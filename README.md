@@ -1,4 +1,5 @@
 # 냠냠코치-한끼위키-김미림-이지민
+### jira 연동
 
 ![image.png](./image.png)
 
