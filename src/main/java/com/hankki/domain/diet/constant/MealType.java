@@ -1,5 +1,11 @@
-package com.hankki.domain.diet.dto;
+package com.hankki.domain.diet.constant;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
+
+import lombok.Getter;
+
+@Getter
 public enum MealType {
 	MORNING (0, "아침 식사"), 
 	LUNCH (1, "점심 식사"), 
@@ -20,15 +26,7 @@ public enum MealType {
 				return meal;
 			}
 		}
-		throw new IllegalArgumentException("[UserDietMeal]유효하지 않은 식사 코드: " + code);
-	}
-
-	public int getCode() {
-		return code;
-	}
-
-	public String getDescription() {
-		return description;
+		throw new HankkiWikiException(ExceptionStatus.INVALID_MEAL_TYPE);
 	}
 	
 }

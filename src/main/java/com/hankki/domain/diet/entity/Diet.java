@@ -3,8 +3,8 @@ package com.hankki.domain.diet.entity;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.hankki.domain.diet.config.MealTypeConverter;
-import com.hankki.domain.diet.dto.MealType;
+import com.hankki.domain.diet.constant.MealType;
+import com.hankki.domain.diet.converter.MealTypeConverter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

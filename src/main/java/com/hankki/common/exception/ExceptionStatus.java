@@ -4,10 +4,12 @@ import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
 
+@Getter
 public enum ExceptionStatus {
-	// DIET
-	INVALID_DIET_MEAL_STATUS(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 정보입니다.");
 	
+	// DIET
+	INVALID_MEAL_TYPE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 종류입니다."),
+	INVALID_MAJOR_CATEGORY(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 대분류입니다.");
 	
 	
 	private final HttpStatus httpStatus;
@@ -18,18 +20,6 @@ public enum ExceptionStatus {
 		this.httpStatus = httpStatus;
 		this.errorCode = errorCode;
 		this.message = message;
-	}
-
-	public HttpStatus getStatus() {
-		return httpStatus;
-	}
-
-	public int getErrorCode() {
-		return errorCode;
-	}
-
-	public String getMessage() {
-		return message;
 	}
 	
 }

@@ -1,6 +1,6 @@
-package com.hankki.domain.diet.config;
+package com.hankki.domain.diet.converter;
 
-import com.hankki.domain.diet.dto.MealType;
+import com.hankki.domain.diet.constant.MealType;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
