@@ -47,11 +47,11 @@ public class Diet {
 		this.mealItems = mealItems;
 	}
 
-	public void updateTakeAt(LocalDate takeAt) {
+	public void changeTakeAt(LocalDate takeAt) {
 		this.takeAt = takeAt;
 	}
 
-	public void updateMeal(MealType mealType) {
+	public void changeMeal(MealType mealType) {
 		this.mealType = mealType;
 	}
 	

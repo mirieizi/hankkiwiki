@@ -71,5 +71,44 @@ public class MealItem {
 		this.fat = fat;
 		this.sugar = sugar;
 	}
-	
+
+	public void changeSubCategory(String subCategory) {
+		this.subCategory = subCategory;
+	}
+
+	public void changeAmountStandard(int amountStandard) {
+		this.amountStandard = amountStandard;
+	}
+
+	public void changeKcal(int kcal) {
+		this.kcal = kcal;
+	}
+
+	public void changeMoisture(int moisture) {
+		this.moisture = moisture;
+	}
+
+	public void changeCarbohydrate(double carbohydrate) {
+		this.carbohydrate = carbohydrate;
+	}
+
+	public void changeProtein(double protein) {
+		this.protein = protein;
+	}
+
+	public void changeFat(double fat) {
+		this.fat = fat;
+	}
+
+	public void changeSugar(double sugar) {
+		this.sugar = sugar;
+	}
+
+	public void changeSodium(double sodium) {
+		this.sodium = sodium;
+	}
+
+	public void changeCholesterol(double cholesterol) {
+		this.cholesterol = cholesterol;
+	}
 }
