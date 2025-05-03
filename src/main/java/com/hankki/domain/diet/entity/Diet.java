@@ -31,7 +31,7 @@ public class Diet {
 	@Column(name = "user_email", unique = true, nullable = false, updatable = false)
 	private String email;
 	
-	@Column(name = "user_take_at", nullable = true, updatable = true)
+	@Column(name = "user_take_at")
 	private LocalDate takeAt;
 	
 	@Column(name = "meal_type", nullable = false)
@@ -40,6 +40,9 @@ public class Diet {
 	
 	@Column(name = "meal_item", nullable = false)
 	private List<MealItem> mealItems;
+
+	@Column(name = "diet_memo")
+	private String dietMemo;
 	
 	public Diet(String email, MealType mealType , List<MealItem> mealItems) {
 		this.email = email;
@@ -51,8 +54,16 @@ public class Diet {
 		this.takeAt = takeAt;
 	}
 
-	public void changeMeal(MealType mealType) {
+	public void changeMealType(MealType mealType) {
 		this.mealType = mealType;
 	}
-	
+
+	public void changeMealItems(List<MealItem> mealItems) {
+		this.mealItems = mealItems;
+	}
+
+	public void changeDietMemo(String dietMemo) {
+		this.dietMemo = dietMemo;
+	}
+
 }
