@@ -1,0 +1,14 @@
+<!-- resources/mapper/DietMapper.xml -->
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hankki.domain.diet.mapper.DietMapper">
+
+    <insert id="insertDiet" parameterType="Diet" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO diet (email, meal_type, take_at, diet_memo)
+        VALUES (#{email}, #{mealType}, #{takeAt}, #{dietMemo})
+    </insert>
+
+</mapper>

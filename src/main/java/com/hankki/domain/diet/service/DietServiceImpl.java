@@ -28,7 +28,7 @@ public class DietServiceImpl implements DietService {
     @Override
     public DietResponseDto getDietByTakeAt(DietGetByTakeAtRequestDto requestDto) {
         log.info("[DietService] 회원의 해당 일자별 Diet 조회 Request : {}", requestDto);
-        
+
         return null;
     }
 }
