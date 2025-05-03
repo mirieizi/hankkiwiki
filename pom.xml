@@ -12,7 +12,7 @@
 	<artifactId>dishwiki</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
-	<name>dishwiki</name>
+	<name>HankkiWiki</name>
 	<description>SSAFY PJT by KIM MIRIM, LEE JIMIN </description>
 	<url/>
 	<licenses>
