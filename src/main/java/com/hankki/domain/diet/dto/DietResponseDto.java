@@ -3,12 +3,14 @@ package com.hankki.domain.diet.dto;
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.entity.MealItem;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Getter
+@Builder
 public class DietResponseDto {
 
     private Long id;
