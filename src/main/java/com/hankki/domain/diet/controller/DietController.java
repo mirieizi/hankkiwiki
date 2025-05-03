@@ -1,6 +1,7 @@
 package com.hankki.domain.diet.controller;
 
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
+import com.hankki.domain.diet.dto.DietGetByTakeAtRequestDto;
 import com.hankki.domain.diet.dto.DietResponseDto;
 import com.hankki.domain.diet.service.DietService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +19,16 @@ public class DietController {
 
     private final DietService dietService;
 
+    /*
+     * 우선 세부적인 화면 구성이 확실하지 않아 반환값으로 생성된 Diet도 반환하게 했습니다.
+     */
     @PostMapping("/create")
     public ResponseEntity<DietResponseDto> createDiet(@RequestBody DietCreateRequestDto requestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(dietService.createDiet(requestDto));
+    }
+
+    public ResponseEntity<DietResponseDto> getDiet(@RequestBody DietGetByTakeAtRequestDto requestDto) {
+
+        return null;
     }
 }
