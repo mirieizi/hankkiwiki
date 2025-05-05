@@ -16,7 +16,7 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "user_diet")
+@Table(name = "diet")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED) // 외부 생성은 차단하여 빌더와 충돌 방지
@@ -36,32 +36,32 @@ public class Diet {
 	@Column(name = "meal_type", nullable = false)
 	@Convert(converter = MealTypeConverter.class)
 	private MealType mealType;
-	
-	@Column(name = "meal_item", nullable = false)
-	private List<MealItem> mealItems;
 
 	@Column(name = "diet_memo")
 	private String dietMemo;
 	
-	public Diet(String email, MealType mealType , List<MealItem> mealItems) {
+	public Diet(String email, MealType mealType) {
 		this.email = email;
 		this.mealType = mealType;
-		this.mealItems = mealItems;
 	}
 
-	public void changeTakeAt(LocalDate takeAt) {
+	protected void setId(Long id) {
+		this.id = id;
+	}
+
+	protected void setEmail(String email) {
+		this.email = email;
+	}
+
+	protected void setTakeAt(LocalDate takeAt) {
 		this.takeAt = takeAt;
 	}
 
-	public void changeMealType(MealType mealType) {
+	protected void setMealType(MealType mealType) {
 		this.mealType = mealType;
 	}
 
-	public void changeMealItems(List<MealItem> mealItems) {
-		this.mealItems = mealItems;
-	}
-
-	public void changeDietMemo(String dietMemo) {
+	protected void setDietMemo(String dietMemo) {
 		this.dietMemo = dietMemo;
 	}
 

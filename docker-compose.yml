@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0.33
+    container_name: mysql_hankkiwiki
+    restart: unless-stopped
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${HANKKI_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${HANKKI_DATABASE}
+      MYSQL_USER: ${HANKKI_USER}
+      MYSQL_PASSWORD: ${HANKKI_PASSWORD}
+    volumes:
+      - mysql-hankkiwiki-data:/var/lib/mysql
+
+volumes:
+  mysql-hankkiwiki-data:

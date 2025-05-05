@@ -11,14 +11,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name="meal_item")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Builder
+@Entity
+@Table(name = "meal_item")
 public class MealItem {
 	
 	@Id
@@ -62,53 +64,55 @@ public class MealItem {
 	@Column
 	private double cholesterol;
 
-	public MealItem(String foodName, MajorCategory majorCategory, double carbohydrate, double protein, double fat,
-			double sugar) {
-		this.foodName = foodName;
-		this.majorCategory = majorCategory;
-		this.carbohydrate = carbohydrate;
-		this.protein = protein;
-		this.fat = fat;
-		this.sugar = sugar;
+	protected void setId(Long id) {
+		this.id = id;
 	}
 
-	public void changeSubCategory(String subCategory) {
+	protected void setFoodName(String foodName) {
+		this.foodName = foodName;
+	}
+
+	protected void setMajorCategory(MajorCategory majorCategory) {
+		this.majorCategory = majorCategory;
+	}
+
+	protected void setSubCategory(String subCategory) {
 		this.subCategory = subCategory;
 	}
 
-	public void changeAmountStandard(int amountStandard) {
+	protected void setAmountStandard(int amountStandard) {
 		this.amountStandard = amountStandard;
 	}
 
-	public void changeKcal(int kcal) {
+	protected void setKcal(int kcal) {
 		this.kcal = kcal;
 	}
 
-	public void changeMoisture(int moisture) {
+	protected void setMoisture(int moisture) {
 		this.moisture = moisture;
 	}
 
-	public void changeCarbohydrate(double carbohydrate) {
+	protected void setCarbohydrate(double carbohydrate) {
 		this.carbohydrate = carbohydrate;
 	}
 
-	public void changeProtein(double protein) {
+	protected void setProtein(double protein) {
 		this.protein = protein;
 	}
 
-	public void changeFat(double fat) {
+	protected void setFat(double fat) {
 		this.fat = fat;
 	}
 
-	public void changeSugar(double sugar) {
+	protected void setSugar(double sugar) {
 		this.sugar = sugar;
 	}
 
-	public void changeSodium(double sodium) {
+	protected void setSodium(double sodium) {
 		this.sodium = sodium;
 	}
 
-	public void changeCholesterol(double cholesterol) {
+	protected void setCholesterol(double cholesterol) {
 		this.cholesterol = cholesterol;
 	}
 }
