@@ -1,7 +1,7 @@
 package com.hankki.domain.diet.controller;
 
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietGetByTakeAtRequestDto;
+import com.hankki.domain.diet.dto.DietGetByDateRequestDto;
 import com.hankki.domain.diet.dto.DietResponseDto;
 import com.hankki.domain.diet.service.DietService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class DietController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Diet 생성 성공 응답");
     }
 
-    public ResponseEntity<DietResponseDto> getDiet(@RequestBody DietGetByTakeAtRequestDto requestDto) {
+    public ResponseEntity<DietResponseDto> getDiet(@RequestBody DietGetByDateRequestDto requestDto) {
 
         return null;
     }
