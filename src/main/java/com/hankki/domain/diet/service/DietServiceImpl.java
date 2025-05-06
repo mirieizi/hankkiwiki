@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -55,8 +54,15 @@ public class DietServiceImpl implements DietService {
         }
     }
 
+    /**
+     * Diet에서 userEmail, takeAt(섭취일자), mealType(식사 종류)에 해당하는 음식 종류(MealItem)들을 조회
+     * 이때 MealType을 간략한 정보로 갖고 온다.
+     * List<MealItemPrieviewResponseDto>가 DietResponseDto에 담겨져 온다.
+     * @param requestDto
+     * @return DietResponseDto
+     */
     @Override
-    public DietResponseDto getMealItemByTakeAtAndMealType(DietGetByDateRequestDto requestDto) {
+    public DietResponseDto findMealItemByTakeAtAndMealType(DietGetByDateRequestDto requestDto) {
         log.info("[DietService] 회원의 해당 일자별 Diet 조회 Request : {}", requestDto);
         try {
             Diet diet = dietMapper.getDietByDate(

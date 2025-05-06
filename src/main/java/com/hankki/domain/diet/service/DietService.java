@@ -8,5 +8,5 @@ public interface DietService {
 
     void createDiet(DietCreateRequestDto requestDto);
 
-    DietResponseDto getMealItemByTakeAtAndMealType(DietGetByDateRequestDto requestDto);
+    DietResponseDto findMealItemByTakeAtAndMealType(DietGetByDateRequestDto requestDto);
 }
