@@ -1,7 +1,5 @@
 package com.hankki.config;
 
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,38 +19,40 @@ public class WebSecurityConfig {
     private final UserDetailService userService;
 
     @Bean
-    public WebSecurityCustomizer configure() {
-        // H2 콘솔 및 정적 리소스 보안 필터 제외
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // H2 콘솔 제외 설정 삭제됨 (필요 시 아래 줄 주석 해제)
+//      .requestMatchers(toH2Console())         // ← 삭제된 라인, H2ConsoleProperties 오류 해결
         return web -> web.ignoring()
-            .requestMatchers(toH2Console())
             .requestMatchers("/static/**");
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // authorizeRequests() deprecated, authorizeHttpRequests() 사용
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/login", "/signup", "/user").permitAll()
-                .anyRequest().authenticated()
-            )
-            // 폼 로그인 설정
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-            )
-            // 로그아웃 설정
-            .logout(logout -> logout
-                .logoutSuccessUrl("/login")
-                .invalidateHttpSession(true)
-            )
-            // CSRF 비활성화
-            .csrf(csrf -> csrf.disable())
-            // H2 콘솔 프레임 옵션 비활성화
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
-
+          .authorizeHttpRequests(authz -> authz
+             // 로그인 페이지와 회원가입은 누구나
+             .requestMatchers("/login", "/login-error", "/user/signup").permitAll()
+             .anyRequest().authenticated()
+          )
+          .formLogin(form -> form
+             .loginPage("/login")            // ① GET /login → 로그인 폼 (아래에서 구현)
+             .loginProcessingUrl("/login")   // ② POST /login → 필터가 아이디/비번 검사
+             .usernameParameter("email")     // 폼 <input name="email">
+             .passwordParameter("password")  // 폼 <input name="password">
+             .defaultSuccessUrl("/", true)   // 로그인 성공 후
+             .failureUrl("/login?error")     // 로그인 실패 후
+          )
+          .logout(logout -> logout
+             .logoutUrl("/logout")           // POST /logout → 필터가 세션 무효화
+             .logoutSuccessUrl("/login")
+             .invalidateHttpSession(true)
+             .deleteCookies("JSESSIONID")
+             .permitAll()
+          )
+          .csrf(csrf -> csrf.disable());
         return http.build();
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -61,7 +61,6 @@ public class WebSecurityConfig {
     ) throws Exception {
         AuthenticationManagerBuilder authBuilder =
             http.getSharedObject(AuthenticationManagerBuilder.class);
-        // UserDetailService로 사용자 인증 설정
         authBuilder
             .userDetailsService(userService)
             .passwordEncoder(bCryptPasswordEncoder);

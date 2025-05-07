@@ -45,12 +45,12 @@ public class User implements UserDetails {
     @Column(name = "user_email", nullable = false, unique = true)
     private String email;
 
-    @Size(min = 8, max = 20)
+    @Size(min = 8, max = 72)
     @Pattern(
       regexp = "^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).+$",
       message = "비밀번호는 8~20자, 영문+특수문자 필요"
     )
-    @Column(name = "user_password", nullable = false)
+    @Column(name = "user_password", length = 72, nullable = false)
     private String password;
 
     @Size(max = 10)
