@@ -1,6 +1,27 @@
 package com.hankki.domain.user.entity;
 
-import jakarta.persistence.*;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,34 +29,95 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)       
-@Builder                                               
-@Table(name = "user")
-public class User {
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "user_id", updatable = false)
     private Long id;
 
-    @Column(name = "user_email", length = 255, nullable = false, unique = true)
+    @Email
+    @NotBlank
+    @Column(name = "user_email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "user_password", length = 255, nullable = false)
+    @Size(min = 8, max = 20)
+    @Pattern(
+      regexp = "^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).+$",
+      message = "비밀번호는 8~20자, 영문+특수문자 필요"
+    )
+    @Column(name = "user_password", nullable = false)
     private String password;
 
-    @Column(name = "user_nickname", length = 20, nullable = false, unique = true)
+    @Size(max = 10)
+    @Pattern(
+      regexp = "^[A-Za-z0-9가-힣]+$",
+      message = "닉네임은 10자 이하, 공백·특수문자 불가"
+    )
+    @Column(name = "user_nickname", nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "user_dailyusage", nullable = false)
-    private int dailyUsage;
+    @OneToOne(mappedBy = "user",
+              cascade = CascadeType.ALL,
+              fetch = FetchType.LAZY,
+              optional = false)
+    private UserHealthInfo healthInfo;
 
-    public void changeEmail(String email) { this.email = email;    }
-    public void changePassword(String password) { this.password = password;    }
-    public void changeNickname(String nickname) { this.nickname = nickname;    }
-    public void changeDailyUsage(int dailyUsage) { this.dailyUsage = dailyUsage;    }
-    
-    
+    /** 이메일 변경 */
+    public void changeEmail(String email) {
+        this.email = email;
+    }
 
+    /** 비밀번호 변경 */
+    public void changePassword(String rawPassword, PasswordEncoder encoder) {
+        this.password = encoder.encode(rawPassword);
+    }
+
+    /** 닉네임 변경 */
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User u)) return false;
+        return id != null && id.equals(u.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("user"));
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

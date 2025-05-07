@@ -1,55 +1,35 @@
 package com.hankki.domain.user.service;
 
-import com.hankki.domain.user.entity.User;
-import com.hankki.domain.user.repository.UserRepository;
-import org.springframework.security.core.userdetails.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.hankki.domain.user.dto.SignUpRequest;
+import com.hankki.domain.user.entity.User;
+import com.hankki.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+
 @Service
-public class UserServiceImpl implements UserService, UserDetailsService {
-
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
-        this.userRepository  = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
-    public User signup(User user) {
-        // 비밀번호 암호화 후 저장
-        user = User.builder()
-                   .email(user.getEmail())
-                   .password(passwordEncoder.encode(user.getPassword()))
-                   .nickname(user.getNickname())
-                   .dailyUsage(user.getDailyUsage())
-                   .build();
-        return userRepository.save(user);
-    }
-
-    @Override
-    public User getById(Long id) {
-        return userRepository.findById(id)
-                             .orElseThrow(() -> new UsernameNotFoundException("사용자 없음: " + id));
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username)
-                                  .orElseThrow(() -> new UsernameNotFoundException("사용자 없음: " + username));
-        return org.springframework.security.core.userdetails.User
-            .withUsername(user.getEmail())
-            .password(user.getPassword())
-            .roles("USER")
+    @Transactional
+    public Long signUp(SignUpRequest request) {
+        User user = User.builder()
+            .email(request.getEmail())
+            .password(bCryptPasswordEncoder.encode(request.getPassword()))
+            .nickname(request.getNickname())
             .build();
+        return userRepository.save(user).getId();
     }
 
-	@Override
-	public User login(User user) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("unexpected User"));
+    }
 }

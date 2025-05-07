@@ -38,4 +38,6 @@ spring:
         format_sql: true
 
 
-
+jwt:
+ issuer: ajufresh@gmail.com
+ secret_key: study-springboot
