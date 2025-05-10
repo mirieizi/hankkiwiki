@@ -78,3 +78,5 @@ spring-boot-devtools.*
 *.swp
 *.bak
 *~
+
+/mysql-data/
