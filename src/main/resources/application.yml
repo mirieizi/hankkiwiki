@@ -3,8 +3,8 @@ spring:
     name: hankkiwiki
 
   datasource:
-    url: jdbc:mysql://localhost:3308/${HANKKI_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${HANKKI_USER}
+    url: jdbc:mysql://mysql:3306/${HANKKI_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${HANKKI_USERNAME}
     password: ${HANKKI_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -32,6 +32,5 @@ logging:
     org.springframework.context.annotation: DEBUG
     org.mybatis.spring.mapper: DEBUG
 
-
 server:
-  port: 8080
+  port: 8081
