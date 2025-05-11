@@ -1,6 +1,13 @@
+
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/hankkiwiki?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+#    username: root
+#    password: ssafy
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+
 spring:
-  application:
-    name: hankkiwiki
 
   datasource:
     url: jdbc:mysql://localhost:3306/hankkiwiki?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
@@ -8,7 +15,21 @@ spring:
     password: ssafy
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  mybatis:
+    mapper-locations: classpath:/mappers/**/*.xml
+    type-aliases-package: com.hankki.domain
+
   jpa:
+    # ★ 반드시 Dialect를 지정해 줍니다
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -16,6 +37,13 @@ spring:
       hibernate:
         format_sql: true
 
+<<<<<<< HEAD
 jwt:
  issuer: ajufresh@gmail.com
  secret_key: study-springboot
+=======
+
+jwt:
+ issuer: ajufresh@gmail.com
+ secret_key: study-springboot
+>>>>>>> d37dac4808a8b86bc3fe7ccb7c24b944a538bf36

@@ -1,7 +1,9 @@
 package com.hankki.domain.user.entity;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,17 +12,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,7 +41,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class User implements UserDetails {
-	// UserDetails를 상속 받아 인증 객체로 사용함
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", updatable = false)
@@ -50,7 +56,7 @@ public class User implements UserDetails {
       regexp = "^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).+$",
       message = "비밀번호는 8~20자, 영문+특수문자 필요"
     )
-    @Column(name = "user_password", nullable = false)
+    @Column(name = "user_password", length = 72, nullable = false)
     private String password;
 
     @Size(max = 10)
@@ -61,11 +67,22 @@ public class User implements UserDetails {
     @Column(name = "user_nickname", nullable = false, unique = true)
     private String nickname;
 
-    @OneToOne(mappedBy = "user",
-              cascade = CascadeType.ALL,
-              fetch = FetchType.LAZY,
-              optional = false)
+    @OneToOne(
+        mappedBy = "user",
+        cascade = CascadeType.ALL,
+        fetch = FetchType.LAZY,
+        optional = false
+    )
     private UserHealthInfo healthInfo;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+      name = "user_roles",
+      joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "role")
+    @Builder.Default
+    private Set<String> roles = new HashSet<>(Set.of("ROLE_USER"));
 
     /** 이메일 변경 */
     public void changeEmail(String email) {
@@ -81,7 +98,41 @@ public class User implements UserDetails {
     public void changeNickname(String nickname) {
         this.nickname = nickname;
     }
-    /** 그냥 equals를 하게 되면 object타입일 때 != User 타입일 때 */
+
+    /** 권한 리스트 반환 */
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+    }
+
+    /** 인증에 사용할 username(email) 반환 */
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -93,39 +144,4 @@ public class User implements UserDetails {
     public int hashCode() {
         return getClass().hashCode();
     }
-    /** 권한 반환 */
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of(new SimpleGrantedAuthority("user"));
-	}
-	/** 사용자의 id를 반환 (고유한 값) */
-	@Override
-	public String getUsername() {
-		return email;
-	}
-	
-	@Override
-	public boolean isAccountNonExpired() {
-		// 만료되어 있는지 확인하는 로직
-		return true;
-	}
-	
-	@Override
-	public boolean isAccountNonLocked() {
-		// 계정 잠금되어 있는지 확인하는 로직
-		return true; // true: 잠금되지 않음
-	}
-	@Override
-	public boolean isCredentialsNonExpired() {
-		// 패스워드가 만료되었는지 확인하는 로직
-		return true;
-	}
-	@Override
-	public boolean isEnabled() {
-		// 계정이 사용 가능한지 확인하는 로직
-		return true; 
-	}
 }
-
-
-

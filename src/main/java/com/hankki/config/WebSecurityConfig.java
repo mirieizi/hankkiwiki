@@ -1,6 +1,5 @@
+// src/main/java/com/hankki/config/WebSecurityConfig.java
 package com.hankki.config;
-
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,9 +7,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.hankki.config.TokenAuthenticationFilter;
+import com.hankki.config.jwt.TokenProvider;
 import com.hankki.domain.user.service.UserDetailService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,38 +21,38 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Configuration
 public class WebSecurityConfig {
-    private final UserDetailService userService;
+    private final UserDetailService  userService;
+    private final TokenProvider      tokenProvider;
 
     @Bean
-    public WebSecurityCustomizer configure() {
-        // H2 콘솔 및 정적 리소스 보안 필터 제외
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // 정적 리소스 및 H2 콘솔 무시
         return web -> web.ignoring()
-            .requestMatchers(toH2Console())
-            .requestMatchers("/static/**");
+            .requestMatchers("/static/**", "/h2-console/**");
     }
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // authorizeRequests() deprecated, authorizeHttpRequests() 사용
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/login", "/signup", "/user").permitAll()
+                // 관리자 전용 API는 ROLE_ADMIN 소유자만 접근 가능
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // 로그인·회원가입·유저 조회·토큰 재발급은 모두 공개
+                .requestMatchers(
+                    "/login",
+                    "/signup",
+                    "/user/**",
+                    "/token/refresh"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
-            // 폼 로그인 설정
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-            )
-            // 로그아웃 설정
-            .logout(logout -> logout
-                .logoutSuccessUrl("/login")
-                .invalidateHttpSession(true)
-            )
-            // CSRF 비활성화
-            .csrf(csrf -> csrf.disable())
-            // H2 콘솔 프레임 옵션 비활성화
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+            .addFilterBefore(
+                new TokenAuthenticationFilter(tokenProvider),
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
@@ -61,7 +64,6 @@ public class WebSecurityConfig {
     ) throws Exception {
         AuthenticationManagerBuilder authBuilder =
             http.getSharedObject(AuthenticationManagerBuilder.class);
-        // UserDetailService로 사용자 인증 설정
         authBuilder
             .userDetailsService(userService)
             .passwordEncoder(bCryptPasswordEncoder);
