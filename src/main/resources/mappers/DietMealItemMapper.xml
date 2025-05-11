@@ -16,4 +16,10 @@
         WHERE diet_id = #{dietId}
     </select>
 
+    <delete id="deleteByDietId"
+            parameterType="long">
+        DELETE FROM diet_meal_item
+        WHERE diet_id = #{dietId}
+    </delete>
+
 </mapper>

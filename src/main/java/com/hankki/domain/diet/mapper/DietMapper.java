@@ -5,10 +5,14 @@ import com.hankki.domain.diet.entity.Diet;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 @Mapper
 public interface DietMapper {
     void insertDiet(Diet diet);
-
-    Diet getDietByDate(@Param("email") String email, @Param("takeAt") String takeAt,
-                       @Param("mealType") MealType mealType);
+    List<Diet> getDietByTakeAt(@Param("email") String email, @Param("takeAt") LocalDate takeAt);
+    Optional<Diet> getDietById(@Param("id") Long id);
+    int deleteDietById(@Param("dietId") Long dietId);
 }

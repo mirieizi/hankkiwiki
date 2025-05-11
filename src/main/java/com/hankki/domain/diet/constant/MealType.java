@@ -5,13 +5,16 @@ import com.hankki.common.exception.HankkiWikiException;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
 public enum MealType {
-	MORNING (0, "아침 식사"), 
-	LUNCH (1, "점심 식사"), 
-	DINNER (2, "저녁 식사"), 
-	SNACK (3, "간식");
-	
+	MORNING (0, "아침"),
+	LUNCH (1, "점심"),
+	DINNER (2, "저녁"),
+	SNACK (3, "간식"),
+	TODAY(9, "오늘");
+
 	private final int code;
 	private final String description;
 	
@@ -19,14 +22,17 @@ public enum MealType {
 		this.code = code;
 		this.description = description;
 	}
-	
-	public static MealType fromcode(int code) {
-		for (MealType meal : values()) {
-			if (meal.code == code) {
-				return meal;
-			}
-		}
-		throw new HankkiWikiException(ExceptionStatus.INVALID_MEAL_TYPE);
+
+	/**
+	 * 코드로부터 해당 enum 을 반환.
+	 * 없으면 IllegalArgumentException 발생.
+	 */
+	public static MealType fromCode(int code) {
+		return Arrays.stream(values())
+				.filter(mt -> mt.code == code)
+				.findFirst()
+				.orElseThrow(() ->
+						new IllegalArgumentException("Invalid MealType code: " + code)
+				);
 	}
-	
 }

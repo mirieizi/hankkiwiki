@@ -11,4 +11,26 @@
         VALUES (#{email}, #{mealType}, #{takeAt}, #{dietMemo})
     </insert>
 
+    <select id="getDietByTakeAt" parameterType="map" resultType="com.hankki.domain.diet.entity.Diet">
+        SELECT
+            id,
+            user_email   AS email,
+            user_take_at AS takeAt,
+            meal_type    AS mealType,
+            diet_memo    AS dietMemo
+        FROM diet
+        WHERE user_email   = #{email}
+          AND user_take_at = #{takeAt}
+    </select>
+
+    <select id="getDietById"
+            parameterType="long"
+            resultType="com.hankki.domain.diet.entity.Diet">
+        SELECT * FROM diet WHERE id = #{dietId}
+    </select>
+
+    <delete id="deleteDietById"
+            parameterType="long">
+        DELETE FROM diet WHERE id = #{dietId}
+    </delete>
 </mapper>

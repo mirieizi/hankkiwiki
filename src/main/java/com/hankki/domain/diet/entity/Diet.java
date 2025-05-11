@@ -18,6 +18,7 @@ import lombok.*;
 @Entity
 @Table(name = "diet")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED) // 외부 생성은 차단하여 빌더와 충돌 방지
 @Builder
@@ -32,10 +33,14 @@ public class Diet {
 	
 	@Column(name = "user_take_at")
 	private LocalDate takeAt;
-	
-	@Column(name = "meal_type", nullable = false)
+
+	@Column(
+			name = "meal_type",
+			nullable = false,
+			columnDefinition = "TINYINT NOT NULL DEFAULT 9"
+	)
 	@Convert(converter = MealTypeConverter.class)
-	private MealType mealType;
+	private MealType mealType = MealType.fromCode(9);
 
 	@Column(name = "diet_memo")
 	private String dietMemo;
@@ -43,26 +48,6 @@ public class Diet {
 	public Diet(String email, MealType mealType) {
 		this.email = email;
 		this.mealType = mealType;
-	}
-
-	protected void setId(Long id) {
-		this.id = id;
-	}
-
-	protected void setEmail(String email) {
-		this.email = email;
-	}
-
-	protected void setTakeAt(LocalDate takeAt) {
-		this.takeAt = takeAt;
-	}
-
-	protected void setMealType(MealType mealType) {
-		this.mealType = mealType;
-	}
-
-	protected void setDietMemo(String dietMemo) {
-		this.dietMemo = dietMemo;
 	}
 
 }
