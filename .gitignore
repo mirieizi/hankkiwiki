@@ -79,4 +79,4 @@ spring-boot-devtools.*
 *.bak
 *~
 
-/mysql-data/
+mysql-data/
