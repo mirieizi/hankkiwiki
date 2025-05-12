@@ -1,7 +1,4 @@
-package com.hankki.domain.diet.converter;
-
-import com.hankki.domain.diet.constant.MajorCategory;
-import com.hankki.domain.diet.constant.MealType;
+package com.hankki.domain.food.constant;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

@@ -1,4 +1,4 @@
-package com.hankki.domain.diet.constant;
+package com.hankki.domain.food.constant;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;

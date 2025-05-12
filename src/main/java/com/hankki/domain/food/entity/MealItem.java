@@ -1,7 +1,7 @@
-package com.hankki.domain.diet.entity;
+package com.hankki.domain.food.entity;
 
-import com.hankki.domain.diet.constant.MajorCategory;
-import com.hankki.domain.diet.converter.MajorCategoryConverter;
+import com.hankki.domain.food.constant.MajorCategory;
+import com.hankki.domain.food.constant.MajorCategoryConverter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

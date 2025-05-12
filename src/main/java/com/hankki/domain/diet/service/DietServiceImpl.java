@@ -10,7 +10,7 @@ import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.entity.DietMealItem;
 import com.hankki.domain.diet.mapper.DietMapper;
 import com.hankki.domain.diet.mapper.DietMealItemMapper;
-import com.hankki.domain.diet.mapper.MealItemMapper;
+import com.hankki.domain.food.mapper.MealItemMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

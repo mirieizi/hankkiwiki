@@ -1,8 +1,7 @@
 package com.hankki.domain.diet.constant;
 
-import com.hankki.common.exception.ExceptionStatus;
-import com.hankki.common.exception.HankkiWikiException;
-
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -35,4 +34,19 @@ public enum MealType {
 						new IllegalArgumentException("Invalid MealType code: " + code)
 				);
 	}
+
+    @Converter(autoApply = false)
+    public static class MealTypeConverter implements AttributeConverter<MealType, Integer> {
+
+        @Override
+        public Integer convertToDatabaseColumn(MealType attribute) {
+            return (attribute != null ? attribute.getCode(): null);
+        }
+
+        @Override
+        public MealType convertToEntityAttribute(Integer dbData) {
+            return (dbData != null ? MealType.fromcode(dbData) : null);
+        }
+
+    }
 }

@@ -1,10 +1,8 @@
 package com.hankki.domain.diet.entity;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import com.hankki.domain.diet.constant.MealType;
-import com.hankki.domain.diet.converter.MealTypeConverter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -39,7 +37,7 @@ public class Diet {
 			nullable = false,
 			columnDefinition = "TINYINT NOT NULL DEFAULT 9"
 	)
-	@Convert(converter = MealTypeConverter.class)
+	@Convert(converter = MealType.MealTypeConverter.class)
 	private MealType mealType = MealType.fromCode(9);
 
 	@Column(name = "diet_memo")

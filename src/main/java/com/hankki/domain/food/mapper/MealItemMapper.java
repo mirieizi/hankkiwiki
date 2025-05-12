@@ -1,6 +1,6 @@
-package com.hankki.domain.diet.mapper;
+package com.hankki.domain.food.mapper;
 
-import com.hankki.domain.diet.entity.MealItem;
+import com.hankki.domain.food.entity.MealItem;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
