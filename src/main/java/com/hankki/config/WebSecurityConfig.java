@@ -31,7 +31,6 @@ public class WebSecurityConfig {
             .requestMatchers("/static/**", "/h2-console/**");
     }
 
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
