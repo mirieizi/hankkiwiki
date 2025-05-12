@@ -1,4 +1,4 @@
-package com.hankki.repository;
+package com.hankki.domain.diary.repository;
 
 import java.util.List;
 

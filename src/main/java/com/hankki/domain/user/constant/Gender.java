@@ -1,4 +1,4 @@
-package com.hankki.domain.user.entity;
+package com.hankki.domain.user.constant;
 
 public enum Gender {
 	MALE, // 남성

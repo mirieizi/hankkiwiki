@@ -8,7 +8,7 @@ import com.hankki.domain.diary.dto.DiaryCreateRequest;
 import com.hankki.domain.diary.dto.DiaryResponse;
 import com.hankki.domain.diary.dto.DiaryUpdateRequest;
 import com.hankki.domain.diary.entity.Diary;
-import com.hankki.repository.DiaryRepository;
+import com.hankki.domain.diary.repository.DiaryRepository;
 import com.hankki.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;

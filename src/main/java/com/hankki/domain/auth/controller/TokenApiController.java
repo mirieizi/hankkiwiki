@@ -1,4 +1,4 @@
-package com.hankki.domain.user.controller;
+package com.hankki.domain.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

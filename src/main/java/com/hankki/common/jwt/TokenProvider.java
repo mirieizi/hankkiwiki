@@ -1,5 +1,5 @@
 
-package com.hankki.config.jwt;
+package com.hankki.common.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -18,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import com.hankki.common.token.TokenType;
 import com.hankki.domain.auth.service.UserDetailService;
 import com.hankki.domain.user.entity.User;
 

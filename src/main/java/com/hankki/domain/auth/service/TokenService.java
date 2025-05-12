@@ -1,10 +1,7 @@
 package com.hankki.domain.auth.service;
 
-import java.time.Duration;
-
 import org.springframework.stereotype.Service;
-import com.hankki.common.token.TokenType;
-import com.hankki.config.jwt.TokenProvider;
+import com.hankki.common.jwt.TokenProvider;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.service.UserService;
 

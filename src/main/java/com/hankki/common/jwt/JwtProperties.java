@@ -1,5 +1,5 @@
 // src/main/java/com/hankki/config/jwt/JwtProperties.java
-package com.hankki.config.jwt;
+package com.hankki.common.jwt;
 
 import java.time.Duration;
 

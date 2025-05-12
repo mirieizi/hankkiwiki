@@ -1,5 +1,5 @@
 
-package com.hankki.config;
+package com.hankki.common.security;
 
 import java.io.IOException;
 
@@ -9,7 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.hankki.config.jwt.TokenProvider;
+import com.hankki.common.jwt.TokenProvider;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

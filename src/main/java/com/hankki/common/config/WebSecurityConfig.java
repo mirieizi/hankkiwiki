@@ -1,6 +1,7 @@
 // src/main/java/com/hankki/config/WebSecurityConfig.java
-package com.hankki.config;
+package com.hankki.common.config;
 
+import com.hankki.common.security.TokenAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,8 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.hankki.config.TokenAuthenticationFilter;
-import com.hankki.config.jwt.TokenProvider;
+import com.hankki.common.jwt.TokenProvider;
 import com.hankki.domain.auth.service.UserDetailService;
 
 import lombok.RequiredArgsConstructor;

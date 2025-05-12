@@ -1,4 +1,4 @@
-package com.hankki.domain.user.entity;
+package com.hankki.domain.user.constant;
 
 public enum ActivityFactor {
     SEDENTARY(0.20),    // 거의 활동 없음 / 운동 안 함

@@ -1,4 +1,4 @@
-package com.hankki.common.token;
+package com.hankki.common.jwt;
 
 public enum TokenType {
 	ACCESS,

@@ -1,5 +1,7 @@
 package com.hankki.domain.user.entity;
 
+import com.hankki.domain.user.constant.ActivityFactor;
+import com.hankki.domain.user.constant.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;

@@ -1,4 +1,4 @@
-package com.hankki.repository;
+package com.hankki.domain.auth.repository;
 
 import java.util.Optional;
 

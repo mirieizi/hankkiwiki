@@ -16,8 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.hankki.domain.auth.dto.SignUpRequest;
 import com.hankki.domain.user.entity.User;
-import com.hankki.domain.user.service.UserServiceImpl;
-import com.hankki.repository.UserRepository;
+import com.hankki.domain.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserSignupTest {

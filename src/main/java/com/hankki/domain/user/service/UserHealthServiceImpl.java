@@ -10,8 +10,8 @@ import com.hankki.domain.user.dto.UpdateUserHealthRequest;
 import com.hankki.domain.user.dto.UserHealthRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.entity.UserHealthInfo;
-import com.hankki.repository.UserHealthInfoRepository;
-import com.hankki.repository.UserRepository;
+import com.hankki.domain.user.repository.UserHealthInfoRepository;
+import com.hankki.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

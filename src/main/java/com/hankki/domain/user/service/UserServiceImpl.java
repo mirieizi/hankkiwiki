@@ -10,13 +10,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.hankki.config.jwt.TokenProvider;
+import com.hankki.common.jwt.TokenProvider;
 import com.hankki.domain.auth.dto.JwtTokenResponse;
 import com.hankki.domain.auth.dto.LoginRequest;
 import com.hankki.domain.auth.dto.SignUpRequest;
 import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
-import com.hankki.repository.UserRepository;
+import com.hankki.domain.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

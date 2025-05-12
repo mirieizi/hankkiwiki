@@ -3,7 +3,7 @@ package com.hankki.domain.auth.service;
 import org.springframework.stereotype.Service;
 
 import com.hankki.domain.auth.dto.RefreshToken;
-import com.hankki.repository.RefreshTokenRepository;
+import com.hankki.domain.auth.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
 

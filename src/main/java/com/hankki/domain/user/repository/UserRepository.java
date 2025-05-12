@@ -1,4 +1,4 @@
-package com.hankki.repository;
+package com.hankki.domain.user.repository;
 
 import java.util.Optional;
 

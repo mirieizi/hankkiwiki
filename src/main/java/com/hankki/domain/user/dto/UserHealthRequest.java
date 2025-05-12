@@ -1,7 +1,7 @@
 package com.hankki.domain.user.dto;
 
-import com.hankki.domain.user.entity.ActivityFactor;
-import com.hankki.domain.user.entity.Gender;
+import com.hankki.domain.user.constant.ActivityFactor;
+import com.hankki.domain.user.constant.Gender;
 import jakarta.validation.constraints.*;
 
 import lombok.*;
