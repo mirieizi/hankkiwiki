@@ -1,6 +1,8 @@
 package com.hankki.domain.diet.dto;
 
 import com.hankki.domain.diet.constant.MealType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,9 +10,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DietUpdateInfoRequestDto {
+public class DietUpdateMealTypeRequestDto {
+    @NotBlank
     private Long dietId;
-    private String email;
+
+    @NotBlank
     private MealType mealType;
-    private String dietMemo;
 }

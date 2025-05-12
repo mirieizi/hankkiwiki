@@ -1,8 +1,7 @@
 package com.hankki.domain.diet.service;
 
+import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietGetByTakeAtRequestDto;
-import com.hankki.domain.diet.dto.DietUpdateInfoRequestDto;
 import com.hankki.domain.diet.entity.Diet;
 
 import java.time.LocalDate;
@@ -16,5 +15,5 @@ public interface DietService {
 
     void deleteDietById(String email, Long dietId);
 
-    void updateDietInfo(DietUpdateInfoRequestDto requestDto);
+    void updateMealType(String email, Long dietId, MealType mealType);
 }

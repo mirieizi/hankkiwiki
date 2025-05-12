@@ -1,7 +1,7 @@
 package com.hankki.domain.diet.service;
 
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietResponseDto;
+import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
 import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
@@ -59,9 +59,23 @@ public class DietFacade {
                 .build();
     }
 
+    /**
+     * 현재 유저 email과 dietId로 찾은 userEmail 같은지 비교
+     * 검증 후, dietId를 Diet, DietMealItem DB에서 삭제
+     * @param email
+     * @param dietId
+     */
     public void deleteDietById(String email, Long dietId) {
         dietService.deleteDietById(email, dietId);
         dietMealItemMapper.deleteByDietId(dietId);
     }
 
+    /**
+     * diet의 식사 타입 변경
+     * @param email
+     * @param requestDto
+     */
+    public void updateMealType(String email, DietUpdateMealTypeRequestDto requestDto) {
+        dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
+    }
 }
