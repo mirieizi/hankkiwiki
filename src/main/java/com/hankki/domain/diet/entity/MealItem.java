@@ -10,14 +10,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 @Builder
 @Entity
 @Table(name = "meal_item")
@@ -64,55 +62,4 @@ public class MealItem {
 	@Column
 	private double cholesterol;
 
-	protected void setId(Long id) {
-		this.id = id;
-	}
-
-	protected void setFoodName(String foodName) {
-		this.foodName = foodName;
-	}
-
-	protected void setMajorCategory(MajorCategory majorCategory) {
-		this.majorCategory = majorCategory;
-	}
-
-	protected void setSubCategory(String subCategory) {
-		this.subCategory = subCategory;
-	}
-
-	protected void setAmountStandard(int amountStandard) {
-		this.amountStandard = amountStandard;
-	}
-
-	protected void setKcal(int kcal) {
-		this.kcal = kcal;
-	}
-
-	protected void setMoisture(int moisture) {
-		this.moisture = moisture;
-	}
-
-	protected void setCarbohydrate(double carbohydrate) {
-		this.carbohydrate = carbohydrate;
-	}
-
-	protected void setProtein(double protein) {
-		this.protein = protein;
-	}
-
-	protected void setFat(double fat) {
-		this.fat = fat;
-	}
-
-	protected void setSugar(double sugar) {
-		this.sugar = sugar;
-	}
-
-	protected void setSodium(double sodium) {
-		this.sodium = sodium;
-	}
-
-	protected void setCholesterol(double cholesterol) {
-		this.cholesterol = cholesterol;
-	}
 }

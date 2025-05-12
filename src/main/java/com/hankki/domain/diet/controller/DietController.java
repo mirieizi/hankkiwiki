@@ -40,15 +40,15 @@ public class DietController {
             @RequestBody DietDeleteRequestDto requestDto
     ){
         dietService.deleteDietById(requestDto.getDietId());
-        return ResponseEntity.ok("사용자의 식단 삭제를 성공했습니다.");
+        return ResponseEntity.ok("Diet 삭제 성공");
     }
 
     @PatchMapping("/update/diet-info")
-    public ResponseEntity<DietResponseDto> updateDietInfo(
+    public ResponseEntity<String> updateDietInfo(
             @RequestBody DietUpdateInfoRequestDto requestDto
     ){
-        DietResponseDto responseDto = dietService.updateInfo(requestDto);
-        return ResponseEntity.ok(responseDto);
+        dietService.updateDietInfo(requestDto);
+        return ResponseEntity.ok("Diet 정보 수정 성공");
     }
 
 }

@@ -91,7 +91,7 @@ public class DietServiceImpl implements DietService {
     }
 
     @Override
-    public void updateInfo(DietUpdateInfoRequestDto requestDto) {
+    public void updateDietInfo(DietUpdateInfoRequestDto requestDto) {
         Diet diet = dietMapper.getDietById(requestDto.getDietId())
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
         // 유저 검증 로직 추가 예정

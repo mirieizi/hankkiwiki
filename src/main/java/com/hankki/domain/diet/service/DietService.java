@@ -15,5 +15,5 @@ public interface DietService {
 
     void deleteDietById(Long dietId);
 
-    void updateInfo(DietUpdateInfoRequestDto requestDto);
+    void updateDietInfo(DietUpdateInfoRequestDto requestDto);
 }
