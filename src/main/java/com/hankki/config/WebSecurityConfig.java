@@ -14,7 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.hankki.config.TokenAuthenticationFilter;
 import com.hankki.config.jwt.TokenProvider;
-import com.hankki.domain.user.service.UserDetailService;
+import com.hankki.domain.auth.service.UserDetailService;
 
 import lombok.RequiredArgsConstructor;
 

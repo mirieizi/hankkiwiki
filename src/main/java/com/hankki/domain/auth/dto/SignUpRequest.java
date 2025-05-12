@@ -1,4 +1,4 @@
-package com.hankki.domain.user.dto;
+package com.hankki.domain.auth.dto;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 

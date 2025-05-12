@@ -1,6 +1,8 @@
 package com.hankki.domain.user.service;
 
-import com.hankki.domain.user.dto.SignUpRequest;
+import com.hankki.domain.auth.dto.JwtTokenResponse;
+import com.hankki.domain.auth.dto.LoginRequest;
+import com.hankki.domain.auth.dto.SignUpRequest;
 import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
 
@@ -15,8 +17,14 @@ public interface UserService {
     User findById(Long userId);
 
     /** 사용자 정보 수정 */
-    User updateUser(UpdateUserRequest request);
+    User updateUser(Long userId, UpdateUserRequest request);
 
     /** 사용자 삭제 */
     void deleteUser(Long userId);
+
+    /** 사용자 로그인 */
+	JwtTokenResponse login(LoginRequest request);
+	
+    /** 사용자 로그아웃 */
+    void logout(String token);
 }

@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
 
@@ -16,8 +18,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.hankki.common.token.TokenType;
+import com.hankki.domain.auth.service.UserDetailService;
 import com.hankki.domain.user.entity.User;
-import com.hankki.domain.user.service.UserDetailService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
@@ -38,11 +41,12 @@ public class TokenProvider {
     private final JwtProperties     jwtProperties;
     private final UserDetailService userDetailService;   // [피드백 반영] UserDetailsService 주입
 
-    // 내부 토큰 구분용 enum (Access vs Refresh)  [피드백 반영]
-    private enum TokenType { ACCESS, REFRESH }
-
-    // === 토큰 생성 메서드 분리 ===
-
+    /**
+     * 무효화된 토큰을 관리하는 블랙리스트
+     * 이거는 인 메모리 타입으로 서버 꺼졌다가 다시 켜지면 무효화 됨 -> 임시로..
+     */
+    private final Set<String> blacklist = ConcurrentHashMap.newKeySet();
+    
     /**
      * AccessToken 생성
      */
@@ -77,8 +81,8 @@ public class TokenProvider {
             .setIssuedAt(now)
             .setExpiration(expiry)
             .setSubject(user.getEmail())
-            .claim("id", user.getId())        // [피드백 반영] 사용자 ID claim
-            .claim("type", type.name())       // [피드백 반영] 토큰 타입 claim
+            .claim("id", user.getId())
+            .claim("type", type.name())       // 토큰 타입 claim
             .claim("roles", roles)
             .signWith(key, SignatureAlgorithm.HS256)
             .compact();
@@ -101,9 +105,14 @@ public class TokenProvider {
     }
 
     /**
-     * 공통 검증 로직: 타입 일치 여부 확인 및 예외 처리  [피드백 반영]
+     * 공통 검증 로직:
+     *  - 토큰 형식, 서명 유효성, 타입 일치, 블랙리스트 확인
      */
     private boolean validateToken(String token, String expectedType) {
+        if (blacklist.contains(token)) {
+            logger.warn("Token is blacklisted: {}", token);
+            return false;
+        }
         try {
             Claims claims = parseClaims(token);
             String actualType = claims.get("type", String.class);
@@ -159,5 +168,16 @@ public class TokenProvider {
             .build()
             .parseClaimsJws(token)
             .getBody();
+    }
+    // 단순히 종료 시키면 JWT 인증 시스템에서는 서버는 유효한 토큰인지만 확인함
+    // -> 세션 관리는 안 하게 되지만 만약 토큰이 탈취된 경우, 토큰 만료 전까지 탈취자가 토큰 사용하여 시스템 접속 가능
+    // -> 블랙 리스트 사용함! (다만 이렇게 하면 약간 서버 부하 증가 (모든 토큰 DB 비교해야 함)
+    // 제대로 하려면 redis 사용해야 함
+    /**
+     * 토큰 무효화 (로그아웃 등)
+     */
+    public void invalidateToken(String token) {
+        blacklist.add(token);
+        logger.info("Token invalidated: {}", token);
     }
 }

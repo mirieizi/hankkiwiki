@@ -1,4 +1,4 @@
-package com.hankki.domain.user.dto;
+package com.hankki.domain.auth.dto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

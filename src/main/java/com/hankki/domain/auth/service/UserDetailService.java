@@ -1,4 +1,4 @@
-package com.hankki.domain.user.service;
+package com.hankki.domain.auth.service;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

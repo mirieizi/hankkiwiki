@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import com.hankki.domain.user.dto.SignUpRequest;
+import com.hankki.domain.auth.dto.SignUpRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.service.UserServiceImpl;
 import com.hankki.repository.UserRepository;

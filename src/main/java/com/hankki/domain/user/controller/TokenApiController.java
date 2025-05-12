@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hankki.domain.user.dto.CreateAccessTokenRequest;
-import com.hankki.domain.user.dto.CreateAccessTokenResponse;
-import com.hankki.domain.user.service.TokenService;
+import com.hankki.domain.auth.dto.CreateAccessTokenRequest;
+import com.hankki.domain.auth.dto.CreateAccessTokenResponse;
+import com.hankki.domain.auth.service.TokenService;
 
 import lombok.RequiredArgsConstructor;
 

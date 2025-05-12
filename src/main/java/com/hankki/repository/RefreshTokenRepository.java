@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.hankki.domain.user.dto.RefreshToken;
+import com.hankki.domain.auth.dto.RefreshToken;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long>{
 	Optional<RefreshToken> findByUserId(Long userId);
