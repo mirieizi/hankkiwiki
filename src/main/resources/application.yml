@@ -1,18 +1,11 @@
-
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/hankkiwiki?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-#    username: root
-#    password: ssafy
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-
-
-
 spring:
+  application:
+    name: hankkiwiki
 
   datasource:
-    url: jdbc:mysql://localhost:3306/hankkiwiki?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-    username: root
-    password: ssafy
+    url: jdbc:mysql://mysql:3306/${HANKKI_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${HANKKI_USERNAME}
+    password: ${HANKKI_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
     hikari:
@@ -28,22 +21,32 @@ spring:
     type-aliases-package: com.hankki.domain
 
   jpa:
-    # ★ 반드시 Dialect를 지정해 줍니다
-    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-<<<<<<< HEAD
-jwt:
- issuer: ajufresh@gmail.com
- secret_key: study-springboot
-=======
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  type-aliases-package: com.hankki.domain.diet.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.hankki: DEBUG
+    org.mybatis: DEBUG
+    jdbc.sqlonly: DEBUG
+    org.springframework.context.annotation: DEBUG
+    org.mybatis.spring.mapper: DEBUG
 
 jwt:
- issuer: ajufresh@gmail.com
- secret_key: study-springboot
->>>>>>> d37dac4808a8b86bc3fe7ccb7c24b944a538bf36
+  issuer: ajufresh@gmail.com
+  secret_key: study-springboot
+
+server:
+  port: 8081

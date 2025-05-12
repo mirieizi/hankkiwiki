@@ -65,3 +65,18 @@ spring-boot-devtools.*
 
 # Repository
 .metadata
+
+### 🛑 환경설정 및 민감정보 ###
+.env
+*.env
+*.sql
+*.dump
+*.properties # optional, if using for sensitive DB config
+
+### 🔃 캐시/임시/백업 ###
+*.tmp
+*.swp
+*.bak
+*~
+
+mysql-data/
