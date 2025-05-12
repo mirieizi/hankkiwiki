@@ -17,8 +17,11 @@ public enum ExceptionStatus {
 	// DB
 	FAIL_TO_CREATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 생성에 실패했습니다."),
 	FAIL_TO_DELETE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 삭제에 실패했습니다."),
-	FAIL_TO_UPDATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 수정에 실패했습니다.");
+	FAIL_TO_UPDATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 수정에 실패했습니다."),
 
+	// USER
+	NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "사용자를 찾지 못했습니다."),
+	ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다.");
 
 	private final HttpStatus httpStatus;
 	private final int errorCode;

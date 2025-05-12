@@ -40,12 +40,4 @@ public class Diet {
 	@Convert(converter = MealType.MealTypeConverter.class)
 	private MealType mealType = MealType.fromCode(9);
 
-	@Column(name = "diet_memo")
-	private String dietMemo;
-	
-	public Diet(String email, MealType mealType) {
-		this.email = email;
-		this.mealType = mealType;
-	}
-
 }

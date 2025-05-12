@@ -14,15 +14,14 @@ import java.util.List;
 @AllArgsConstructor
 public class DietCreateRequestDto {
 
-    private String email;
     private MealType mealType;
     private LocalDate takeAt;
     private String dietMemo;
     private List<Long> mealItemIds;
 
-    public Diet toEntity() {
+    public Diet toEntity(String email) {
         return Diet.builder()
-                .email(this.email)
+                .email(email)
                 .takeAt(this.takeAt)
                 .mealType(this.mealType)
                 .dietMemo(this.dietMemo)

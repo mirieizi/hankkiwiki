@@ -1,5 +1,6 @@
 package com.hankki.domain.diet.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,8 +13,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class DietGetByTakeAtRequestDto {
 
+    @NotBlank
     private String email;
 
+    @NotBlank
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate takeAt;
 }
