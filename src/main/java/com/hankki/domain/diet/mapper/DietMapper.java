@@ -1,6 +1,5 @@
 package com.hankki.domain.diet.mapper;
 
-import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.entity.Diet;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,5 +13,6 @@ public interface DietMapper {
     void insertDiet(Diet diet);
     List<Diet> getDietByTakeAt(@Param("email") String email, @Param("takeAt") LocalDate takeAt);
     Optional<Diet> getDietById(@Param("id") Long id);
-    int deleteDietById(@Param("dietId") Long dietId);
+    void deleteDietById(@Param("dietId") Long dietId);
+    void updateDietInfo(Diet diet);
 }

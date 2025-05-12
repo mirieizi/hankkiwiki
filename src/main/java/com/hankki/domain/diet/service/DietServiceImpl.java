@@ -4,10 +4,10 @@ import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
 import com.hankki.domain.diet.dto.DietResponseDto;
+import com.hankki.domain.diet.dto.DietUpdateInfoRequestDto;
 import com.hankki.domain.diet.dto.MealItemPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.entity.DietMealItem;
-import com.hankki.domain.diet.entity.MealItem;
 import com.hankki.domain.diet.mapper.DietMapper;
 import com.hankki.domain.diet.mapper.DietMealItemMapper;
 import com.hankki.domain.diet.mapper.MealItemMapper;
@@ -86,7 +86,30 @@ public class DietServiceImpl implements DietService {
 
         } catch (Exception e) {
             log.error("[ERROR] DietService: Diet 삭제 실패: {}", e.getMessage(), e);
-            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET);
+            throw new HankkiWikiException(ExceptionStatus.FAIL_TO_DELETE_ENTITY);
+        }
+    }
+
+    @Override
+    public void updateInfo(DietUpdateInfoRequestDto requestDto) {
+        Diet diet = dietMapper.getDietById(requestDto.getDietId())
+                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
+        // 유저 검증 로직 추가 예정
+
+        try {
+            if (requestDto.getMealType() != null) {
+                diet.setMealType(requestDto.getMealType());
+            }
+
+            if (requestDto.getDietMemo() != null) {
+                diet.setDietMemo(requestDto.getDietMemo());
+            }
+
+            dietMapper.updateDietInfo(diet);
+            log.info("[DietService] Diet 정보 수정 성공");
+        } catch (Exception e) {
+            log.error("[ERROR] Diet 정보 수정 실패: {}", e.getMessage(), e);
+            throw new HankkiWikiException(ExceptionStatus.FAIL_TO_UPDATE_ENTITY);
         }
     }
 

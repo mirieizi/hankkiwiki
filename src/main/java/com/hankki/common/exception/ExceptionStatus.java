@@ -15,8 +15,11 @@ public enum ExceptionStatus {
 	NOT_FOUND_MEAL_ITEM(HttpStatus.NOT_FOUND, 404, "음식 정보가 존재하지 않습니다."),
 
 	// DB
-	FAIL_TO_CREATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 생성에 실패했습니다.");
-	
+	FAIL_TO_CREATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 생성에 실패했습니다."),
+	FAIL_TO_DELETE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 삭제에 실패했습니다."),
+	FAIL_TO_UPDATE_ENTITY(HttpStatus.BAD_REQUEST, 400, "엔티티 수정에 실패했습니다.");
+
+
 	private final HttpStatus httpStatus;
 	private final int errorCode;
 	private final String message;

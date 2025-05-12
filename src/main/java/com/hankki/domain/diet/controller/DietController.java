@@ -1,9 +1,6 @@
 package com.hankki.domain.diet.controller;
 
-import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietDeleteRequestDto;
-import com.hankki.domain.diet.dto.DietGetByTakeAtRequestDto;
-import com.hankki.domain.diet.dto.DietResponseDto;
+import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.diet.service.DietService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,5 +43,12 @@ public class DietController {
         return ResponseEntity.ok("사용자의 식단 삭제를 성공했습니다.");
     }
 
+    @PatchMapping("/update/diet-info")
+    public ResponseEntity<DietResponseDto> updateDietInfo(
+            @RequestBody DietUpdateInfoRequestDto requestDto
+    ){
+        DietResponseDto responseDto = dietService.updateInfo(requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
 
 }
