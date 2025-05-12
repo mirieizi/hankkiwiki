@@ -16,7 +16,6 @@ public class DietCreateRequestDto {
 
     private MealType mealType;
     private LocalDate takeAt;
-    private String dietMemo;
     private List<Long> mealItemIds;
 
     public Diet toEntity(String email) {
@@ -24,7 +23,6 @@ public class DietCreateRequestDto {
                 .email(email)
                 .takeAt(this.takeAt)
                 .mealType(this.mealType)
-                .dietMemo(this.dietMemo)
                 .build();
     }
 }
