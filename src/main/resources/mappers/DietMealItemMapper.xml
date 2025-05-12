@@ -5,21 +5,17 @@
 
 <mapper namespace="com.hankki.domain.diet.mapper.DietMealItemMapper">
 
-    <insert id="insertDietMealItem" parameterType="DietMealItem">
+    <select id="findFoodIdIdsByDietId" resultType="long" parameterType="long">
+        SELECT food_id FROM diet_meal_item WHERE diet_id = #{dietId}
+    </select>
+
+    <insert id="insertDietMealItem" parameterType="com.hankki.domain.diet.entity.DietMealItem">
         INSERT INTO diet_meal_item (diet_id, meal_item_id)
         VALUES (#{dietId}, #{mealItemId})
     </insert>
 
-    <select id="findByDietId" resultType="DietMealItem">
-        SELECT id, diet_id, meal_item_id
-        FROM diet_meal_item
-        WHERE diet_id = #{dietId}
-    </select>
-
-    <delete id="deleteByDietId"
-            parameterType="long">
-        DELETE FROM diet_meal_item
-        WHERE diet_id = #{dietId}
+    <delete id="deleteByDietId" parameterType="long">
+        DELETE FROM diet_meal_item WHERE diet_id = #{dietId}
     </delete>
 
 </mapper>

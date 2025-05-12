@@ -19,7 +19,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "meal_item")
-public class MealItem {
+public class Food {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
