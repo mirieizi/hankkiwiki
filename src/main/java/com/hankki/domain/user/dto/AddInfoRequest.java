@@ -38,10 +38,6 @@ public class AddInfoRequest {
     @NotNull(message = "활동 레벨을 선택해주세요.")
     private ActivityFactor activityFactor;
 
-    @NotNull(message = "일일 활동 지수를 입력해주세요.")
-    @Min(value = 1, message = "일일 활동 지수는 최소 1이어야 합니다.")
-    @Max(value = 5, message = "일일 활동 지수는 최대 5이어야 합니다.")
-    private Integer dailyUsage;
 
     public UserHealthInfo toHealthInfo(User user) {
         return UserHealthInfo.builder()
@@ -51,7 +47,6 @@ public class AddInfoRequest {
             .weight(this.weight)
             .age(this.age)
             .activityFactor(this.activityFactor)
-            .dailyUsage(this.dailyUsage)
             .build();
     }
 }
