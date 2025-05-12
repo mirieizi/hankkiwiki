@@ -33,7 +33,12 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
-
+    
+    /**
+     * 회원가입
+     * @Param SignUpRequest (이메일, 비밀번호, 닉네임)
+     * @return id (userId)
+     */
     @Override
     @Transactional
     public Long signUp(SignUpRequest request) {
@@ -47,7 +52,19 @@ public class UserServiceImpl implements UserService {
         log.debug("User signed up with ID: {}", id);
         return id;
     }
-
+    /**
+     * JwtToken을 사용한 로그인
+     * @Param LoginRequest 
+     * @return JwtToken
+     * 검증 성공하면 Autehntication 객체, 실패하면 BadCredentialsException을 던짐
+     * 그리고 SecurityContextHolder.getContext()에 인증된 Authentication 객체를 저장
+     * 
+     * 설명
+     * UsernamePasswordAuthenticationToken에 요청된 이메일과 비밀번호를 받아서
+     * authenticationManage.authenticate에 넣으면 내부에 등록된 UserDetailsService의 passwordEncoder를 통해
+     * 이메일 유효? 비밀번호 일치한지 확인
+     * 
+     */
     @Override
     @Transactional
     public JwtTokenResponse login(LoginRequest request) {
@@ -64,6 +81,12 @@ public class UserServiceImpl implements UserService {
         log.debug("User {} logged in, tokens generated", user.getEmail());
         return new JwtTokenResponse(accessToken, refreshToken);
     }
+    
+    /**
+     * userId로 user를 반환
+     * @param userId
+     * @return User
+     */
 
     @Override
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")

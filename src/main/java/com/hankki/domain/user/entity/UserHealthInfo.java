@@ -43,12 +43,6 @@ public class UserHealthInfo {
     @Column(name = "activity_factor", nullable = false)
     private ActivityFactor activityFactor;
 
-    @NotNull
-    @Min(value = 1, message = "dailyUsage는 최소 1이어야 합니다.")
-    @Max(value = 5, message = "dailyUsage는 최대 5이어야 합니다.")
-    @Column(name = "daily_usage", nullable = false)
-    private Integer dailyUsage;
-
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -113,8 +107,4 @@ public class UserHealthInfo {
         this.activityFactor = activityFactor;
     }
 
-    /** dailyUsage 변경 */
-    public void changeDailyUsage(Integer dailyUsage) {
-        this.dailyUsage = dailyUsage;
-    }
 }

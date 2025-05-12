@@ -45,7 +45,7 @@ public enum MealType {
 
         @Override
         public MealType convertToEntityAttribute(Integer dbData) {
-            return (dbData != null ? MealType.fromcode(dbData) : null);
+            return (dbData != null ? MealType.fromCode(dbData) : null);
         }
 
     }
