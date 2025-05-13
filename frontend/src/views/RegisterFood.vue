@@ -57,10 +57,10 @@ function submitDiary() {
 
 .layout {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   gap: 3rem;
   justify-content: center;
-  align-items: stretch;
+  align-items: flex-start;
 }
 
 .search-section,
@@ -75,6 +75,21 @@ function submitDiary() {
 
 .search-section {
   background-color: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 800px;
+  height: auto;
+  position: relative;
+  padding-bottom: 5rem;
+  overflow: hidden;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 8rem;
+  box-sizing: border-box;
+  isolation: isolate;
+  z-index: 1;
 }
 
 .diary-section {
@@ -85,12 +100,12 @@ function submitDiary() {
   min-height: 800px;
   height: auto;
   position: relative;
-  padding-bottom: 5rem;
+  padding-bottom: 2rem;
   overflow: hidden; /* 버튼 잘림 방지 & 하단 끊기 */
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-  margin-bottom: 8rem; /* footer와 여백 확보 */
+  margin-bottom: 10rem; /* footer와 여백 확보 */
   box-sizing: border-box;
   isolation: isolate;
   z-index: 1;
@@ -136,7 +151,7 @@ function submitDiary() {
   border: 1px solid #ccc;
   border-radius: 8px;
   resize: vertical;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
   font-size: 1rem;
   box-sizing: border-box;
   flex-grow: 1;
@@ -146,15 +161,15 @@ function submitDiary() {
 .submit-button {
   background-color: #ffe9b5;
   border: none;
-  padding: 0.9rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
   width: 100%;
   box-sizing: border-box;
   font-size: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 0.8rem;
   align-self: stretch;
 }
 
@@ -162,7 +177,7 @@ function submitDiary() {
   background-color: #ffd983;
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 600px), screen and (max-height: 700px) and (max-width: 900px) {
   .search-section,
   .diary-section {
     flex: 1 1 100%;
