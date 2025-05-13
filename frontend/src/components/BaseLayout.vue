@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
     <!-- ① 헤더 -->
-    <div class="layout-header">
+    <div class="layout-header fancy-font">
       <AppHeader />
     </div>
 

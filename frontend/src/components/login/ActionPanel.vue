@@ -1,0 +1,47 @@
+<!-- src/components/ActionPanel.vue -->
+<template>
+  <div class="action-panel">
+    <!-- 로그인할 때(반가워요!)는 scholar 곰돌이, 회원가입할 때(환영해요!)는 welcome 곰돌이 -->
+    <img class="mascot" :src="props.signIn ? scholarBear : welcomeBear" alt="한 끼 천재 마스코트" />
+
+    <h2 class="diary-font">{{ heading }}</h2>
+    <p>{{ text }}</p>
+    <button @click.prevent="$emit('slide')">{{ btn }}</button>
+  </div>
+</template>
+
+<script setup>
+import { computed, defineProps } from "vue";
+import scholarBear from "@/assets/login_logo.png";
+import welcomeBear from "@/assets/eat_bear_logo.png";
+
+const props = defineProps({ signIn: Boolean });
+
+const heading = computed(() => (props.signIn ? "반가워요!" : "환영해요! :"));
+const text = computed(() =>
+  props.signIn
+    ? "어서 오세요, 식탁의 고민 해결사! 방대한 음식 영양 백과와 나만의 식단 분석으로 ‘오늘의 한 끼’를 스마트하게 골라드립니다."
+    : "지금 가입하고 ‘한 끼 천재’ 되기! 음식 영양 사전부터 개인 맞춤 메뉴 추천까지, 맛과 건강을 한 번에 사로잡을 준비 되셨나요?"
+);
+const btn = computed(() => (props.signIn ? "회원가입하기" : "로그인하기"));
+</script>
+
+<style scoped>
+/* 마스코트 크기 및 여백 */
+.mascot {
+  display: block;
+  width: 200px;
+  margin: 0 auto 1rem;
+}
+
+/* 기존 버튼 스타일 유지 */
+button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  background: #ff5722;
+  color: white;
+  cursor: pointer;
+}
+</style>
