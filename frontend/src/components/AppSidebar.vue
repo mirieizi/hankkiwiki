@@ -20,6 +20,9 @@
           </ul>
         </li>
         <li>
+          <RouterLink to="/food/register" class="sidebar-link">오늘 뭐 먹음!</RouterLink>
+        </li>
+        <li>
           <RouterLink to="/calendar" class="sidebar-link">캘린더</RouterLink>
         </li>
         <li><RouterLink :to="{ name: 'ProfileInfo' }" class="sidebar-link">마이페이지</RouterLink></li>
