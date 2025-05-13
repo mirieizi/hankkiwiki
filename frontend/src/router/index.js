@@ -7,6 +7,7 @@ import LoginPage from "@/views/LoginPage.vue";
 import ProfileInfoPage from "@/views/ProfileInfoPage.vue";
 import HealthInfoPage from "@/views/HealthInfoPage.vue";
 import UserInfoPage from "@/views/UserInfoPage.vue";
+import RandomRecommend from "@/views/RandomRecommend.vue";
 
 const routes = [
   {
@@ -50,6 +51,11 @@ const routes = [
     path: "/profile/user",
     name: "ProfileUser",
     component: UserInfoPage,
+  },
+  {
+    path: "/recommend/random",
+    name: "RandomRecommend",
+    component: RandomRecommend,
   },
 ];
 
