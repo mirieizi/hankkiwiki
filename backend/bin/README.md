@@ -1,6 +1,6 @@
 # 냠냠코치-한끼위키-김미림-이지민
 
-![image.png](./image.png)
+![image.png](image.png)
 
 ## Getting started
 
