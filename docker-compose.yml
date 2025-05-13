@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.0.33
+    restart: always
+    container_name: mysql-1
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${HANKKI_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${HANKKI_DATABASE}
+      MYSQL_USER: ${HANKKI_USERNAME}
+      MYSQL_PASSWORD: ${HANKKI_PASSWORD}
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: app-1
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      HANKKI_USERNAME: ${HANKKI_USERNAME}
+      HANKKI_PASSWORD: ${HANKKI_PASSWORD}
+      HANKKI_DATABASE: ${HANKKI_DATABASE}
+    networks:
+      - app-network
+
+networks:
+  app-network:

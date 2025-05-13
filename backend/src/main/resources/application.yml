@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: hankkiwiki
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/${HANKKI_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${HANKKI_USERNAME}
+    password: ${HANKKI_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  mybatis:
+    mapper-locations: classpath:/mappers/**/*.xml
+    type-aliases-package: com.hankki.domain
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  type-aliases-package: com.hankki.domain.diet.entity.DietMealItem
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.hankki: DEBUG
+    org.mybatis: DEBUG
+    jdbc.sqlonly: DEBUG
+    org.springframework.context.annotation: DEBUG
+    org.mybatis.spring.mapper: DEBUG
+
+jwt:
+  issuer: ajufresh@gmail.com
+  secret_key: study-springboot
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api

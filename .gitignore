@@ -1,67 +1,83 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# Maven
-/target/
-
-# STS / Eclipse
-.classpath
-.project
-.settings/
-.apt_generated/
-.factorypath
-
-# IntelliJ (혹시 같이 쓰는 팀원이 있을 경우 대비)
-/.idea/
-*.iml
-
-# Logs
-*.log
-
-# OS
+##################################
+# 🌱 기본 설정
+##################################
 .DS_Store
 Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+*~
 
-# Spring Boot
-spring-boot-devtools.*
+##################################
+# 🧠 IDE & 에디터 설정
+##################################
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
 
-# Redis (혹시 임시 파일 생기는 경우)
-/dump.rdb
-/redis-data/
+# VS Code
+.vscode/
+.history/
 
-# Build output
+##################################
+# ☕ Backend (Spring Boot, Maven)
+##################################
+/backend/target/
+/backend/.mvn/
+!/backend/.mvn/wrapper/maven-wrapper.jar
+/backend/mvnw
+/backend/mvnw.cmd
+/backend/*.iml
+
+# Spring 설정 관련
+/backend/.env
+/backend/application-*.yml
+/backend/application-*.properties
+/backend/*.sql
+/backend/*.dump
+
+# 데이터 폴더 (MySQL, Redis 등)
+backend/mysql-data/
+backend/redis-data/
+backend/dump.rdb
+
+##################################
+# 🌐 Frontend (Vue.js, Node.js)
+##################################
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env
+/frontend/.env.*          # 예: .env.production, .env.development
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/.output/        # Nuxt 등 일부 프레임워크
+/frontend/.nuxt/          # Nuxt.js 사용 시
+/frontend/.vite/          # Vite 빌드 시
+/frontend/package-lock.json
+/frontend/pnpm-lock.yaml
+/frontend/yarn.lock
+
+##################################
+# 🗂️ 기타 공통
+##################################
+/build/
 /out/
+/.env
+.env.*     # 루트에서 실수로 생기는 경우도 막음
+*.env
+*.env.*
 
-# Repository
-.metadata
+# 압축/백업 파일
+*.zip
+*.tar
+*.gz
+*.rar
+
+# OS 메타데이터
+ehthumbs.db
+Icon?
+Desktop.ini
