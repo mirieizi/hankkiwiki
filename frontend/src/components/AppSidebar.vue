@@ -20,6 +20,9 @@
           </ul>
         </li>
         <li>
+          <RouterLink to="/writeToday" class="sidebar-link">오늘 뭐 먹음!</RouterLink>
+        </li>
+        <li>
           <RouterLink to="/calendar" class="sidebar-link">캘린더</RouterLink>
         </li>
         <!-- 마이페이지 및 로그아웃 메뉴 -->
