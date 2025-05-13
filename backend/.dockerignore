@@ -1,0 +1,26 @@
+# Maven build output
+target/
+*.jar
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE files
+.idea/
+*.iml
+
+# Git and logs
+.git
+.gitignore
+*.log
+
+# 환경 설정 파일
+*.env
+application-*.yml
+application-*.properties
+
+# 데이터베이스 임시 파일
+mysql-data/
+dump.rdb
