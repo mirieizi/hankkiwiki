@@ -1,18 +1,20 @@
 <template>
   <BaseLayout>
-    <div class="calendar-wrapper">
-      <CalendarView
-        :selected="selectedDate"
-        :recorded-dates="Object.keys(mockData)"
-        @select-date="handleDateSelect"
-      />
-      <div class="record-panel">
-        <DailyRecord
-          v-if="recordData"
-          :data="recordData"
-          :date="selectedDate"
+    <div class="calendar-center-wrapper">
+      <div class="calendar-wrapper">
+        <CalendarView
+          :selected="selectedDate"
+          :recorded-dates="Object.keys(mockData)"
+          @select-date="handleDateSelect"
         />
-        <EmptyNotice v-else />
+        <div class="record-panel">
+          <DailyRecord
+            v-if="recordData"
+            :data="recordData"
+            :date="selectedDate"
+          />
+          <EmptyNotice v-else />
+        </div>
       </div>
     </div>
   </BaseLayout>
@@ -64,10 +66,12 @@ function handleDateSelect(dateStr) {
 </script>
 
 <style scoped>
-.app-layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+.calendar-center-wrapper {
+  display: grid;
+  place-content: center;
+  min-height: calc(100vh - 64px - 48px); /* 헤더, 푸터 높이 제외 */
+  padding: 2rem 0;
+  transform: translateY(-5vh);
 }
 
 .calendar-wrapper {

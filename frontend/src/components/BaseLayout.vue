@@ -63,10 +63,9 @@ import AppFooter from '@/components/AppFooter.vue';
 
 .layout-main {
   grid-area: main;
-  display: grid;
-  place-content: center;
-  min-height: calc(100vh - 64px - 48px);
-  padding: 2rem 0;
+  overflow-y: auto;
+  margin-left: 2rem;
+  padding: 1.5rem;
 }
 
 .layout-footer {
