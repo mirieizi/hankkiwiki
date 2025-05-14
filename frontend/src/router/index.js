@@ -8,7 +8,7 @@ import ProfileInfoPage from "@/views/ProfileInfoPage.vue";
 import HealthInfoPage from "@/views/HealthInfoPage.vue";
 import UserInfoPage from "@/views/UserInfoPage.vue";
 import RandomRecommend from "@/views/RandomRecommend.vue";
-import analysisRecommend from "../views/analysisRecommend.vue";
+import historyRecommend from "@/views/historyRecommend.vue";
 import AiRecommend from "../views/AiRecommend.vue";
 
 const routes = [
@@ -61,8 +61,8 @@ const routes = [
   },
   {
     path: "/recommend/history",
-    name: "analysisRecommend",
-    component: analysisRecommend,
+    name: "historyRecommend",
+    component: historyRecommend,
   },
   {
     path: "/recommend/ai",

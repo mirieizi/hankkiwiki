@@ -1,7 +1,7 @@
 <!-- src/views/AiRecommend.vue -->
 <template>
   <!-- Recommend가 내부에서 mode="ai"를 관리하므로, 별도 props 없이 그대로 사용 -->
-  <Recommend initialMode="ai" />
+  <Recommend initialMode="history" />
 </template>
 
 <script>

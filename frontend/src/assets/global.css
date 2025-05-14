@@ -77,6 +77,14 @@ body {
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Hakgyoansim_R";
+  src: url("./fonts/Hakgyoansim_R.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .fancy-font {
   font-family: "Gumi Romance", sans-serif;
   font-size: 2rem; /* 필요하다면 크기도 크게 설정 */
@@ -91,5 +99,5 @@ body {
 
 /* 2) 전체에 적용하기 */
 body {
-  font-family: "Dovemayo_gothic", sans-serif, "Gumi Romance";
+  font-family: "EF-Hakgyoansim_R", sans-serif, "Gumi Romance";
 }
