@@ -1,4 +1,5 @@
 <template>
+  <!-- 전체 달력을 카드 형태로 감쌈 -->
   <div class="calendar-view">
     <div class="calendar-header">
       <button @click="prevMonth">‹</button>
@@ -126,75 +127,83 @@ function hasRecord(date) {
 
 <style scoped>
 .calendar-view {
-  width: 400px;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 360px;
+  max-width: 640px;
 }
+
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
 }
+
+.calendar-today-button {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-today-button button {
+  background-color: #ffe2b3;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+.calendar-today-button button:hover {
+  background-color: #ffc085;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 0.5rem;
 }
+
 .day-label {
   text-align: center;
   font-weight: bold;
-  color: #888;
+  color: #666;
 }
 
-/* 선택된 일자 색상, 기록된 일자 색상 지정 */
 .day-cell {
   text-align: center;
-  padding: 0.8rem 0;
-  border-radius: 50%;
+  padding: 0.75rem 0;
+  border-radius: 12px;
   cursor: pointer;
-  background-color: #f8f9fa;
-  position: relative;
-}
-.day-cell.not-current-month {
-  color: #ccc;
-}
-.day-cell.recorded {
-  background-color: #ffe2b3;
-}
-.day-cell.selected {
-  background-color: #ffc085 !important; /* 진한 오렌지 */
-  font-weight: bold;
-  color: #5c3b1e;
-}
-.day-cell.selected .day-number::after {
-  content: '';
-  display: block;
-  margin: 2px auto 0;
-  width: 40%;
-  height: 2px;
-  background-color: #5c3b1e;
-  border-radius: 1px;
+  background-color: #fff9f0;
+  transition: 0.2s;
 }
 
-/* 오늘 일자로 이동하기 버튼 */
-.calendar-today-button {
-  display: flex;
-  justify-content: center;
-  margin: 0.5rem 0 1rem 0;
+.day-cell:hover {
+  background-color: #ffe2b3;
 }
-.calendar-today-button button {
-  background-color: #ffe2b3; /* 연한 오렌지 */
-  color: #5c3b1e; /* 초콜릿 텍스트 */
-  border: none;
-  padding: 0.4rem 1.2rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 400; /* ✅ Regular */
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+
+.day-cell.selected {
+  background-color: #ffc085;
+  color: white;
+  font-weight: bold;
 }
-.calendar-today-button button:hover {
-  background-color: #ffd699;
+
+.day-cell.recorded {
+  border-bottom: 2px solid chocolate;
+}
+
+.day-cell.not-current-month {
+  opacity: 0.3;
+}
+
+.day-cell.today {
+  border: 2px solid #ffc085;
 }
 </style>

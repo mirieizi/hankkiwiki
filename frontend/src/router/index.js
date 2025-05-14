@@ -66,7 +66,7 @@ const routes = [
   },
   {
     path: '/calendar',
-    name: 'Canlendar',
+    name: 'Calendar',
     component: Calendar,
   },
 ];

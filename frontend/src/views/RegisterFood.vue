@@ -12,17 +12,40 @@
 
       <!-- 오른쪽: 일기 작성 -->
       <div class="right-section">
-        <DiaryEditor :date="today" userName="양미이" @submit="submitDiary" />
+        <DiaryEditor
+          :date="selectedDate"
+          userName="양미이"
+          @submit="submitDiary"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
 import SearchFood from '@/components/registerFood/SearchFood.vue';
 import SelectedFoodList from '@/components/registerFood/SelectedFoodList.vue';
 import DiaryEditor from '@/components/registerFood/DiaryEditor.vue';
+import BaseLayout from '../components/BaseLayout.vue';
+
+const route = useRoute();
+const selectedDate = ref('');
+
+// ✅ 날짜 감지: 쿼리에서 가져오되 없으면 오늘 날짜
+watchEffect(() => {
+  const dateFromRoute = route.query.date;
+  if (typeof dateFromRoute === 'string') {
+    selectedDate.value = dateFromRoute;
+  } else {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    selectedDate.value = `${yyyy}-${mm}-${dd}`;
+  }
+});
 
 // 💡 더미 음식 데이터 (사전 연결 전)
 const allFoods = ref([
@@ -38,9 +61,8 @@ const allFoods = ref([
   '잡채',
 ]);
 
-const diaryContent = ref('');
 const selectedFoods = ref([]);
-const today = new Date();
+const diaryContent = ref('');
 
 function addFood(food) {
   if (!selectedFoods.value.includes(food)) {
@@ -52,16 +74,16 @@ function removeFood(food) {
   selectedFoods.value = selectedFoods.value.filter((f) => f !== food);
 }
 
-function submitDiary() {
-  console.log('일기 내용:', diaryContent.value);
+function submitDiary(content) {
+  console.log('일기 제출됨:', selectedDate.value, content, selectedFoods.value);
 }
 </script>
 
 <style scoped>
 .register-container {
+  max-width: 960px;
+  margin: 0 auto;
   padding: 2rem;
-  max-width: 1600px;
-  margin: auto;
 }
 
 .title {
@@ -75,7 +97,7 @@ function submitDiary() {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 3rem;
+  gap: clamp(2rem, 4vw, 6rem);
   justify-content: center;
   align-items: flex-start;
 }

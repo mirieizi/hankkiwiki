@@ -23,13 +23,13 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 // props
 const props = defineProps({
   date: {
-    type: Date,
+    type: String,
     required: true,
   },
   userName: {
@@ -38,14 +38,16 @@ const props = defineProps({
   },
 });
 
+const diaryContent = ref('');
+
 // emit
 const emit = defineEmits(['submit']);
 
-const diaryContent = ref('');
-
-const formattedDate = computed(() =>
-  format(props.date, 'yyyy년 M월 d일 EEEE', { locale: ko }),
-);
+const formattedDate = computed(() => {
+  if (!props.date) return '';
+  const dateObj = parseISO(props.date); // ✅ 문자열 → Date 객체로 변환
+  return format(dateObj, 'yyyy년 MM월 dd일 EEEE', { locale: ko });
+});
 
 function submitDiary() {
   emit('submit', diaryContent.value);

@@ -1,34 +1,31 @@
 <template>
-  <BaseLayout>
-    <div class="calendar-center-wrapper">
-      <div class="calendar-wrapper">
+  <div class="calendar-center-wrapper">
+    <div class="calendar-wrapper">
+      <div class="calendar-panel">
         <CalendarView
           :selected="selectedDate"
           :recorded-dates="Object.keys(mockData)"
           @select-date="handleDateSelect"
         />
-        <div class="record-panel">
-          <DailyRecord
-            v-if="recordData"
-            :data="recordData"
-            :date="selectedDate"
-          />
-          <EmptyNotice v-else />
-        </div>
+      </div>
+      <div class="record-panel">
+        <DailyRecord
+          v-if="recordData"
+          :data="recordData"
+          :date="selectedDate"
+        />
+        <EmptyNotice v-else date="selectedDate" />
       </div>
     </div>
-  </BaseLayout>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
 import CalendarView from '@/components/calendar/CalendarView.vue';
 import DailyRecord from '@/components/calendar/DailyRecord.vue';
 import EmptyNotice from '@/components/calendar/EmptyNotice.vue';
-
-const today = new Date();
-const selectedDate = ref(formatDate(today));
-const recordData = ref(null);
 
 // ✅ 추후 API 연결 지점
 // ✅ 더미 데이터 (날짜: YYYY-MM-DD)
@@ -63,6 +60,27 @@ function handleDateSelect(dateStr) {
   selectedDate.value = dateStr;
   recordData.value = mockData[dateStr] || null;
 }
+
+// 변수수
+const today = new Date();
+const selectedDate = ref(formatDate(today));
+const recordData = ref({});
+const route = useRoute();
+
+watchEffect(() => {
+  const dateFromRoute = route.query.date;
+  if (typeof dateFromRoute === 'string') {
+    selectedDate.value = dateFromRoute;
+  } else {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    selectedDate.value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  recordData.value = mockData[selectedDate.value] || null;
+});
 </script>
 
 <style scoped>
@@ -70,22 +88,29 @@ function handleDateSelect(dateStr) {
   display: grid;
   place-content: center;
   min-height: calc(100vh - 64px - 48px); /* 헤더, 푸터 높이 제외 */
-  padding: 2rem 0;
   transform: translateY(-5vh);
+  width: 100%;
+  min-width: 360px;
+  max-width: 1100px;
+  margin: 0 auto; /* ✅ 가운데 정렬 */
+  padding: 2rem; /* ✅ 양 옆에 여백 */
+  box-sizing: border-box;
+  padding: 2rem 3rem; /* ✅ 사이드바 침범 방지 */
 }
 
 .calendar-wrapper {
   display: flex;
   flex-direction: row;
   gap: clamp(2rem, 4vw, 6rem); /* ✅ 반응형 간격 */
-  width: 100%;
-  max-width: 1400px;
+  max-width: none;
   padding: 1rem 2rem;
-  box-sizing: border-box;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 @media (max-width: 680px) {
-  .calendar-wrapper {
+  .calendar-wrapper,
+  .record-panel {
     flex-direction: column;
     align-items: center;
     justify-content: center; /* ✅ 세로 정렬도 중앙 */
@@ -93,7 +118,7 @@ function handleDateSelect(dateStr) {
   }
 }
 
-.calendar-container,
+.calendar-panel,
 .record-panel {
   flex: 1 1 500px;
   min-width: 360px;
@@ -101,15 +126,16 @@ function handleDateSelect(dateStr) {
   width: 100%;
 }
 
-.calendar-container {
-  flex: 1.2;
-  min-width: 350px;
-  max-width: 800px;
-  width: clamp(350px, 45vw, 700px); /* ✅ 반응형으로 커짐 */
-  background-color: #fff8ed; /* ✅ 다시 명시 */
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+.calendar-panel {
+  width: 100%;
+  display: flex;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  isolation: isolate;
+  z-index: 1;
+  justify-content: flex-start;
 }
 
 .record-panel {
@@ -119,5 +145,15 @@ function handleDateSelect(dateStr) {
   width: clamp(350px, 45vw, 700px);
   padding: 2rem;
   font-size: 1.1rem;
+}
+@media screen and (max-width: 480px) {
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .calendar-panel,
+  .record-panel {
+    flex: 1 1 100%;
+  }
 }
 </style>
