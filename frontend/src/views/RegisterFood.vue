@@ -2,14 +2,11 @@
   <div class="register-container">
     <h1 class="title">오늘 뭐 먹음!</h1>
     <div class="layout">
-      <!-- 왼쪽: 음식 검색 및 선택 영역 -->
       <div class="search-section">
         <h2>음식 검색</h2>
         <p>음식 검색영역</p>
-        <!-- 여기에 검색 바, 결과 리스트 등 추가 예정 -->
       </div>
 
-      <!-- 오른쪽: 일기 작성 영역 -->
       <div class="diary-section">
         <div class="diary-header">
           <span class="date">{{ formattedDate }}</span>

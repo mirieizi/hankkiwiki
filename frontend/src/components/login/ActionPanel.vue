@@ -1,7 +1,5 @@
-<!-- src/components/ActionPanel.vue -->
 <template>
   <div class="action-panel">
-    <!-- 로그인할 때(반가워요!)는 scholar 곰돌이, 회원가입할 때(환영해요!)는 welcome 곰돌이 -->
     <img class="mascot" :src="props.signIn ? scholarBear : welcomeBear" alt="한 끼 천재 마스코트" />
 
     <h2 class="diary-font">{{ heading }}</h2>
@@ -27,14 +25,12 @@ const btn = computed(() => (props.signIn ? "회원가입하기" : "로그인하�
 </script>
 
 <style scoped>
-/* 마스코트 크기 및 여백 */
 .mascot {
   display: block;
   width: 200px;
   margin: 0 auto 1rem;
 }
 
-/* 기존 버튼 스타일 유지 */
 button {
   margin-top: 1rem;
   padding: 0.75rem 1.5rem;

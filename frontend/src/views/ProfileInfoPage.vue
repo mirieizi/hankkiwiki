@@ -19,7 +19,6 @@ import axios from "axios";
 const router = useRouter();
 const userNickname = ref("");
 
-// 마운트 시 사용자 닉네임 로드 (예시)
 onMounted(async () => {
   try {
     const { data } = await axios.get("/api/user/profile");

@@ -234,6 +234,12 @@ export default {
   align-items: flex-start;
   justify-content: flex-start;
 }
+/* 플레이스홀더 보여질 때(기본 상태), 완전히 가운데 정렬 */
+.main-view:not(.expanded) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .main-view.expanded {
   border-color: #409eff;
@@ -255,12 +261,18 @@ export default {
 
 .placeholder {
   grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  height: 100%;
 }
 
 .placeholder img {
   max-width: 120px;
   max-height: 120px;
+  justify-content: center;
 }
 
 .result-box {

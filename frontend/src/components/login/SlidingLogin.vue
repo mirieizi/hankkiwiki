@@ -18,10 +18,8 @@ function toggleMode() {
 </script>
 
 <style scoped>
-/* 전역 변수(컬러 팔레트) 가져오기 */
 @import "@/assets/global.css";
 
-/* 컨테이너 기본 */
 .container {
   position: relative;
   width: 800px;
@@ -34,7 +32,6 @@ function toggleMode() {
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
 }
 
-/* 로그인(form) 패널 */
 .container .form-panel {
   background: var(--butter-bg);
   width: 50%;
@@ -42,7 +39,6 @@ function toggleMode() {
   transition: transform 0.7s cubic-bezier(0.63, 0.39, 0.54, 0.91);
 }
 
-/* 회원가입(action) 패널 */
 .container .action-panel {
   background: var(--orange-light);
   color: var(--brown-dark);
@@ -51,15 +47,12 @@ function toggleMode() {
   transition: transform 0.7s cubic-bezier(0.63, 0.39, 0.54, 0.91);
 }
 
-/* 슬라이드 토글 */
 .container.sign-up-mode .form-panel {
   transform: translateX(100%);
 }
 .container.sign-up-mode .action-panel {
   transform: translateX(-100%);
 }
-
-/* 버튼 등 주요 컬러 예시 */
 .container .action-panel button {
   background-color: var(--orange-dark);
   color: white;
