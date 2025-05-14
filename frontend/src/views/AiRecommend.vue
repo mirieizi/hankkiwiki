@@ -1,6 +1,20 @@
 <template>
+  <!-- No history popup -->
+  <transition name="fade">
+    <div v-if="showNoHistoryPrompt" class="modal-overlay" @click.self="showNoHistoryPrompt = false">
+      <div class="modal">
+        <p>최근 3일간 식사 기록이 없습니다.</p>
+        <div class="modal-buttons">
+          <router-link to="/calendar" class="modal-btn">식사 입력하러 가기</router-link>
+          <router-link to="/recommend/random" class="modal-btn">랜덤으로 추출하기</router-link>
+        </div>
+        <button class="modal-close" @click="showNoHistoryPrompt = false">✕</button>
+      </div>
+    </div>
+  </transition>
+
   <div class="recommend-page">
-    <!-- 0) 추천 실행 버튼 추가 -->
+    <!-- 0) 추천 실행 버튼 -->
     <div class="run-button">
       <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" @run="onRun" />
     </div>
@@ -17,8 +31,8 @@
 
     <!-- 2) 가운데 애니메이션 영역 고정 -->
     <section class="main-view">
-      <!-- loading 상태에서만 룰렛 애니메이션 표시 -->
-      <RandomAnimation v-if="loading" @done="fetchResult" />
+      <!-- loading 상태에서만 AI 애니메이션 표시 -->
+      <AIAnimation v-if="loading" @done="fetchResult" />
       <!-- 실행 전/완료 후 빈 화면 대신 플레이스홀더 삽입 -->
       <div v-else class="placeholder">
         <img :src="placeholderImage" alt="추천 준비 중" />
@@ -40,20 +54,22 @@
 
 <script>
 import { useRoute } from "vue-router";
-import RandomAnimation from "@/components/RandomAnimation.vue";
+import AIAnimation from "@/components/AIAnimation.vue";
 import RecommendButton from "@/components/RecommendButton.vue";
 import { ref, computed } from "vue";
-// placeholder image import
 import placeholderImage from "@/assets/eat_bear_logo.png";
 
 export default {
-  name: "RandomRecommend",
-  components: { RandomAnimation, RecommendButton },
+  name: "AIRecommend",
+  components: { AIAnimation, RecommendButton },
   setup() {
     const route = useRoute();
     const spoonCount = ref(5);
     const loading = ref(false);
     const result = ref(null);
+    const historyRecords = ref([]);
+    const showNoHistoryPrompt = ref(false);
+    const historyEmpty = computed(() => historyRecords.value.length === 0);
 
     const modes = [
       { id: "random", label: "랜덤 추천", icon: "🎲" },
@@ -61,26 +77,26 @@ export default {
       { id: "ai", label: "AI 맛추 추천", icon: "🤖" },
     ];
 
-    const mode = computed(() => route.params.mode || "random");
-    const spoonCost = computed(() => (mode.value === "ai" ? 2 : 1));
-    const buttonLabel = computed(() => {
-      if (mode.value === "random") return "랜덤으로 추천받기";
-      if (mode.value === "history") return "최근 3일 기반 추천";
-      return "AI 맞춤 추천";
-    });
+    const mode = computed(() => route.params.mode || "ai");
+    const spoonCost = computed(() => 2); // AI 추천은 숟가락 2개
+    const buttonLabel = computed(() => "AI 맞춤 추천");
 
     function onRun() {
+      // 기록이 없으면 팝업 표시 후 중단
+      if (historyEmpty.value) {
+        showNoHistoryPrompt.value = true;
+        return;
+      }
       if (spoonCount.value < spoonCost.value) return;
-      loading.value = true;
       spoonCount.value -= spoonCost.value;
+      loading.value = true;
     }
+
     function fetchResult() {
       const dummy = {
-        random: { name: "떡볶이", detail: "매콤달콤 쫄깃한 떡볶이", image: "/images/tteokbokki.jpg" },
-        history: { name: "제육볶음", detail: "매콤한 돼지고기 볶음", image: "/images/jeyuk.jpg" },
         ai: { name: "비빔밥", detail: "다채로운 야채와 고기", image: "/images/bibimbap.jpg" },
       };
-      result.value = dummy[mode.value] || null;
+      result.value = dummy.ai;
       loading.value = false;
     }
 
@@ -95,6 +111,9 @@ export default {
       onRun,
       fetchResult,
       placeholderImage,
+      historyRecords,
+      historyEmpty,
+      showNoHistoryPrompt,
     };
   },
 };
@@ -114,8 +133,6 @@ export default {
   grid-column: 1 / span 3;
   margin-bottom: 16px;
 }
-
-/* 나머지 기존 스타일 유지 */
 .page-buttons {
   grid-column: 1;
   display: flex;
@@ -176,7 +193,6 @@ export default {
   display: block;
   margin: 0 auto 8px;
 }
-
 .result-box {
   grid-column: 3;
   background: #fff;
@@ -213,5 +229,34 @@ export default {
   .result-box {
     margin-top: 16px;
   }
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  text-align: center;
+}
+.modal-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+.modal-btn {
+  padding: 8px 16px;
+  background: #409eff;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
 }
 </style>
