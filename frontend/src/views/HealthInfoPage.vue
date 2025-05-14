@@ -66,20 +66,21 @@ const form = reactive({
   activityFactor: "",
 });
 const error = ref("");
+const isExist = ref(false); // 데이터 존재 여부 체크
 
 // 초기 데이터 로드
 onMounted(async () => {
   try {
     const { data } = await axios.get("/api/user/health");
-    Object.assign(form, {
-      gender: data.gender,
-      age: data.age,
-      height: data.height,
-      weight: data.weight,
-      activityFactor: data.activityFactor,
-    });
+    if (data && Object.keys(data).length > 0) {
+      Object.assign(form, data);
+      isExist.value = true;
+    } else {
+      isExist.value = false;
+    }
   } catch {
     error.value = "건강 정보를 불러오는 중 오류가 발생했습니다.";
+    isExist.value = false;
   }
 });
 
@@ -112,20 +113,17 @@ async function onSubmit() {
   if (!validate()) return;
 
   try {
-    await axios.put("/api/user/health", {
-      gender: form.gender,
-      age: form.age,
-      height: form.height,
-      weight: form.weight,
-      activityFactor: form.activityFactor,
-    });
+    if (isExist.value) {
+      await axios.put("/api/user/health", { ...form });
+    } else {
+      await axios.post("/api/user/health", { ...form });
+    }
     router.push({ name: "ProfileInfo" });
   } catch (e) {
     error.value = e.response?.data?.message || "저장 중 문제가 발생했습니다.";
   }
 }
 </script>
-
 <style scoped>
 .health-page {
   max-width: 500px;
