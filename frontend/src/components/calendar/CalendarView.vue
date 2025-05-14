@@ -183,15 +183,18 @@ function hasRecord(date) {
   margin: 0.5rem 0 1rem 0;
 }
 .calendar-today-button button {
-  background-color: #339af0;
-  color: white;
-  padding: 6px 16px;
+  background-color: #ffe2b3; /* 연한 오렌지 */
+  color: #5c3b1e; /* 초콜릿 텍스트 */
   border: none;
-  border-radius: 6px;
-  font-weight: bold;
+  padding: 0.4rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 400; /* ✅ Regular */
   cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 .calendar-today-button button:hover {
-  background-color: #1c7ed6;
+  background-color: #ffd699;
 }
 </style>
