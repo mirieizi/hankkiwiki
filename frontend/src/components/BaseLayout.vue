@@ -23,9 +23,9 @@
 </template>
 
 <script setup>
-import AppHeader from "@/components/AppHeader.vue";
-import AppSidebar from "@/components/AppSidebar.vue";
-import AppFooter from "@/components/AppFooter.vue";
+import AppHeader from '@/components/AppHeader.vue';
+import AppSidebar from '@/components/AppSidebar.vue';
+import AppFooter from '@/components/AppFooter.vue';
 </script>
 
 <style scoped>
@@ -41,9 +41,9 @@ import AppFooter from "@/components/AppFooter.vue";
   grid-template-rows: var(--header-height) 1fr auto;
   grid-template-columns: 240px 1fr;
   grid-template-areas:
-    "header  header"
-    "sidebar main"
-    "footer  footer";
+    'header  header'
+    'sidebar main'
+    'footer  footer';
 }
 
 .layout-header {
