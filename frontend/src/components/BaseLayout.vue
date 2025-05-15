@@ -30,14 +30,14 @@ import AppFooter from '@/components/AppFooter.vue';
 
 <style scoped>
 .app-layout {
-  /* 헤더 높이를 변수로 정의 */
+
   --header-height: 64px;
 
   display: grid;
   height: 100vh;
   overflow: hidden;
 
-  /* grid-template-rows: 헤더 / 본문 / 푸터 */
+
   grid-template-rows: var(--header-height) 1fr auto;
   grid-template-columns: 240px 1fr;
   grid-template-areas:
@@ -52,13 +52,12 @@ import AppFooter from '@/components/AppFooter.vue';
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #fff; /* 뒤쪽 콘텐츠 가리는 용도 */
+  background: #fff; 
 }
 
 .layout-sidebar {
   grid-area: sidebar;
-  /* 이제 사이드바는 그리드가 만든 64px 아래에서 시작하므로
-     헤더에 가려지지 않습니다 */
+
 }
 
 .layout-main {

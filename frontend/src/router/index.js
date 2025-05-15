@@ -1,13 +1,15 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 
-import Home from '@/views/Home.vue';
-import About from '@/views/About.vue';
-import LoginPage from '@/views/LoginPage.vue';
-import ProfileInfoPage from '@/views/ProfileInfoPage.vue';
-import HealthInfoPage from '@/views/HealthInfoPage.vue';
-import UserInfoPage from '@/views/UserInfoPage.vue';
-import RandomRecommend from '@/views/RandomRecommend.vue';
+import Home from "@/views/Home.vue";
+import About from "@/views/About.vue";
+import LoginPage from "@/views/LoginPage.vue";
+import ProfileInfoPage from "@/views/ProfileInfoPage.vue";
+import HealthInfoPage from "@/views/HealthInfoPage.vue";
+import UserInfoPage from "@/views/UserInfoPage.vue";
+import RandomRecommend from "@/views/RandomRecommend.vue";
+import historyRecommend from "@/views/historyRecommend.vue";
+import AiRecommend from "../views/AiRecommend.vue";
 import RegisterFood from '@/views/RegisterFood.vue';
 import Calendar from '@/views/Calendar.vue';
 
@@ -58,6 +60,16 @@ const routes = [
     path: '/recommend/random',
     name: 'RandomRecommend',
     component: RandomRecommend,
+  },
+  {
+    path: "/recommend/history",
+    name: "historyRecommend",
+    component: historyRecommend,
+  },
+  {
+    path: "/recommend/ai",
+    name: "AiRecommend",
+    component: AiRecommend,
   },
   {
     path: '/food/register',
