@@ -1,3 +1,4 @@
+<!--scr/view/Calendar.vue-->
 <template>
   <div class="calendar-center-wrapper">
     <div class="calendar-wrapper">
@@ -10,22 +11,35 @@
       </div>
       <div class="record-panel">
         <DailyRecord
-          v-if="recordData"
-          :data="recordData"
+          v-if="hasRecord && recordData"
+          :data="recordDataObject"
           :date="selectedDate"
         />
-        <EmptyNotice v-else date="selectedDate" />
+        <EmptyNotice v-else :date="selectedDate" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import CalendarView from '@/components/calendar/CalendarView.vue';
 import DailyRecord from '@/components/calendar/DailyRecord.vue';
 import EmptyNotice from '@/components/calendar/EmptyNotice.vue';
+
+function formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function handleDateSelect(dateStr) {
+  selectedDate.value = dateStr;
+  const target = mockData[dateStr];
+  recordData.value = target ? { ...target } : null;
+}
 
 // ✅ 추후 API 연결 지점
 // ✅ 더미 데이터 (날짜: YYYY-MM-DD)
@@ -49,53 +63,55 @@ const mockData = {
   },
 };
 
-function formatDate(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function handleDateSelect(dateStr) {
-  selectedDate.value = dateStr;
-  recordData.value = mockData[dateStr] || null;
-}
-
-// 변수수
-const today = new Date();
-const selectedDate = ref(formatDate(today));
-const recordData = ref({});
+// 변수
+const selectedDate = ref('');
+const recordData = ref(null);
 const route = useRoute();
 
-watchEffect(() => {
+onMounted(() => {
   const dateFromRoute = route.query.date;
-  if (typeof dateFromRoute === 'string') {
-    selectedDate.value = dateFromRoute;
-  } else {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    selectedDate.value = `${yyyy}-${mm}-${dd}`;
-  }
+  selectedDate.value =
+    typeof dateFromRoute === 'string' ? dateFromRoute : formatDate(new Date());
 
-  recordData.value = mockData[selectedDate.value] || null;
+  recordData.value = mockData[selectedDate.value]
+    ? { ...mockData[selectedDate.value] }
+    : null;
 });
+
+watch(selectedDate, (newDate) => {
+  console.log('[watch] selectedDate changed:', newDate);
+  recordData.value = mockData[newDate] ? { ...mockData[newDate] } : null;
+});
+
+watch([recordData], () => {
+  console.log('[debug] recordData:', recordData.value);
+  console.log('[debug] hasRecord:', hasRecord.value); // ✅ 추가해줘!
+});
+
+const hasRecord = computed(
+  () =>
+    recordData.value !== null &&
+    typeof recordData.value === 'object' &&
+    recordData.value.meals &&
+    Object.keys(recordData.value.meals).length > 0,
+);
+
+const recordDataObject = computed(() => recordData.value);
 </script>
 
 <style scoped>
 .calendar-center-wrapper {
   display: grid;
   place-content: center;
-  min-height: calc(100vh - 64px - 48px); /* 헤더, 푸터 높이 제외 */
+  min-height: calc(100vh - 64px - 48px);
   transform: translateY(-5vh);
   width: 100%;
   min-width: 360px;
   max-width: 1100px;
-  margin: 0 auto; /* ✅ 가운데 정렬 */
-  padding: 2rem; /* ✅ 양 옆에 여백 */
+  margin: 0 auto;
+  padding: 2rem;
   box-sizing: border-box;
-  padding: 2rem 3rem; /* ✅ 사이드바 침범 방지 */
+  padding: 2rem 3rem;
 }
 
 .calendar-wrapper {
@@ -103,6 +119,7 @@ watchEffect(() => {
   flex-direction: row;
   gap: clamp(2rem, 4vw, 6rem); /* ✅ 반응형 간격 */
   max-width: none;
+  flex-wrap: wrap;
   padding: 1rem 2rem;
   justify-content: center;
   align-items: flex-start;
@@ -140,12 +157,11 @@ watchEffect(() => {
 
 .record-panel {
   flex: 1;
-  min-width: 350px;
+  min-width: 360px;
   max-width: 800px;
-  width: clamp(350px, 45vw, 700px);
   padding: 2rem;
-  font-size: 1.1rem;
 }
+
 @media screen and (max-width: 480px) {
   .layout {
     flex-direction: column;

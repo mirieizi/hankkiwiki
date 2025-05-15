@@ -1,30 +1,43 @@
 <!-- components/calendar/DailyRecord.vue -->
 <template>
-  <div class="record-container">
-    <p class="record-title">{{ date }} 식사 기록</p>
+  <div>
+    <div ref="target" class="record-container">
+      <p class="record-title">{{ date }} 식사 기록</p>
 
-    <p class="diary">{{ data.diary }}</p>
+      <p class="diary" v-if="data">{{ data.diary }}</p>
 
-    <div class="meal-list">
-      <div class="meal-item" v-for="(value, key) in data.meals" :key="key">
-        <span class="meal-time">{{ convertMealKey(key) }}</span>
-        <span class="meal-menu">{{ value }}</span>
+      <div class="meal-list" v-if="data?.meals">
+        <div class="meal-item" v-for="(value, key) in data.meals" :key="key">
+          <span class="meal-time">{{ convertMealKey(key) }}</span>
+          <span class="meal-menu">{{ value }}</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { onMounted, nextTick, ref } from 'vue';
+
+const target = ref(null);
+
+onMounted(async () => {
+  await nextTick();
+  if (target.value && target.value.parentNode) {
+    console.log('[DailyRecord] 부모 요소 있음:', target.value.parentNode);
+  }
+});
+
+const props = defineProps({
   data: {
     type: Object,
     required: true,
   },
   date: {
     type: String,
-    default: '',
+    required: true,
   },
-})
+});
 
 function convertMealKey(key) {
   const map = {
@@ -32,18 +45,21 @@ function convertMealKey(key) {
     lunch: '점심',
     snack: '간식',
     dinner: '저녁',
-  }
-  return map[key] || key
+  };
+  return map[key] || key;
 }
 </script>
 
 <style scoped>
 .record-container {
-  background-color: #fff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  min-height: 300px;
+  width: 100%; /* ✅ 부모 영역 꽉 채움 */
+  max-width: 700px; /* ✅ 최대 폭 제한 (디자인 목적) */
+  min-height: 300px; /* ✅ 내용물이 적어도 일정 높이 확보 */
+  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: black;
 }
 .record-title {
   font-size: 1.2rem;
