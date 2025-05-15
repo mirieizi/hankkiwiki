@@ -1,51 +1,89 @@
+// ✅ RegisterFood.vue (페이지 조립 뷰)
 <template>
   <div class="register-container">
     <h1 class="title">오늘 뭐 먹음!</h1>
+
     <div class="layout">
-      <!-- 왼쪽: 음식 검색 및 선택 영역 -->
-      <div class="search-section">
-        <h2>음식 검색</h2>
-        <p>음식 검색영역</p>
-        <!-- 여기에 검색 바, 결과 리스트 등 추가 예정 -->
+      <!-- 왼쪽: 음식 검색 + 선택 -->
+      <div class="left-section">
+        <SearchFood :allFoods="allFoods" @select-food="addFood" />
+        <SelectedFoodList :foods="selectedFoods" @remove-food="removeFood" />
       </div>
 
-      <!-- 오른쪽: 일기 작성 영역 -->
-      <div class="diary-section">
-        <div class="diary-header">
-          <span class="date">{{ formattedDate }}</span>
-          <div class="user">
-            <img src="@/assets/logo.png" class="avatar" alt="user" />
-            <span class="user-name">양미이 님</span>
-          </div>
-        </div>
-
-        <p class="label">아래에 일기를 작성해주세요</p>
-        <textarea v-model="diaryContent" class="diary-textarea" placeholder="오늘 하루는 어땠나요?"></textarea>
-
-        <button class="submit-button" @click="submitDiary">등록하기</button>
+      <!-- 오른쪽: 일기 작성 -->
+      <div class="right-section">
+        <DiaryEditor
+          :date="selectedDate"
+          userName="양미이"
+          @submit="submitDiary"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ref, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
+import SearchFood from '@/components/registerFood/SearchFood.vue';
+import SelectedFoodList from '@/components/registerFood/SelectedFoodList.vue';
+import DiaryEditor from '@/components/registerFood/DiaryEditor.vue';
+import BaseLayout from '../components/BaseLayout.vue';
 
-const today = new Date();
-const formattedDate = computed(() => format(today, "yyyy년 M월 d일 EEEE", { locale: ko }));
-const diaryContent = ref("");
-function submitDiary() {
-  console.log("일기 내용:", diaryContent.value);
+const route = useRoute();
+const selectedDate = ref('');
+
+// ✅ 날짜 감지: 쿼리에서 가져오되 없으면 오늘 날짜
+watchEffect(() => {
+  const dateFromRoute = route.query.date;
+  if (typeof dateFromRoute === 'string') {
+    selectedDate.value = dateFromRoute;
+  } else {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    selectedDate.value = `${yyyy}-${mm}-${dd}`;
+  }
+});
+
+// 💡 더미 음식 데이터 (사전 연결 전)
+const allFoods = ref([
+  '닭볶음탕',
+  '된장찌개',
+  '김치찌개',
+  '비빔밥',
+  '불고기',
+  '제육볶음',
+  '갈비탕',
+  '순두부찌개',
+  '떡볶이',
+  '잡채',
+]);
+
+const selectedFoods = ref([]);
+const diaryContent = ref('');
+
+function addFood(food) {
+  if (!selectedFoods.value.includes(food)) {
+    selectedFoods.value.push(food);
+  }
+}
+
+function removeFood(food) {
+  selectedFoods.value = selectedFoods.value.filter((f) => f !== food);
+}
+
+function submitDiary(content) {
+  console.log('일기 제출됨:', selectedDate.value, content, selectedFoods.value);
 }
 </script>
 
 <style scoped>
 .register-container {
+  max-width: 960px;
+  margin: 0 auto;
   padding: 2rem;
-  max-width: 1600px;
-  margin: auto;
 }
 
 .title {
@@ -58,22 +96,48 @@ function submitDiary() {
 .layout {
   display: flex;
   flex-direction: row;
-  gap: 3rem;
+  flex-wrap: wrap;
+  gap: clamp(2rem, 4vw, 6rem);
   justify-content: center;
   align-items: flex-start;
 }
 
-.search-section,
-.diary-section {
-  flex: 1 1 600px;
+.left-section,
+.right-section {
+  flex: 1 1 600px; /* 가로 너비 기준 설정 */
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   min-height: 600px;
+  height: auto;
+  position: relative;
+  overflow: hidden;
 }
 
-.search-section {
+/* ================= 공통 Diary Section 컨테이너 스타일 ================= */
+.right-section {
+  background-color: #fff8e1;
+  max-width: none; /* ✅ 기존 600px → 제거 */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 800px;
+  height: auto;
+  position: relative;
+  padding: 2rem;
+  overflow: hidden; /* 버튼 잘림 방지 & 하단 끊기 */
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 10rem; /* footer와 여백 확보 */
+  box-sizing: border-box;
+  isolation: isolate;
+  z-index: 1;
+}
+
+/* ====== 음식 검색 영역 (좌측: 음식 검색 및 선택 박스) ====== */
+.left-section {
   background-color: #f8f8f8;
   display: flex;
   flex-direction: column;
@@ -92,99 +156,15 @@ function submitDiary() {
   z-index: 1;
 }
 
-.diary-section {
-  background-color: #fff8e1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  min-height: 800px;
-  height: auto;
-  position: relative;
-  padding-bottom: 2rem;
-  overflow: hidden; /* 버튼 잘림 방지 & 하단 끊기 */
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-  margin-bottom: 10rem; /* footer와 여백 확보 */
-  box-sizing: border-box;
-  isolation: isolate;
-  z-index: 1;
-}
-
-.diary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.date {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-}
-
-.user-name {
-  font-size: 1rem;
-}
-
-.label {
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-}
-
-.diary-textarea {
-  width: 100%;
-  min-height: 350px;
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  resize: vertical;
-  margin-bottom: 0.8rem;
-  font-size: 1rem;
-  box-sizing: border-box;
-  flex-grow: 1;
-  overflow: auto;
-}
-
-.submit-button {
-  background-color: #ffe9b5;
-  border: none;
-  padding: 0.8rem 1.2rem;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 1rem;
-  margin-top: 0.8rem;
-  align-self: stretch;
-}
-
-.submit-button:hover {
-  background-color: #ffd983;
-}
-
-@media screen and (max-width: 600px), screen and (max-height: 700px) and (max-width: 900px) {
-  .search-section,
-  .diary-section {
-    flex: 1 1 100%;
-  }
+/* ====== 반응형: 화면 좁을 경우 세로 정렬로 전환 ====== */
+@media screen and (max-width: 680px) {
   .layout {
     flex-direction: column;
     align-items: stretch;
+  }
+  .left-section,
+  .right-section {
+    flex: 1 1 100%;
   }
 }
 </style>
