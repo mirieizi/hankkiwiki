@@ -26,11 +26,11 @@ Thumbs.db
 # ☕ Backend (Spring Boot, Maven)
 ##################################
 /backend/target/
-/backend/.mvn/
-!/backend/.mvn/wrapper/maven-wrapper.jar
-/backend/mvnw
-/backend/mvnw.cmd
 /backend/*.iml
+!/backend/.mvn/
+!/backend/.mvn/wrapper/
+!/backend/.mvn/wrapper/maven-wrapper.jar
+!/backend/.mvn/wrapper/maven-wrapper.properties
 
 # Spring 설정 관련
 /backend/.env
