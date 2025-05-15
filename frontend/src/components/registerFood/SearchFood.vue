@@ -1,77 +1,97 @@
+<!-- src/components/registerFood/FoodSearch.vue -->
 <template>
   <div class="search-section">
     <h2>음식 검색</h2>
-    <input
-      v-model="query"
-      placeholder="음식명을 입력하세요"
-      class="search-input"
-    />
+    <input v-model="query" placeholder="음식명을 입력하세요" class="search-input" />
 
     <ul class="search-result">
-      <li
-        v-for="food in paginatedFoods"
-        :key="food"
-        class="result-item"
-        @click="select(food)"
-      >
-        {{ food }}
+      <li v-for="food in paginatedFoods" :key="food.id" class="result-item" @click="select(food)">
+        <span>{{ food.name }}</span>
+        <small>{{ food.calories }} kcal</small>
       </li>
     </ul>
 
-    <div class="pagination">
-      <button
-        v-for="page in totalPages"
-        :key="page"
-        class="page-button"
-        :class="{ active: currentPage === page }"
-        @click="setPage(page)"
-      >
+    <div class="pagination" v-if="totalPages > 1">
+      <button v-for="page in totalPages" :key="page" class="page-button" :class="{ active: currentPage === page }" @click="setPage(page)">
         {{ page }}
       </button>
     </div>
+
+    <!-- 로그인 필요 안내 -->
+    <div v-if="error" class="error">{{ error }}</div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
+// Vue Composition API
+import { ref, watch, computed } from "vue";
+import { useRouter } from "vue-router";
 
-const props = defineProps({
-  allFoods: {
-    type: Array,
-    required: true,
-  },
-});
-const emit = defineEmits(['select-food']);
+// HTTP 클라이언트
+import axios from "axios";
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+axios.defaults.withCredentials = true;
 
-const query = ref('');
+// 이벤트 방출
+const emit = defineEmits(["select-food"]);
+
+// 검색어, 목록, 페이징 상태
+const query = ref("");
+const foods = ref([]);
+const error = ref("");
+const loading = ref(false);
+
 const currentPage = ref(1);
 const itemsPerPage = 5;
 
-const filteredFoods = computed(() => {
-  return props.allFoods
-    .filter((food) => food.includes(query.value.trim()))
-    .sort((a, b) => a.localeCompare(b));
-});
-
-const totalPages = computed(() =>
-  Math.ceil(filteredFoods.value.length / itemsPerPage),
+// 서버에서 검색 결과 가져오기
+let cancelToken;
+watch(
+  query,
+  async (q) => {
+    currentPage.value = 1;
+    if (!q.trim()) {
+      foods.value = [];
+      return;
+    }
+    loading.value = true;
+    error.value = "";
+    // 이전 요청 취소
+    if (cancelToken) cancelToken.cancel();
+    cancelToken = axios.CancelToken.source();
+    try {
+      const res = await axios.get("/api/food/search", {
+        params: { q: q.trim() },
+        cancelToken: cancelToken.token,
+      });
+      foods.value = res.data; // [{ id, name, calories }, ...]
+    } catch (e) {
+      if (!axios.isCancel(e)) {
+        console.error("검색 실패:", e);
+        error.value = "검색 중 오류가 발생했습니다.";
+      }
+    } finally {
+      loading.value = false;
+    }
+  },
+  { debounce: 300 }
 );
 
+// 페이징 계산
+const totalPages = computed(() => Math.ceil(foods.value.length / itemsPerPage));
 const paginatedFoods = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
-  return filteredFoods.value.slice(start, start + itemsPerPage);
+  return foods.value.slice(start, start + itemsPerPage);
 });
 
-watch(query, () => {
-  currentPage.value = 1;
-});
-
+// 페이지 변경
 function setPage(page) {
   currentPage.value = page;
 }
 
+// 아이템 선택
 function select(food) {
-  emit('select-food', food);
+  emit("select-food", food);
 }
 </script>
 
@@ -90,7 +110,7 @@ function select(food) {
 }
 
 .search-result {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -103,7 +123,6 @@ function select(food) {
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  font-weight: 500;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -113,7 +132,6 @@ function select(food) {
   background-color: #ffe9b5;
 }
 
-/* ====== 페이지네이션 (검색 결과 페이징 처리 UI) ====== */
 .pagination {
   display: flex;
   justify-content: center;
@@ -133,5 +151,11 @@ function select(food) {
 .page-button.active {
   background-color: #ffcc66;
   color: #333;
+}
+
+.error {
+  color: #d32f2f;
+  text-align: center;
+  margin-top: 1rem;
 }
 </style>

@@ -7,8 +7,10 @@
     <form @submit.prevent="onSubmit">
       <input v-if="!signIn" v-model.trim="form.nickname" @blur="checkNicknameDup" type="text" placeholder="닉네임 (최대10자, 공백·특수문자 금지)" maxlength="10" required />
       <p v-if="dupError.nickname" class="error">{{ dupError.nickname }}</p>
+
       <input v-model.trim="form.email" @blur="checkEmailDup" type="email" placeholder="이메일" required />
       <p v-if="dupError.email" class="error">{{ dupError.email }}</p>
+
       <input v-model="form.password" type="password" placeholder="비밀번호 (8~20자, 영문+특수문자)" required />
       <input v-if="!signIn" v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" required />
       <p v-if="error" class="error">{{ error }}</p>
@@ -29,23 +31,15 @@ import axios from "axios";
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
 axios.defaults.withCredentials = true;
 
-const props = defineProps({
-  signIn: { type: Boolean, default: true },
-});
-
+const props = defineProps({ signIn: { type: Boolean, default: true } });
 const router = useRouter();
+
 const title = computed(() => (props.signIn ? "로그인" : "회원가입"));
 const subtitle = computed(() => (props.signIn ? "한끼위키에 로그인하기!" : "새 계정을 만들어보세요!"));
 const buttonText = computed(() => (props.signIn ? "로그인" : "회원가입"));
 
-const form = reactive({
-  nickname: "",
-  email: "",
-  password: "",
-  passwordConfirm: "",
-});
+const form = reactive({ nickname: "", email: "", password: "", passwordConfirm: "" });
 const error = ref("");
-
 const dupError = reactive({ nickname: "", email: "" });
 const isCheckingDup = ref(false);
 
@@ -59,12 +53,8 @@ async function checkNicknameDup() {
   }
   isCheckingDup.value = true;
   try {
-    const res = await axios.get("/api/users/check-nickname", {
-      params: { nickname: form.nickname },
-    });
-    if (!res.data.available) {
-      dupError.nickname = "이미 사용 중인 닉네임입니다.";
-    }
+    const res = await axios.get("/api/user/check-nickname", { params: { nickname: form.nickname } });
+    if (!res.data.available) dupError.nickname = "이미 사용 중인 닉네임입니다.";
   } catch {
     dupError.nickname = "닉네임 확인에 실패했습니다.";
   } finally {
@@ -83,12 +73,8 @@ async function checkEmailDup() {
   if (props.signIn) return;
   isCheckingDup.value = true;
   try {
-    const res = await axios.get("/api/users/check-email", {
-      params: { email: form.email },
-    });
-    if (!res.data.available) {
-      dupError.email = "이미 사용 중인 이메일입니다.";
-    }
+    const res = await axios.get("/api/user/check-email", { params: { email: form.email } });
+    if (!res.data.available) dupError.email = "이미 사용 중인 이메일입니다.";
   } catch {
     dupError.email = "이메일 확인에 실패했습니다.";
   } finally {
@@ -98,54 +84,36 @@ async function checkEmailDup() {
 
 function validate() {
   error.value = "";
-
   if (!props.signIn) {
-    if (!form.nickname) {
-      error.value = "닉네임을 입력해주세요.";
-      return false;
-    }
-    if (dupError.nickname) {
-      error.value = dupError.nickname;
-      return false;
-    }
+    if (!form.nickname) return (error.value = "닉네임을 입력해주세요."), false;
+    if (dupError.nickname) return false;
   }
-
-  if (!form.email) {
-    error.value = "이메일을 입력해주세요.";
-    return false;
-  }
-  if (dupError.email) {
-    error.value = dupError.email;
-    return false;
-  }
-
+  if (!form.email) return (error.value = "이메일을 입력해주세요."), false;
+  if (dupError.email) return false;
   const pwdRe = /^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).{8,20}$/;
   if (!pwdRe.test(form.password)) {
     error.value = "비밀번호는 8~20자, 영문자와 특수문자를 포함해야 합니다.";
     return false;
   }
-
   if (!props.signIn && form.password !== form.passwordConfirm) {
     error.value = "비밀번호가 일치하지 않습니다.";
     return false;
   }
-
   return true;
 }
 
 async function onSubmit() {
   if (!validate()) return;
-
   try {
     if (props.signIn) {
-      const res = await axios.post("/api/auth/login", {
+      const res = await axios.post("/api/user/login", {
         email: form.email,
         password: form.password,
       });
       localStorage.setItem("token", res.data.token);
       await router.push("/");
     } else {
-      await axios.post("/api/auth/signup", {
+      await axios.post("/api/user/signup", {
         nickname: form.nickname,
         email: form.email,
         password: form.password,
@@ -165,11 +133,9 @@ async function onSubmit() {
   flex-direction: column;
   align-items: center;
 }
-
 p {
   margin: 0.5rem 0;
 }
-
 form {
   width: 100%;
   display: flex;
@@ -177,14 +143,12 @@ form {
   gap: 1rem;
   margin: 1rem 0;
 }
-
 input {
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 5px;
   width: 100%;
 }
-
 button[type="submit"] {
   padding: 0.75rem;
   border: none;
@@ -193,7 +157,6 @@ button[type="submit"] {
   color: white;
   cursor: pointer;
 }
-
 .error {
   color: #d32f2f;
   font-size: 0.9rem;

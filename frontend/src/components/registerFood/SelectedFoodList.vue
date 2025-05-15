@@ -2,13 +2,9 @@
   <div>
     <h3>🍴 선택된 음식</h3>
     <ul class="selected-list">
-      <li v-for="food in foods" :key="food" class="selected-item">
-        {{ food }}
-        <button
-          class="remove-button"
-          @click="$emit('remove-food', food)"
-          aria-label="삭제"
-        >
+      <li v-for="food in foods" :key="food.id" class="selected-item">
+        {{ food.name }}
+        <button class="remove-button" @click="$emit('remove-food', food)" aria-label="삭제">
           <img src="@/assets/junk.png" alt="삭제" class="remove-icon" />
         </button>
       </li>
@@ -18,6 +14,8 @@
 </template>
 
 <script setup>
+import axios from "axios";
+
 const props = defineProps({
   foods: {
     type: Array,
@@ -25,9 +23,17 @@ const props = defineProps({
   },
 });
 
-function saveFoods() {
-  console.log('✅ 저장된 음식 목록:', props.foods);
-  alert('음식이 저장되었습니다!');
+async function saveFoods() {
+  try {
+    // foods: [{ id, name, ... }, ... ]
+    const payload = props.foods.map((f) => f.id);
+    await axios.post("/api/food/register", { foodIds: payload });
+    alert("음식이 성공적으로 저장되었습니다!");
+    // 필요 시: $emit('saved') 등으로 상위에 알림
+  } catch (e) {
+    console.error("저장 실패:", e);
+    alert("음식 저장 중 오류가 발생했습니다.");
+  }
 }
 </script>
 
@@ -73,7 +79,7 @@ function saveFoods() {
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background-color 0.2s ease;
   width: 100%;
   box-sizing: border-box;
   font-size: 1rem;

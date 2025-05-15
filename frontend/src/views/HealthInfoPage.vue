@@ -2,7 +2,7 @@
 <template>
   <div class="health-page">
     <h2>개인 건강 정보 수정</h2>
-    <form @submit.prevent="onSubmit" class="health-form">
+    <form v-if="isLoggedIn" @submit.prevent="onSubmit" class="health-form">
       <!-- 성별 -->
       <label>
         성별
@@ -49,15 +49,24 @@
 
       <button type="submit">저장하기</button>
     </form>
+
+    <!-- 로그인 필요 알림 -->
+    <div v-else class="login-prompt">
+      <p>로그인이 필요합니다.</p>
+      <button @click="goLogin">로그인하러 가기</button>
+    </div>
   </div>
 </template>
 
 <script setup>
+// Composition API + 한국어 주석
 import { reactive, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
+
+// 폼 데이터 초기화
 const form = reactive({
   gender: "",
   age: null,
@@ -65,25 +74,42 @@ const form = reactive({
   weight: null,
   activityFactor: "",
 });
-const error = ref("");
-const isExist = ref(false); // 데이터 존재 여부 체크
 
-// 초기 데이터 로드
+const error = ref("");
+const isExist = ref(false); // 기존 데이터 존재 여부
+const isLoggedIn = ref(true); // 로그인 상태 플래그
+
+// Axios 기본 설정
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+axios.defaults.withCredentials = true;
+
+// 로그인 페이지로 이동
+function goLogin() {
+  router.push("/login");
+}
+
+// 페이지 로드 시
 onMounted(async () => {
   try {
-    const { data } = await axios.get("/api/user/health");
-    if (data && Object.keys(data).length > 0) {
-      Object.assign(form, data);
+    const res = await axios.get("/api/user/me/health");
+    // 성공적으로 불러왔으면
+    if (res.data && Object.keys(res.data).length > 0) {
+      Object.assign(form, res.data);
       isExist.value = true;
     } else {
       isExist.value = false;
     }
-  } catch {
-    error.value = "건강 정보를 불러오는 중 오류가 발생했습니다.";
-    isExist.value = false;
+  } catch (e) {
+    // 401 Unauthorized 이면 로그인 필요
+    if (e.response?.status === 401) {
+      isLoggedIn.value = false;
+    } else {
+      error.value = "건강 정보를 불러오는 중 오류가 발생했습니다.";
+    }
   }
 });
 
+// 입력값 검증 함수
 function validate() {
   error.value = "";
   if (!form.gender) {
@@ -109,21 +135,31 @@ function validate() {
   return true;
 }
 
+// 폼 제출 핸들러
 async function onSubmit() {
   if (!validate()) return;
 
   try {
     if (isExist.value) {
-      await axios.put("/api/user/health", { ...form });
+      // 기존 데이터가 있으면 PUT
+      await axios.put("/api/user/me/health", { ...form });
     } else {
-      await axios.post("/api/user/health", { ...form });
+      // 없으면 POST
+      await axios.post("/api/user/me/health", { ...form });
     }
+    // 저장 후 개인정보 수정 페이지로 이동
     router.push({ name: "ProfileInfo" });
   } catch (e) {
-    error.value = e.response?.data?.message || "저장 중 문제가 발생했습니다.";
+    if (e.response?.status === 401) {
+      // 세션 만료 등으로 인증 실패 시
+      isLoggedIn.value = false;
+    } else {
+      error.value = e.response?.data?.message || "저장 중 문제가 발생했습니다.";
+    }
   }
 }
 </script>
+
 <style scoped>
 .health-page {
   max-width: 500px;
@@ -176,5 +212,24 @@ async function onSubmit() {
   color: #d32f2f;
   font-size: 0.9rem;
   text-align: center;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 2rem;
+}
+
+.login-prompt p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.login-prompt button {
+  padding: 0.75rem 1.5rem;
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 </style>
