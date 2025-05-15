@@ -18,7 +18,6 @@ public class UserHealthInfo {
     private Long id;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;
 
@@ -41,11 +40,10 @@ public class UserHealthInfo {
     private Integer age;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     @Column(name = "activity_factor", nullable = false)
     private ActivityFactor activityFactor;
 
-    @OneToOne
+    @OneToOne(fetch=FetchType.LAZY) // FK 소유하는 엔티티 lazy 로딩 설정
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

@@ -12,8 +12,18 @@ public enum ActivityFactor {
     ActivityFactor(double coefficient) {
         this.coefficient = coefficient;
     }
-
+    
     public double getCoefficient() {
-        return coefficient;
+    	return coefficient;
     }
+
+    public static ActivityFactor fromCoefficient(double dbValue) {
+    	for (ActivityFactor af : values()) {
+    		if (Double.compare(af.coefficient, dbValue)==0) {
+    			return af;
+    		}
+    	}
+    	throw new IllegalArgumentException("UnKnown coefficient: "+dbValue);
+    }
+
 }

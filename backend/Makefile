@@ -1,4 +1,4 @@
-.PHONY: build test clean fclean docker-build docker-network docker-up docker-down run re logs
+.PHONY: build test clean fclean docker-build docker-network docker-up docker-down run re logs wclean wrun
 
 # Maven 빌드 (테스트 생략)
 build:
@@ -47,3 +47,47 @@ run:
 # 컨테이너 로그 보기
 logs:
 	docker logs -f hankkiwiki-app
+# ==========================
+# Windows 전용 명령어 시작
+# ==========================
+
+# 윈도우 클린 (타겟 폴더, 이미지, 네트워크 초기화)
+# 윈도우 클린
+# 윈도우 빌드 (PowerShell 전용)
+wbuild:
+	powershell -Command "& { \
+		$env:JAVA_HOME='C:\Program Files\BellSoft\LibericaJDK-17'; \
+		$env:PATH='$env:JAVA_HOME\bin;$env:PATH'; \
+		./mvnw.cmd clean package -DskipTests; \
+	}"
+
+# 윈도우 클린
+wclean:
+	if exist target (rmdir /S /Q target) || exit 0
+	docker rmi -f hankkiwiki-app || exit 0
+	docker network rm app-network || exit 0
+
+# 윈도우 전체 Docker 실행 (빌드 + 네트워크 + 실행)
+wup:
+	@make wnetwork
+	@make wbuild
+	cd .. && docker-compose up -d --build
+
+# Docker 네트워크 생성
+wnetwork:
+	docker network create app-network || exit 0
+
+# 윈도우 전체 초기화
+wfclean:
+	@make wdown
+	if exist target (rmdir /S /Q target) || exit 0
+	docker rmi -f hankkiwiki-app || exit 0
+	docker network rm app-network || exit 0
+
+# 윈도우 전체 Docker 중지 및 볼륨 제거
+wdown:
+	docker-compose down -v
+
+# ==========================
+# Windows 전용 명령어 끝
+# ==========================

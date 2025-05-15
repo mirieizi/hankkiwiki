@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  * 사용자 계정 관리 컨트롤러
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 @Validated
 public class UserController {
