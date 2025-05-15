@@ -1,22 +1,20 @@
 <!--scr/view/Calendar.vue-->
 <template>
-  <div class="calendar-center-wrapper">
-    <div class="calendar-wrapper">
-      <div class="calendar-panel">
-        <CalendarView
-          :selected="selectedDate"
-          :recorded-dates="Object.keys(mockData)"
-          @select-date="handleDateSelect"
-        />
-      </div>
-      <div class="record-panel">
-        <DailyRecord
-          v-if="hasRecord && recordData"
-          :data="recordDataObject"
-          :date="selectedDate"
-        />
-        <EmptyNotice v-else :date="selectedDate" />
-      </div>
+  <div class="calendar-wrapper">
+    <div class="calendar-panel">
+      <CalendarView
+        :selected="selectedDate"
+        :recorded-dates="Object.keys(mockData)"
+        @select-date="handleDateSelect"
+      />
+    </div>
+    <div class="record-panel">
+      <DailyRecord
+        v-if="hasRecord && recordData"
+        :data="recordDataObject"
+        :date="selectedDate"
+      />
+      <EmptyNotice v-else :date="selectedDate" />
     </div>
   </div>
 </template>
@@ -100,59 +98,37 @@ const recordDataObject = computed(() => recordData.value);
 </script>
 
 <style scoped>
-.calendar-center-wrapper {
-  display: grid;
-  place-content: center;
-  min-height: calc(100vh - 64px - 48px);
-  transform: translateY(-5vh);
-  width: 100%;
-  min-width: 360px;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem;
-  box-sizing: border-box;
-  padding: 2rem 3rem;
-}
-
 .calendar-wrapper {
   display: flex;
   flex-direction: row;
-  gap: clamp(2rem, 4vw, 6rem); /* ✅ 반응형 간격 */
+  place-content: center;
+  gap: clamp(2rem, 4vw, 6rem);
+  width: 100%;
   max-width: none;
+  min-height: calc(100vh - 64px - 48px);
+  transform: translateY(-5vh);
   flex-wrap: wrap;
-  padding: 1rem 2rem;
-  justify-content: center;
+  padding: 2rem;
   align-items: flex-start;
-}
-
-@media (max-width: 680px) {
-  .calendar-wrapper,
-  .record-panel {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; /* ✅ 세로 정렬도 중앙 */
-    padding: 1rem;
-  }
+  box-sizing: border-box;
 }
 
 .calendar-panel,
 .record-panel {
+  display: block;
   flex: 1 1 500px;
   min-width: 360px;
-  max-width: 600px;
+  max-width: 700px;
   width: 100%;
 }
 
 .calendar-panel {
-  width: 100%;
-  display: flex;
   height: auto;
   border-radius: 12px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   isolation: isolate;
   z-index: 1;
-  justify-content: flex-start;
+  padding: 2rem;
 }
 
 .record-panel {
@@ -163,13 +139,16 @@ const recordDataObject = computed(() => recordData.value);
 }
 
 @media screen and (max-width: 480px) {
-  .layout {
+  .calendar-wrapper {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    padding: 1rem;
   }
   .calendar-panel,
   .record-panel {
     flex: 1 1 100%;
+    max-width: 100%;
+    justify-content: center;
   }
 }
 </style>
