@@ -2,55 +2,86 @@
 <template>
   <div class="profile-info-page">
     <h2>개인 정보</h2>
-    <p class="greeting">{{ userNickname }}님, 안녕하세요!</p>
 
-    <div class="button-group">
-      <button @click="goToInfoEdit">개인 정보 수정</button>
-      <button @click="goToHealthEdit">개인 건강 정보 수정</button>
+    <!-- 로그인 필요 안내 -->
+    <div v-if="!isLoggedIn" class="login-prompt">
+      <p>로그인이 필요합니다.</p>
+      <button @click="goLogin">로그인하러 가기</button>
     </div>
 
-    <!-- 탈퇴 버튼 (하단 우측) -->
-    <button class="delete-btn" @click="confirmDelete">탈퇴하기</button>
+    <!-- 실제 프로필 정보 -->
+    <div v-else>
+      <p class="greeting">{{ userNickname }}님, 안녕하세요!</p>
+
+      <div class="button-group">
+        <button @click="goToInfoEdit">개인 정보 수정</button>
+        <button @click="goToHealthEdit">개인 건강 정보 수정</button>
+      </div>
+
+      <!-- 탈퇴 버튼 (하단 우측) -->
+      <button class="delete-btn" @click="confirmDelete">탈퇴하기</button>
+    </div>
   </div>
 </template>
 
 <script setup>
+// Composition API + 한국어 주석
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
+
 const userNickname = ref("");
+const isLoggedIn = ref(true); // 로그인 상태 플래그
 
-onMounted(async () => {
-  try {
-    const { data } = await axios.get("/api/user/profile");
-    userNickname.value = data.nickname;
-  } catch {
-    userNickname.value = "사용자";
-  }
-});
+// 로그인 페이지로 이동
+function goLogin() {
+  router.push("/login");
+}
 
+// 개인정보 수정 페이지로 이동
 function goToInfoEdit() {
   router.push({ name: "ProfileUser" });
 }
 
+// 건강정보 수정 페이지로 이동
 function goToHealthEdit() {
   router.push({ name: "ProfileHealth" });
 }
 
+// 회원 탈퇴 처리
 async function confirmDelete() {
-  const confirmed = window.confirm("정말 탈퇴하시겠습니까?");
-  if (!confirmed) return;
+  const ok = window.confirm("정말 탈퇴하시겠습니까?");
+  if (!ok) return;
 
   try {
-    await axios.delete("/api/user");
+    await axios.delete("/api/user/me");
     alert("탈퇴가 완료되었습니다.");
     router.push({ name: "Login" });
   } catch (e) {
-    alert(e.response?.data?.message || "탈퇴 중 문제가 발생했습니다.");
+    if (e.response?.status === 401) {
+      isLoggedIn.value = false;
+    } else {
+      alert(e.response?.data?.message || "탈퇴 중 문제가 발생했습니다.");
+    }
   }
 }
+
+// 컴포넌트 마운트 시 내 프로필 정보 로드
+onMounted(async () => {
+  try {
+    const { data } = await axios.get("/api/user/me");
+    userNickname.value = data.nickname;
+  } catch (e) {
+    if (e.response?.status === 401) {
+      // 인증 실패 시 로그인 안내
+      isLoggedIn.value = false;
+    } else {
+      userNickname.value = "사용자";
+    }
+  }
+});
 </script>
 
 <style scoped>
@@ -63,6 +94,24 @@ async function confirmDelete() {
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
+}
+
+.login-prompt {
+  padding: 2rem;
+}
+
+.login-prompt p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.login-prompt button {
+  padding: 0.75rem 1.5rem;
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 h2 {
@@ -93,7 +142,6 @@ h2 {
 }
 
 .button-group button:hover {
-  /* 다크 모드 없이 호버 색상 유지 */
   opacity: 0.9;
 }
 
