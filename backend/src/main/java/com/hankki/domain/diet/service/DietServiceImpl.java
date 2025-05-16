@@ -50,6 +50,7 @@ public class DietServiceImpl implements DietService {
     }
 
     @Override
+    @Transactional
     public List<Diet> getDietsByEmail(String email) {
         return dietRepository.findDietsByEmail(email);
     }
@@ -79,6 +80,16 @@ public class DietServiceImpl implements DietService {
 
         diet.setMealType(mealType);
         log.info("[DietService] Diet MealType {}으로 수정 성공", mealType.name());
+    }
+
+    @Override
+    @Transactional
+    public void updateTakeAt(String email, Long dietId, LocalDate takeAt) {
+        Diet diet = dietRepository.findById(dietId)
+                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
+
+        diet.setTakeAt(takeAt);
+        log.info("[DietService] Diet takeAt {}으로 수정 성공", takeAt.toString());
     }
 
 }

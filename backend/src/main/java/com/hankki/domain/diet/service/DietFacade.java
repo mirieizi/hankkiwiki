@@ -2,10 +2,7 @@ package com.hankki.domain.diet.service;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
-import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietResponseDto;
-import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
-import com.hankki.domain.diet.dto.GroupedDietResponseDto;
+import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
@@ -101,5 +98,16 @@ public class DietFacade {
      */
     public void updateMealType(String email, DietUpdateMealTypeRequestDto requestDto) {
         dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
+    }
+
+    public void updateDietInfo(DietUpdateRequestDto requestDto) {
+        if (requestDto.getMealType() != null) {
+            dietService.updateMealType(requestDto.getEmail(), requestDto.getDietId(), requestDto.getMealType());
+        }
+
+        if (requestDto.getTakeAt() != null) {
+            dietService.updateTakeAt(requestDto.getEmail(), requestDto.getDietId(), requestDto.getTakeAt());
+        }
+
     }
 }
