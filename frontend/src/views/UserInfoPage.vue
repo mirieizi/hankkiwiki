@@ -1,24 +1,84 @@
-<!-- src/views/UserInfoPage.vue -->
+<script setup>
+import { ref, watchEffect, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+
+const router = useRouter();
+const userStore = useUserStore();
+
+// 로컬 폼 상태
+const form = ref({
+  email: "",
+  nickname: "",
+  password: "",
+  passwordConfirm: "",
+});
+const isChecking = ref(false);
+
+// 초기 데이터 로드
+onMounted(async () => {
+  await userStore.fetchProfile();
+  form.value.email = userStore.email;
+  form.value.nickname = userStore.nickname;
+});
+
+// 닉네임 입력할 때마다 Pinia로 검사
+watchEffect(async () => {
+  const nick = form.value.nickname.trim();
+  if (!nick || nick === userStore.nickname) {
+    userStore.dupError = "";
+    return;
+  }
+  isChecking.value = true;
+  await userStore.checkNickname(nick, userStore.nickname);
+  isChecking.value = false;
+});
+
+// 유효성 검사
+function validate() {
+  if (userStore.dupError) return false;
+  const pwd = form.value.password;
+  if (pwd) {
+    const pwdRe = /^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).{8,20}$/;
+    if (!pwdRe.test(pwd) || pwd !== form.value.passwordConfirm) {
+      userStore.error = pwdRe.test(pwd) ? "비밀번호가 일치하지 않습니다." : "비밀번호는 8~20자, 영문자+특수문자 조합이어야 합니다.";
+      return false;
+    }
+  }
+  return true;
+}
+
+// 제출
+async function onSubmit() {
+  if (!validate()) return;
+  const payload = { nickname: form.value.nickname };
+  if (form.value.password) payload.password = form.value.password;
+
+  const ok = await userStore.updateProfile(payload);
+  if (ok) {
+    alert("개인 정보가 저장되었습니다.");
+    router.replace({ name: "ProfileInfo" });
+  }
+}
+</script>
+
 <template>
   <div class="info-page">
     <h2>개인 정보 수정</h2>
-    <p class="greeting">{{ userNickname }}님, 정보 수정 페이지입니다.</p>
+    <p class="greeting">{{ userStore.nickname }}님, 정보 수정 페이지입니다.</p>
 
     <form @submit.prevent="onSubmit" class="info-form">
-      <!-- 이메일 (읽기 전용) -->
       <label>
         이메일
         <input type="email" :value="form.email" disabled />
       </label>
 
-      <!-- 닉네임 -->
       <label>
         닉네임
-        <input v-model="form.nickname" @blur="checkNicknameDup" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required />
+        <input v-model="form.nickname" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required />
       </label>
-      <p v-if="dupError.nickname" class="error">{{ dupError.nickname }}</p>
+      <p v-if="userStore.dupError" class="error">{{ userStore.dupError }}</p>
 
-      <!-- 비밀번호 변경 (선택) -->
       <label>
         새 비밀번호
         <input v-model="form.password" type="password" placeholder="8~20자, 영문+특수문자" />
@@ -28,114 +88,12 @@
         <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" />
       </label>
 
-      <!-- 에러 메시지 -->
-      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="userStore.error" class="error">{{ userStore.error }}</p>
 
-      <button type="submit" :disabled="isCheckingDup">저장하기</button>
+      <button type="submit" :disabled="isChecking">저장하기</button>
     </form>
   </div>
 </template>
-
-<script setup>
-import { reactive, ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import axios from "axios";
-
-const router = useRouter();
-
-// form state
-const form = reactive({
-  email: "",
-  nickname: "",
-  password: "",
-  passwordConfirm: "",
-});
-const error = ref("");
-const dupError = reactive({ nickname: "" });
-const isCheckingDup = ref(false);
-const userNickname = ref("");
-
-// load existing user info
-onMounted(async () => {
-  try {
-    const { data } = await axios.get("/api/user/profile");
-    form.email = data.email;
-    form.nickname = data.nickname;
-    userNickname.value = data.nickname;
-  } catch {
-    error.value = "사용자 정보를 불러오는 중 오류가 발생했습니다.";
-  }
-});
-
-// 닉네임 중복 검사
-async function checkNicknameDup() {
-  dupError.nickname = "";
-  if (!form.nickname) return;
-  const nickRe = /^[가-힣A-Za-z0-9]{1,10}$/;
-  if (!nickRe.test(form.nickname)) {
-    dupError.nickname = "닉네임은 최대10자, 공백·특수문자 없이 입력해주세요.";
-    return;
-  }
-  if (form.nickname === userNickname.value) return;
-  isCheckingDup.value = true;
-  try {
-    const res = await axios.get("/api/users/check-nickname", {
-      params: { nickname: form.nickname },
-    });
-    if (!res.data.available) {
-      dupError.nickname = "이미 사용 중인 닉네임입니다.";
-    }
-  } catch {
-    dupError.nickname = "닉네임 확인에 실패했습니다.";
-  } finally {
-    isCheckingDup.value = false;
-  }
-}
-
-// validate
-function validate() {
-  error.value = "";
-
-  if (!form.nickname) {
-    error.value = "닉네임을 입력해주세요.";
-    return false;
-  }
-  if (dupError.nickname) {
-    error.value = dupError.nickname;
-    return false;
-  }
-
-  if (form.password) {
-    const pwdRe = /^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).{8,20}$/;
-    if (!pwdRe.test(form.password)) {
-      error.value = "비밀번호는 8~20자, 영문자+특수문자 조합이어야 합니다.";
-      return false;
-    }
-    if (form.password !== form.passwordConfirm) {
-      error.value = "비밀번호가 일치하지 않습니다.";
-      return false;
-    }
-  }
-
-  return true;
-}
-
-// submit
-async function onSubmit() {
-  if (!validate()) return;
-
-  const payload = { nickname: form.nickname };
-  if (form.password) payload.password = form.password;
-
-  try {
-    await axios.put("/api/user/profile", payload);
-    alert("개인 정보가 저장되었습니다.");
-    router.replace({ name: "ProfileInfo" });
-  } catch (e) {
-    error.value = e.response?.data?.message || "저장 중 오류가 발생했습니다.";
-  }
-}
-</script>
 
 <style scoped>
 .info-page {

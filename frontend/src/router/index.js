@@ -1,5 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 // Views
 import Home from "@/views/Home.vue";
@@ -16,30 +17,47 @@ import Calendar from "@/views/Calendar.vue";
 
 // Route definitions
 const routes = [
-  // Main
+  // Public routes
   { path: "/", name: "Home", component: Home },
   { path: "/about", name: "About", component: About },
-
-  // Auth
   { path: "/login", name: "Login", component: LoginPage, props: { signIn: true } },
   { path: "/signup", name: "Signup", component: LoginPage, props: { signIn: false } },
 
-  // Profile
-  { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage },
-  { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage },
-  { path: "/profile/user", name: "ProfileUser", component: UserInfoPage },
+  // Profile pages (require auth)
+  { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: true } },
+  { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: true } },
+  { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
 
-  // Recommendations
+  // Recommendation pages
   { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend },
   { path: "/recommend/history", name: "HistoryRecommend", component: HistoryRecommend },
   { path: "/recommend/ai", name: "AiRecommend", component: AiRecommend },
 
-  // Food & Calendar
+  // Food & Calendar (require auth)
   { path: "/food/register", name: "RegisterFood", component: RegisterFood },
   { path: "/calendar", name: "Calendar", component: Calendar },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(), // HTML5 history mode
   routes,
 });
+
+// Global navigation guard
+router.beforeEach(async (to, from, next) => {
+  const auth = useAuthStore();
+
+  // Ensure auth initialization only once
+  if (!auth._initialized) {
+    auth._initialized = true;
+    await auth.initialize?.();
+  }
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    next({ name: "Login", query: { redirect: to.fullPath } });
+  } else {
+    next();
+  }
+});
+
+export default router;
