@@ -37,16 +37,15 @@ public class WebSecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // 관리자 전용 API는 ROLE_ADMIN 소유자만 접근 가능
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                // 로그인·회원가입·유저 조회·토큰 재발급은 모두 공개
-                .requestMatchers(
-                    "/login",
-                    "/signup",
-                    "/user/**",
-                    "/token/refresh"
-                ).permitAll()
-                .anyRequest().authenticated()
+                    .requestMatchers(
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/swagger-resources/**",
+                            "/webjars/**"
+                    ).permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/login", "/signup", "/user/**", "/token/refresh").permitAll()
+                    .anyRequest().authenticated()
             )
             .addFilterBefore(
                 new TokenAuthenticationFilter(tokenProvider),
