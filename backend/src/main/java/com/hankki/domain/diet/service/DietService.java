@@ -17,6 +17,8 @@ public interface DietService {
 
     void deleteDietById(String email, Long dietId);
 
+    void deleteDietByDietId(Long dietId);
+
     void updateMealType(String email, Long dietId, MealType mealType);
 
     void updateTakeAt(String email, Long dietId, LocalDate takeAt);

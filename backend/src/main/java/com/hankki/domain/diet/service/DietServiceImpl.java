@@ -70,6 +70,13 @@ public class DietServiceImpl implements DietService {
 
     @Override
     @Transactional
+    public void deleteDietByDietId(Long dietId) {
+        dietRepository.deleteById(dietId);
+        log.info("[DietService] Diet 삭제 성공");
+    }
+
+    @Override
+    @Transactional
     public void updateMealType(String email, Long dietId, MealType mealType) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));

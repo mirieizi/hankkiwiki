@@ -63,6 +63,19 @@ public class DietFacade {
                 .build();
     }
 
+    /**
+     * diet의 식사 타입 변경
+     * @param email
+     * @param requestDto
+     */
+    public void updateMealType(String email, DietUpdateMealTypeRequestDto requestDto) {
+        dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
+    }
+
+    /*********************************
+     *      admin 기능 관리 구역        *
+     *********************************/
+
     public List<DietResponseDto> getDietsByUserId(Long userId) {
         try {
             String email = userRepository.findById(userId).orElseThrow().getEmail();
@@ -80,27 +93,11 @@ public class DietFacade {
         }
     }
 
-    /**
-     * 현재 유저 email과 dietId로 찾은 userEmail 같은지 비교
-     * 검증 후, dietId를 Diet, DietMealItem DB에서 삭제
-     * @param email
-     * @param dietId
-     */
-    public void deleteDietById(String email, Long dietId) {
-        dietService.deleteDietById(email, dietId);
-        dietMealItemMapper.deleteByDietId(dietId);
-    }
+    public void updateDietInfo(Long dietId, DietUpdateRequestDto requestDto) {
+        if (!dietId.equals(requestDto.getDietId())) {
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET);
+        }
 
-    /**
-     * diet의 식사 타입 변경
-     * @param email
-     * @param requestDto
-     */
-    public void updateMealType(String email, DietUpdateMealTypeRequestDto requestDto) {
-        dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
-    }
-
-    public void updateDietInfo(DietUpdateRequestDto requestDto) {
         if (requestDto.getMealType() != null) {
             dietService.updateMealType(requestDto.getEmail(), requestDto.getDietId(), requestDto.getMealType());
         }
@@ -108,6 +105,9 @@ public class DietFacade {
         if (requestDto.getTakeAt() != null) {
             dietService.updateTakeAt(requestDto.getEmail(), requestDto.getDietId(), requestDto.getTakeAt());
         }
+    }
 
+    public void deleteDietByIdByAdmin(Long dietId) {
+        dietService.deleteDietByDietId(dietId);
     }
 }
