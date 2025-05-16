@@ -15,7 +15,7 @@ public interface DietService {
 
     List<Diet> getDietsByEmail(String email);
 
-    void deleteDietById(String email, Long dietId);
+    void deleteDietByEmailAndId(String email, Long dietId);
 
     void deleteDietByDietId(Long dietId);
 

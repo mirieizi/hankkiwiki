@@ -72,6 +72,10 @@ public class DietFacade {
         dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
     }
 
+    public void deleteDietById(String email, Long dietId) {
+        dietService.deleteDietByEmailAndId(email, dietId);
+    }
+
     /*********************************
      *      admin 기능 관리 구역        *
      *********************************/

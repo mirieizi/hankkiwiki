@@ -57,7 +57,7 @@ public class DietServiceImpl implements DietService {
 
     @Override
     @Transactional
-    public void deleteDietById(String email,Long dietId) {
+    public void deleteDietByEmailAndId(String email,Long dietId) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
