@@ -1,4 +1,4 @@
-package com.hankki.domain.user.constant;
+package com.hankki.domain.auth.constant;
 
 import org.springframework.security.core.GrantedAuthority;
 

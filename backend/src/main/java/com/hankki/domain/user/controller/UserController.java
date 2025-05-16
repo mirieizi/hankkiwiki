@@ -1,35 +1,36 @@
 package com.hankki.domain.user.controller;
 
 import java.net.URI;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.hankki.domain.auth.dto.JwtTokenResponse;
-import com.hankki.domain.auth.dto.LoginRequest;
-import com.hankki.domain.auth.dto.SignUpRequest;
+import com.hankki.domain.auth.dto.UserPrincipal;
+import com.hankki.domain.auth.dto.request.LoginRequest;
+import com.hankki.domain.auth.dto.request.SignUpRequest;
+import com.hankki.domain.auth.dto.response.JwtTokenResponse;
+import com.hankki.domain.auth.util.CurrentUser;
 import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.media.Content;
-
 import lombok.RequiredArgsConstructor;
 
 /**
  * 사용자 계정 관리 컨트롤러
  */
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 @Validated
 public class UserController {
@@ -82,12 +83,9 @@ public class UserController {
         @ApiResponse(responseCode = "204", description = "로그아웃 성공"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorization) {
-        String token = authorization.startsWith("Bearer ")
-            ? authorization.substring(7)
-            : authorization;
-        log.info("Request to logout token: {}", token);
-        userService.logout(token);
+    public ResponseEntity<Void> logout(@CurrentUser UserPrincipal principal) {
+        log.info("Request to logout token: {}", principal.getEmail());
+        userService.logout(principal.getUserId());
         return ResponseEntity.noContent().build();
     }
 
@@ -101,10 +99,9 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal User principal) {
-        log.info("Request to get current user: {}", principal.getId());
-        User user = userService.findById(principal.getId());
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserPrincipal> getCurrentUser(@CurrentUser UserPrincipal principal) {
+        log.info("Request to get current user: {}", principal.getUserId());
+        return ResponseEntity.ok(principal);
     }
 
     /**
@@ -119,14 +116,14 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "입력 값 오류"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<User> updateCurrentUser(
-        @AuthenticationPrincipal User principal,
+    public ResponseEntity<UserPrincipal> updateCurrentUser(
+        @CurrentUser UserPrincipal principal,
         @RequestBody UpdateUserRequest request
     ) {
         log.info("Request to update current user {}: email={}, nickname={} ",
-            principal.getId(), request.getEmail(), request.getNickname());
-        User updated = userService.updateUser(principal.getId(), request);
-        return ResponseEntity.ok(updated);
+            principal.getUserId(), request.getEmail(), request.getNickname());
+        User updated = userService.updateUser(principal.getUserId(), request);
+        return ResponseEntity.ok(UserPrincipal.from(updated));
     }
 
     /**
@@ -140,9 +137,9 @@ public class UserController {
         @ApiResponse(responseCode = "204", description = "탈퇴 성공"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Void> deleteCurrentUser(@AuthenticationPrincipal User principal) {
-        log.info("Request to delete current user: {}", principal.getId());
-        userService.deleteUser(principal.getId());
+    public ResponseEntity<Void> deleteCurrentUser(@CurrentUser UserPrincipal principal) {
+        log.info("Request to delete current user: {}", principal.getUserId());
+        userService.deleteUser(principal.getUserId());
         return ResponseEntity.noContent().build();
     }
 
@@ -150,33 +147,33 @@ public class UserController {
      * 7) 관리자: 특정 사용자 조회
      * GET /user/admin/{userId}
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/admin/{userId}")
-    public ResponseEntity<User> getAnyUser(@PathVariable Long userId) {
+    public ResponseEntity<UserPrincipal> getAnyUser(@PathVariable Long userId) {
         User user = userService.findById(userId);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserPrincipal.from(user));
     }
 
     /**
-     * 8) 관리자: 특정 사용자 수정
-     * PUT /user/admin/{userId}
+     * 8) 관리자: 전체 사용자 조회
+     * GET /user/admin
      */
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/admin/{userId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/admin")
     @Transactional
-    public ResponseEntity<User> updateAnyUser(
-        @PathVariable Long userId,
-        @RequestBody UpdateUserRequest request
-    ) {
-        User updated = userService.updateUser(userId, request);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<List<UserPrincipal>> getAllUsers() {
+        List<UserPrincipal> users = userService.findAllUsers()
+                .stream()
+                .map(UserPrincipal::from)
+                .toList();
+        return ResponseEntity.ok(users);
     }
 
     /**
      * 9) 관리자: 특정 사용자 삭제
      * DELETE /user/admin/{userId}
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/admin/{userId}")
     @Transactional
     public ResponseEntity<Void> deleteAnyUser(@PathVariable Long userId) {

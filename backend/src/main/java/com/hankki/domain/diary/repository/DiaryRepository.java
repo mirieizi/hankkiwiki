@@ -17,6 +17,6 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
          + "ORDER BY d.date ASC")
     List<DiaryResponse> findResponsesByUserIdOrderByDateAsc(@Param("userId") Long userId);
 
-    // 삭제 메서드는 그대로
-    void deleteByIdAndUserId(Long diaryId, Long userId);
+    // 삭제 메서드
+    int deleteByIdAndUserId(Long diaryId, Long userId);
 }
