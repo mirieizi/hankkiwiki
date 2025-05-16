@@ -82,42 +82,55 @@ watch(selectedDate, (newDate) => {
 <style scoped>
 .calendar-wrapper {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: row;
+  place-content: center;
   gap: clamp(2rem, 4vw, 6rem);
   width: 100%;
+  max-width: none;
   min-height: calc(100vh - 64px - 48px);
+  transform: translateY(-5vh);
+  flex-wrap: wrap;
   padding: 2rem;
+  align-items: flex-start;
   box-sizing: border-box;
 }
 
 .calendar-panel,
 .record-panel {
-  flex: 1 1 360px;
+  display: block;
+  flex: 1 1 500px;
+  min-width: 360px;
   max-width: 700px;
-  padding: 2rem;
+  width: 100%;
 }
 
 .calendar-panel {
+  height: auto;
   border-radius: 12px;
+  box-sizing: border-box;
+  isolation: isolate;
   z-index: 1;
-  background: #fff;
+  padding: 2rem;
 }
 
 .record-panel {
-  background: #fafafa;
-  border-radius: 12px;
+  flex: 1;
+  min-width: 360px;
+  max-width: 800px;
+  padding: 2rem;
 }
 
 @media screen and (max-width: 480px) {
   .calendar-wrapper {
     flex-direction: column;
+    align-items: center;
     padding: 1rem;
   }
   .calendar-panel,
   .record-panel {
+    flex: 1 1 100%;
     max-width: 100%;
-    padding: 1rem;
+    justify-content: center;
   }
 }
 </style>
