@@ -1,5 +1,7 @@
 package com.hankki.domain.diet.service;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
 import com.hankki.domain.diet.dto.DietResponseDto;
 import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
@@ -11,11 +13,13 @@ import com.hankki.domain.diet.mapper.DietMealItemMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
 import com.hankki.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DietFacade {
@@ -63,15 +67,20 @@ public class DietFacade {
     }
 
     public List<DietResponseDto> getDietsByUserId(Long userId) {
-        String email = userRepository.findById(userId).orElseThrow().getEmail();
-        List<Diet> dietList = dietService.getDietsByEmail(email);
-        return dietList.stream()
-                .map(diet -> DietResponseDto.builder()
-                        .id(diet.getId())
-                        .takeAt(diet.getTakeAt())
-                        .mealType(diet.getMealType())
-                        .build())
-                .toList();
+        try {
+            String email = userRepository.findById(userId).orElseThrow().getEmail();
+            List<Diet> dietList = dietService.getDietsByEmail(email);
+            return dietList.stream()
+                    .map(diet -> DietResponseDto.builder()
+                            .id(diet.getId())
+                            .takeAt(diet.getTakeAt())
+                            .mealType(diet.getMealType())
+                            .build())
+                    .toList();
+        } catch (Exception e) {
+            log.error("[DietFacade] 사용자 조회 실패 - userId: {}", userId);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER);
+        }
     }
 
     /**

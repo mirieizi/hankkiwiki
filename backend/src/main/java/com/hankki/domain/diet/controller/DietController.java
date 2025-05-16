@@ -56,6 +56,11 @@ public class DietController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "특정 사용자의 식단 조회", description = "특정 사용자의 식단을 조회한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "식단 조회에 성공하였습니다.", content = @Content),
+            @ApiResponse(responseCode = "404", description = "해당하는 사용자를 찾지 못했습니다.")
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/diet/admin/{userId}")
     public ResponseEntity<List<DietResponseDto>> getDietByAdmin(
