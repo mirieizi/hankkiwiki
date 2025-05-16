@@ -14,14 +14,20 @@ PROJECT_NAME=hankkiwiki-server
 DOCKER_COMPOSE_CMD=docker-compose -f $(DOCKER_COMPOSE_FILE) -p $(PROJECT_NAME)
 
 # ========================================
-# 공통 명령어 (macOS/Linux)
+# 공통 명령어 (macOS/Linux/Windows)
 # ========================================
 detect-os:
-ifeq ($(OS),Windows_NT)
-	@echo "🪟 Windows 환경입니다. wup 또는 wbuild를 사용하세요."
-else
-	@echo "🍎 macOS/Linux 환경입니다. make up 또는 make build를 사용하세요."
-endif
+	@if [ "$(shell uname)" = "Darwin" ]; then \
+		echo "macOS environment detected. Use 'make up' or 'make build'."; \
+	elif [ "$(shell uname)" = "Linux" ]; then \
+		echo "Linux environment detected. Use 'make up' or 'make build'."; \
+	elif [ "$(shell uname | grep -i mingw)" ]; then \
+		echo "Windows environment detected. Use 'make wup' or 'make wbuild'."; \
+	else \
+		echo "Unknown environment detected. Please configure manually."; \
+	fi
+
+
 
 # Maven 빌드 (테스트 생략)
 build:
@@ -78,11 +84,9 @@ logs:
 # 윈도우 클린
 # 윈도우 빌드 (PowerShell 전용)
 wbuild:
-	powershell -Command "& { \
-		$env:JAVA_HOME='$(JAVA_HOME_WIN)'; \
-		$env:PATH='$$env:JAVA_HOME\\bin;$$env:PATH'; \
-		./mvnw.cmd clean package -DskipTests; \
-	}"
+	export JAVA_HOME="$(JAVA_HOME_WIN)"; \
+	export PATH="$$JAVA_HOME/bin:$$PATH"; \
+	./mvnw.cmd clean package -DskipTests
 
 # 윈도우 클린
 wclean:
@@ -92,14 +96,11 @@ wclean:
 
 # 윈도우 전체 Docker 실행 (빌드 + 네트워크 + 실행)
 wup: wnetwork wbuild
-	cd .. && docker-compose up -d --build
+	$(DOCKER_COMPOSE_CMD) up -d --build
 
 # Docker 네트워크 생성
 wnetwork:
 	docker network create $(NETWORK_NAME) || exit 0
-
-wup: wnetwork wbuild
-	$(DOCKER_COMPOSE_CMD) up -d --build
 
 # 윈도우 전체 Docker 중지 및 볼륨 제거
 wdown:
@@ -110,6 +111,12 @@ wfclean: wdown
 	if exist target (rmdir /S /Q target) || exit 0
 	docker rmi -f $(IMAGE_NAME) || exit 0
 	docker network rm $(NETWORK_NAME) || exit 0
+
+# Windows 전용 재배포 (다운 → 빌드 → 업)
+wre:
+	@make wdown
+	@make wbuild
+	$(DOCKER_COMPOSE_CMD) up -d --build
 
 # ==========================
 # Windows 전용 명령어 끝
