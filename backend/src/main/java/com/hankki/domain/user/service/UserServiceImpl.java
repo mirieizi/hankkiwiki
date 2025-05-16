@@ -1,5 +1,7 @@
 package com.hankki.domain.user.service;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,6 +16,7 @@ import com.hankki.common.jwt.TokenProvider;
 import com.hankki.domain.auth.dto.request.LoginRequest;
 import com.hankki.domain.auth.dto.request.SignUpRequest;
 import com.hankki.domain.auth.dto.response.JwtTokenResponse;
+import com.hankki.domain.auth.entity.AuthUser;
 import com.hankki.domain.auth.entity.RefreshToken;
 import com.hankki.domain.auth.repository.RefreshTokenRepository;
 import com.hankki.domain.user.dto.UpdateUserRequest;
@@ -21,8 +24,6 @@ import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 /**
  * 사용자 회원가입, 로그인, 조회, 수정, 삭제 로직을 담당하는 서비스 구현체
@@ -86,7 +87,8 @@ public class UserServiceImpl implements UserService {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        User user = (User) authentication.getPrincipal();
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+        User user = authUser.getUser();
         String accessToken = tokenProvider.generateAccessToken(user);
         String refreshToken = tokenProvider.generateRefreshToken(user);
 

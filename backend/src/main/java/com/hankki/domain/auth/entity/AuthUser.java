@@ -58,4 +58,9 @@ public class AuthUser implements UserDetails {
     public UserPrincipal getUserPrincipal() {
         return new UserPrincipal(this.user);
     }
+
+    public User getUser() {
+        return this.user;
+    }
+
 }
