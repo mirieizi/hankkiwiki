@@ -1,6 +1,7 @@
 package com.hankki.domain.diet.service;
 
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
+import com.hankki.domain.diet.dto.DietResponseDto;
 import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
 import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.food.dto.FoodGroupDto;
@@ -8,6 +9,7 @@ import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.mapper.DietMealItemMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
+import com.hankki.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class DietFacade {
     private final DietService dietService;
     private final DietMealItemMapper dietMealItemMapper;
     private final FoodQueryServiceImpl foodQueryService;
+    private final UserRepository userRepository;
 
     /**
      * Diet 생성
@@ -57,6 +60,18 @@ public class DietFacade {
                 .takeAt(takeAt)
                 .foods(foods)
                 .build();
+    }
+
+    public List<DietResponseDto> getDietsByUserId(Long userId) {
+        String email = userRepository.findById(userId).orElseThrow().getEmail();
+        List<Diet> dietList = dietService.getDietsByEmail(email);
+        return dietList.stream()
+                .map(diet -> DietResponseDto.builder()
+                        .id(diet.getId())
+                        .takeAt(diet.getTakeAt())
+                        .mealType(diet.getMealType())
+                        .build())
+                .toList();
     }
 
     /**

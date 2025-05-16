@@ -13,6 +13,8 @@ public interface DietRepository  extends JpaRepository<Diet, Long> {
 
     Optional<Diet> findById(Long dietId);
 
+    List<Diet> findDietsByEmail(String email);
+
     List<Diet> findDietsByEmailAndTakeAt(String email, LocalDate takeAt);
 
     void deleteById(Long dietId);

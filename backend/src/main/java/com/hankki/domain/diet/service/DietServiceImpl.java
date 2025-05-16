@@ -50,6 +50,11 @@ public class DietServiceImpl implements DietService {
     }
 
     @Override
+    public List<Diet> getDietsByEmail(String email) {
+        return dietRepository.findDietsByEmail(email);
+    }
+
+    @Override
     @Transactional
     public void deleteDietById(String email,Long dietId) {
         Diet diet = dietRepository.findById(dietId)
