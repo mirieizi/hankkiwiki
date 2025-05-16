@@ -47,6 +47,8 @@ logging:
 jwt:
   issuer: ajufresh@gmail.com
   secret_key: study-springboot
+  access-token-validity: 3600000         # 1시간 (밀리초 단위)
+  refresh-token-validity: 604800000      # 7일 (밀리초 단위)
 
 server:
   port: 8081
