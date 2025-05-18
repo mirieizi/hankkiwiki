@@ -61,20 +61,44 @@ public class WebSecurityConfig {
 //        return http.build();
 //    }
     
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//          // ↓↓↓ 모든 요청을 인증 없이 허용
+//          .authorizeHttpRequests(authz -> authz
+//               .anyRequest().permitAll()
+//          )
+//          .csrf(csrf -> csrf.disable())
+//          .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//          .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+//        return http.build();
+//    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-          // ↓↓↓ 모든 요청을 인증 없이 허용
-          .authorizeHttpRequests(authz -> authz
-               .anyRequest().permitAll()
-          )
+          .cors(cors -> cors.configurationSource(corsConfigurationSource()))
           .csrf(csrf -> csrf.disable())
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-          .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+          .authorizeHttpRequests(authz -> authz
+              // 로그인·회원가입·토큰 갱신은 모두 인증 없이 접근 허용
+              .requestMatchers(
+                  "/user/signup",
+                  "/user/login",
+                  "/user/refresh"
+              ).permitAll()
+              // 그 외 모든 요청은 인증 필요
+              .anyRequest().authenticated()
+          )
+          // JWT 토큰 필터 등록
+          .addFilterBefore(
+              new TokenAuthenticationFilter(tokenProvider),
+              UsernamePasswordAuthenticationFilter.class
+          );
+
         return http.build();
     }
-
-    
+  
     
     
     

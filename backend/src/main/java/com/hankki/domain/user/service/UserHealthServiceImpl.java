@@ -33,12 +33,12 @@ public class UserHealthServiceImpl implements UserHealthService {
      */
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #request.userId == authentication.principal.id")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public Long registerHealthInfo(Long userId, UserHealthRequest request) {
-        log.info("Request to register HealthInfo for userId={}", request.getUserId());
+        log.info("Request to register HealthInfo for userId={}", userId);
 
-        User user = userRepo.findById(request.getUserId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 ID: " + request.getUserId()));
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 ID: " + userId));
 
         UserHealthInfo info = UserHealthInfo.builder()
             .user(user)

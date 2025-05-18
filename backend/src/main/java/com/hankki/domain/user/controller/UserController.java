@@ -108,7 +108,7 @@ public class UserController {
      * 5) 내 정보 수정
      * PUT /user/me
      */
-    @PutMapping("/me")
+    @PatchMapping("/me")
     @Transactional
     @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
     @ApiResponses({

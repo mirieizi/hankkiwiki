@@ -7,6 +7,7 @@
 NETWORK_NAME=app-network
 IMAGE_NAME=app-1
 JAVA_HOME_WIN=C:\Program Files\BellSoft\LibericaJDK-17
+JAVA_HOME_WIN_NOTEBOOK=C:\Program Files\Java\jdk-17
 DOCKERFILE_PATH=Dockerfile
 DOCKER_CONTEXT=.
 DOCKER_COMPOSE_FILE=docker-compose-server.yml
@@ -116,6 +117,20 @@ wfclean: wdown
 wre:
 	@make wdown
 	@make wbuild
+	$(DOCKER_COMPOSE_CMD) up -d --build
+
+# ─────────────────────────────────────────
+# Git Bash 전용: 노트북용 JDK로만 빌드
+wbuild-notebook:
+	@bash -lc '\
+	  export JAVA_HOME="$(JAVA_HOME_WIN_NOTEBOOK)" && \
+	  export PATH="$$JAVA_HOME/bin:$$PATH" && \
+	  ./mvnw clean package -DskipTests\
+	'
+
+# 노트북용 전체 재배포 (컨테이너 내림 → wbuild-notebook → 다시 올림)
+wre-notebook: wdown wbuild-notebook
+	@echo "[노트북용 재배포 시작]" && \
 	$(DOCKER_COMPOSE_CMD) up -d --build
 
 # ==========================

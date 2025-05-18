@@ -14,6 +14,8 @@ import com.hankki.domain.user.dto.UserHealthRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.entity.UserHealthInfo;
 import com.hankki.domain.user.service.UserHealthService;
+import com.hankki.domain.auth.dto.UserPrincipal;
+import com.hankki.domain.auth.util.CurrentUser;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,10 +39,10 @@ public class UserHealthController {
     @Transactional
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Long> registerOwnHealth(
-        @AuthenticationPrincipal User user,
+        @CurrentUser UserPrincipal principal,
         @Validated @RequestBody UserHealthRequest request
     ) {
-        Long userId = user.getId();
+        Long userId = principal.getUserId();
         log.info("Register health for self, userId={}", userId);
         Long savedId = userHealthService.registerHealthInfo(userId, request);
         return ResponseEntity.ok(savedId);
