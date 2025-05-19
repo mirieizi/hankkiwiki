@@ -6,7 +6,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hankki.domain.user.dto.DailyCalorieResponse;
 import com.hankki.domain.user.dto.UpdateUserHealthRequest;
+import com.hankki.domain.user.dto.UserHealthInfoResponse;
 import com.hankki.domain.user.dto.UserHealthRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.entity.UserHealthInfo;
@@ -60,9 +62,10 @@ public class UserHealthServiceImpl implements UserHealthService {
     @Override
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public UserHealthInfo findHealthById(Long userId) {
-        return healthRepo.findByUserId(userId)
+    public UserHealthInfoResponse findHealthById(Long userId) {
+        UserHealthInfo info =  healthRepo.findByUserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
+        return UserHealthInfoResponse.from(info);
     }
 
     /**
@@ -97,10 +100,28 @@ public class UserHealthServiceImpl implements UserHealthService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public void deleteHealthInfo(Long userId) {
-        UserHealthInfo info = healthRepo.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
-        healthRepo.delete(info);
+    	User user = userRepo.findById(userId)
+    			.orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID가 존재하지 않습니다: " + userId));
+    	
+    	UserHealthInfo healthInfo = user.getHealthInfo();
+        if (healthInfo == null) {
+            throw new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId);
+        }
+        // 부모 엔티티에서 참조 끊기
+        user.changeHealthInfo(null);
+        userRepo.save(user);  // 중요: 영속성 컨텍스트에서 상태 변경을 감지하여 실제로 삭제되도록
+
+        log.info("Deleted health info for userId={}", userId);
     }
+
+	@Override
+	@Transactional
+	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+	public DailyCalorieResponse getUserDailyCalorie(Long userId) {
+		DailyCalorieResponse calorie = healthRepo.findDailyCalorie(userId)
+				.orElseThrow(()-> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
+		return calorie;
+	}
 
 
 }

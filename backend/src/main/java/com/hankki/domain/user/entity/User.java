@@ -65,7 +65,7 @@ public class User {
         mappedBy = "user",
         cascade = CascadeType.ALL,
         fetch = FetchType.LAZY,
-        optional = false
+        optional = true // 고아객체 삭제
     )
     private UserHealthInfo healthInfo;
 
@@ -88,5 +88,8 @@ public class User {
     /** 닉네임 변경 */
     public void changeNickname(String nickname) {
         this.nickname = nickname;
+    }
+    public void changeHealthInfo(UserHealthInfo info) {
+    	this.healthInfo = info;
     }
 }
