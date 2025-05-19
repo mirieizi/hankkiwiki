@@ -13,7 +13,13 @@ public interface DietService {
 
     List<Diet> getDietsByTakeAt(String email, LocalDate takeAt);
 
-    void deleteDietById(String email, Long dietId);
+    List<Diet> getDietsByEmail(String email);
+
+    void deleteDietByEmailAndId(String email, Long dietId);
+
+    void deleteDietByDietId(Long dietId);
 
     void updateMealType(String email, Long dietId, MealType mealType);
+
+    void updateTakeAt(String email, Long dietId, LocalDate takeAt);
 }

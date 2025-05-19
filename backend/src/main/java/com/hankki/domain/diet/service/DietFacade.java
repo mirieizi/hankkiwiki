@@ -1,19 +1,22 @@
 package com.hankki.domain.diet.service;
 
-import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
-import com.hankki.domain.diet.dto.GroupedDietResponseDto;
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
+import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.mapper.DietMealItemMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
+import com.hankki.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DietFacade {
@@ -21,6 +24,7 @@ public class DietFacade {
     private final DietService dietService;
     private final DietMealItemMapper dietMealItemMapper;
     private final FoodQueryServiceImpl foodQueryService;
+    private final UserRepository userRepository;
 
     /**
      * Diet 생성
@@ -60,22 +64,54 @@ public class DietFacade {
     }
 
     /**
-     * 현재 유저 email과 dietId로 찾은 userEmail 같은지 비교
-     * 검증 후, dietId를 Diet, DietMealItem DB에서 삭제
-     * @param email
-     * @param dietId
-     */
-    public void deleteDietById(String email, Long dietId) {
-        dietService.deleteDietById(email, dietId);
-        dietMealItemMapper.deleteByDietId(dietId);
-    }
-
-    /**
      * diet의 식사 타입 변경
      * @param email
      * @param requestDto
      */
     public void updateMealType(String email, DietUpdateMealTypeRequestDto requestDto) {
         dietService.updateMealType(email, requestDto.getDietId(), requestDto.getMealType());
+    }
+
+    public void deleteDietById(String email, Long dietId) {
+        dietService.deleteDietByEmailAndId(email, dietId);
+    }
+
+    /*********************************
+     *      admin 기능 관리 구역        *
+     *********************************/
+
+    public List<DietResponseDto> getDietsByUserId(Long userId) {
+        try {
+            String email = userRepository.findById(userId).orElseThrow().getEmail();
+            List<Diet> dietList = dietService.getDietsByEmail(email);
+            return dietList.stream()
+                    .map(diet -> DietResponseDto.builder()
+                            .id(diet.getId())
+                            .takeAt(diet.getTakeAt())
+                            .mealType(diet.getMealType())
+                            .build())
+                    .toList();
+        } catch (Exception e) {
+            log.error("[DietFacade] 사용자 조회 실패 - userId: {}", userId);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER);
+        }
+    }
+
+    public void updateDietInfo(Long dietId, DietUpdateRequestDto requestDto) {
+        if (!dietId.equals(requestDto.getDietId())) {
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET);
+        }
+
+        if (requestDto.getMealType() != null) {
+            dietService.updateMealType(requestDto.getEmail(), requestDto.getDietId(), requestDto.getMealType());
+        }
+
+        if (requestDto.getTakeAt() != null) {
+            dietService.updateTakeAt(requestDto.getEmail(), requestDto.getDietId(), requestDto.getTakeAt());
+        }
+    }
+
+    public void deleteDietByIdByAdmin(Long dietId) {
+        dietService.deleteDietByDietId(dietId);
     }
 }

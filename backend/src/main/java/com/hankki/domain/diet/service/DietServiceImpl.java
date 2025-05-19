@@ -51,13 +51,26 @@ public class DietServiceImpl implements DietService {
 
     @Override
     @Transactional
-    public void deleteDietById(String email,Long dietId) {
+    public List<Diet> getDietsByEmail(String email) {
+        return dietRepository.findDietsByEmail(email);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDietByEmailAndId(String email,Long dietId) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
         if (!diet.getEmail().equals(email)) {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
+        dietRepository.deleteById(dietId);
+        log.info("[DietService] Diet 삭제 성공");
+    }
+
+    @Override
+    @Transactional
+    public void deleteDietByDietId(Long dietId) {
         dietRepository.deleteById(dietId);
         log.info("[DietService] Diet 삭제 성공");
     }
@@ -74,6 +87,16 @@ public class DietServiceImpl implements DietService {
 
         diet.setMealType(mealType);
         log.info("[DietService] Diet MealType {}으로 수정 성공", mealType.name());
+    }
+
+    @Override
+    @Transactional
+    public void updateTakeAt(String email, Long dietId, LocalDate takeAt) {
+        Diet diet = dietRepository.findById(dietId)
+                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
+
+        diet.setTakeAt(takeAt);
+        log.info("[DietService] Diet takeAt {}으로 수정 성공", takeAt.toString());
     }
 
 }
