@@ -61,14 +61,6 @@ public class User {
     @Column(name = "user_nickname", nullable = false, unique = true)
     private String nickname;
 
-    @OneToOne(
-        mappedBy = "user",
-        cascade = CascadeType.ALL,
-        fetch = FetchType.LAZY,
-        optional = true // 고아객체 삭제
-    )
-    private UserHealthInfo healthInfo;
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
@@ -88,8 +80,5 @@ public class User {
     /** 닉네임 변경 */
     public void changeNickname(String nickname) {
         this.nickname = nickname;
-    }
-    public void changeHealthInfo(UserHealthInfo info) {
-    	this.healthInfo = info;
     }
 }

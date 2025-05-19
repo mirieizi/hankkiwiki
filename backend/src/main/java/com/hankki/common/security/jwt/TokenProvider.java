@@ -1,5 +1,5 @@
 
-package com.hankki.common.jwt;
+package com.hankki.common.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;

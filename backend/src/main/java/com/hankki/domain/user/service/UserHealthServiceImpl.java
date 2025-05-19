@@ -6,6 +6,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.user.dto.DailyCalorieResponse;
 import com.hankki.domain.user.dto.UpdateUserHealthRequest;
 import com.hankki.domain.user.dto.UserHealthInfoResponse;
@@ -23,105 +25,92 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class UserHealthServiceImpl implements UserHealthService {
-    private static final Logger log = LoggerFactory.getLogger(UserHealthServiceImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(UserHealthServiceImpl.class);
 
-    private final UserHealthInfoRepository healthRepo;
-    private final UserRepository userRepo;
+	private final UserHealthInfoRepository healthRepo;
+	private final UserRepository userRepo;
 
-    /**
-     * 사용자 건강정보 등록
-     * 관리자: 모든 사용자 등록 가능
-     * 일반 사용자: 자기 자신만 등록 가능
-     */
-    @Override
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public Long registerHealthInfo(Long userId, UserHealthRequest request) {
-        log.info("Request to register HealthInfo for userId={}", userId);
+	/**
+	 * 사용자 건강정보 등록 관리자: 모든 사용자 등록 가능 일반 사용자: 자기 자신만 등록 가능
+	 */
+	@Override
+	@Transactional
+	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+	public Long registerHealthInfo(Long userId, UserHealthRequest request) {
+		log.info("Request to register HealthInfo for userId={}", userId);
 
-        User user = userRepo.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 ID: " + userId));
+		User user = userRepo.findById(userId)
+				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
-        UserHealthInfo info = UserHealthInfo.builder()
-            .user(user)
-            .gender(request.getGender())
-            .height(request.getHeight())
-            .weight(request.getWeight())
-            .age(request.getAge())
-            .activityFactor(request.getActivityFactor())
-            .build();  // recommendedCalorie는 엔티티 콜백으로 자동 계산
+		UserHealthInfo info = UserHealthInfo.builder().gender(request.getGender()).height(request.getHeight())
+				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).build(); // recommendedCalorie는
+																														// 엔티티
+																														// 콜백으로
+																														// 자동
+																														// 계산
 
-        return healthRepo.save(info).getId();
-    }
+		return healthRepo.save(info).getId();
+	}
 
-    /**
-     * 사용자 건강정보 조회
-     * 관리자: 모든 사용자 조회 가능
-     * 일반 사용자: 자기 자신만 조회 가능
-     */
-    @Override
-    @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public UserHealthInfoResponse findHealthById(Long userId) {
-        UserHealthInfo info =  healthRepo.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
-        return UserHealthInfoResponse.from(info);
-    }
+	/**
+	 * 사용자 건강정보 조회 관리자: 모든 사용자 조회 가능 일반 사용자: 자기 자신만 조회 가능
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+	public UserHealthInfoResponse findHealthById(Long userId) {
+		UserHealthInfo info = healthRepo.findByUserId(userId)
+				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
+		return UserHealthInfoResponse.from(info);
+	}
 
-    /**
-     * 사용자 건강정보 수정
-     * 관리자: 모든 사용자 수정 가능
-     * 일반 사용자: 자기 자신만 수정 가능
-     */
-    @Override
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public UserHealthInfo updateHealthInfo(Long userId, UpdateUserHealthRequest request) {
-        UserHealthInfo info = healthRepo.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
+	/**
+	 * 사용자 건강정보 수정 관리자: 모든 사용자 수정 가능 일반 사용자: 자기 자신만 수정 가능
+	 */
+	@Override
+	@Transactional
+	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+	public UserHealthInfo updateHealthInfo(Long userId, UpdateUserHealthRequest request) {
+		UserHealthInfo info = healthRepo.findByUserId(userId)
+				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
-        // 변경 메서드 호출
-        info.changeHeight(request.getHeight());
-        info.changeWeight(request.getWeight());
-        info.changeAge(request.getAge());
-        info.changeGender(request.getGender());
-        info.changeActivityFactor(request.getActivityFactor());
+		// 변경 메서드 호출
+		info.changeHeight(request.getHeight());
+		info.changeWeight(request.getWeight());
+		info.changeAge(request.getAge());
+		info.changeGender(request.getGender());
+		info.changeActivityFactor(request.getActivityFactor());
 
-        // save 호출 없이 @Transactional에서 자동 변경 감지 (dirty checking)
-        return info;
-    }
-
-    /**
-     * 사용자 건강정보 삭제
-     * 관리자: 모든 사용자 삭제 가능
-     * 일반 사용자: 자기 자신만 삭제 가능
-     */
-    @Override
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public void deleteHealthInfo(Long userId) {
-    	User user = userRepo.findById(userId)
-    			.orElseThrow(() -> new IllegalArgumentException("해당 사용자 ID가 존재하지 않습니다: " + userId));
-    	
-    	UserHealthInfo healthInfo = user.getHealthInfo();
-        if (healthInfo == null) {
-            throw new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId);
-        }
-        // 부모 엔티티에서 참조 끊기
-        user.changeHealthInfo(null);
-        userRepo.save(user);  // 중요: 영속성 컨텍스트에서 상태 변경을 감지하여 실제로 삭제되도록
-
-        log.info("Deleted health info for userId={}", userId);
-    }
+		// save 호출 없이 @Transactional에서 자동 변경 감지 (dirty checking)
+		return info;
+	}
 
 	@Override
 	@Transactional
 	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-	public DailyCalorieResponse getUserDailyCalorie(Long userId) {
-		DailyCalorieResponse calorie = healthRepo.findDailyCalorie(userId)
-				.orElseThrow(()-> new IllegalArgumentException("해당 사용자 ID의 건강정보가 없습니다: " + userId));
-		return calorie;
+	public void deleteHealthInfo(Long userId) {
+		// 1) 사용자 존재 여부 확인
+		userRepo.findById(userId).orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
+
+
+		// 2) 건강정보 조회
+		UserHealthInfo info = healthRepo.findByUserId(userId)
+				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
+
+		// 3) 바로 삭제
+		healthRepo.delete(info);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+	public DailyCalorieResponse getUserDailyCalorie(Long userId) {
+		// 1) 사용자 존재 여부 확인
+		userRepo.findById(userId).orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
+
+		// 2) 칼로리 조회
+		return healthRepo.findDailyCalorieByUserId(userId)
+				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
+	}
 
 }

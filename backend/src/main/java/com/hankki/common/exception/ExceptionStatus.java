@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 public enum ExceptionStatus {
-	
+
 	// DIET
 	INVALID_MEAL_TYPE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 종류입니다."),
 	INVALID_MAJOR_CATEGORY(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 대분류입니다."),
@@ -21,16 +21,20 @@ public enum ExceptionStatus {
 
 	// USER
 	NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "사용자를 찾지 못했습니다."),
-	ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다.");
+	ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다."),
+
+	EMAIL_DUPLICATION(HttpStatus.CONFLICT, 409, "이미 사용 중인 이메일입니다."),
+	NICKNAME_DUPLICATION(HttpStatus.CONFLICT, 409, "이미 사용 중인 닉네임입니다."),
+	NOT_FOUND_USER_HEALTH(HttpStatus.NOT_FOUND, 404, "해당 사용자 ID의 건강정보가 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final int errorCode;
 	private final String message;
-	
-	ExceptionStatus (HttpStatus httpStatus, int errorCode, String message) {
+
+	ExceptionStatus(HttpStatus httpStatus, int errorCode, String message) {
 		this.httpStatus = httpStatus;
 		this.errorCode = errorCode;
 		this.message = message;
 	}
-	
+
 }

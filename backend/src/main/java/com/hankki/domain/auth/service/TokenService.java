@@ -1,7 +1,8 @@
 package com.hankki.domain.auth.service;
 
 import org.springframework.stereotype.Service;
-import com.hankki.common.jwt.TokenProvider;
+
+import com.hankki.common.security.jwt.TokenProvider;
 import com.hankki.domain.auth.entity.RefreshToken;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.service.UserService;

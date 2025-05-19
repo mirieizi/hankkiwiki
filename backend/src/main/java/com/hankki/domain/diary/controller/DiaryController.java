@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hankki.common.security.principal.CurrentUser;
 import com.hankki.domain.auth.dto.UserPrincipal;
-import com.hankki.domain.auth.util.CurrentUser;
 import com.hankki.domain.diary.dto.DiaryCreateRequest;
 import com.hankki.domain.diary.dto.DiaryResponse;
 import com.hankki.domain.diary.dto.DiaryUpdateRequest;

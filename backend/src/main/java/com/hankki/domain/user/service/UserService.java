@@ -13,7 +13,7 @@ import com.hankki.domain.user.entity.User;
  */
 public interface UserService {
     /** 회원가입 처리 */
-    Long signUp(SignUpRequest request);
+//    Long signUp(SignUpRequest request);
 
     /** ID로 사용자 조회 */
     User findById(Long userId);
@@ -25,10 +25,10 @@ public interface UserService {
     void deleteUser(Long userId);
 
     /** 사용자 로그인 */
-	JwtTokenResponse login(LoginRequest request);
+//	JwtTokenResponse login(LoginRequest request);
 	
     /** 사용자 로그아웃 (ID 기반)*/
-    void logout(Long userId);
+//    void logout(Long userId);
     
     /** 모든 사용자 조회 (관리자 전용) */
     List<User> findAllUsers();
