@@ -5,6 +5,7 @@ import com.hankki.common.vector.VectorAggregator;
 import com.hankki.domain.user.constant.Gender;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RedisVectorSearcher {
 
     private final RedisCommands<String, String> redisCommands; // FT.SEARCH 실행용
@@ -51,10 +53,12 @@ public class RedisVectorSearcher {
                 topK, topK
         );
 
+        // 디버깅 용
         String command = String.format(
                 "FT.SEARCH %s \"%s\" PARAMS 2 vec_param \"%s\" DIALECT 2",
                 index, query, base64Vec
         );
+        log.debug("[RedisVectorSearcher] FT.SEARCH command: {}", command);
 
         List<Object> result = redisCommands.dispatch(io.lettuce.core.protocol.CommandType.valueOf("FT.SEARCH"),
                 new io.lettuce.core.output.ArrayOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
@@ -75,5 +79,33 @@ public class RedisVectorSearcher {
         }
 
         return foodIds;
+    }
+
+    /**
+     * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 1개 반환
+     */
+    public Long furthestSearch(Gender gender, float[] queryVector) {
+        String index = String.format("idx:food_%s", gender.name().toLowerCase());
+        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.floatArrayToBytes(queryVector));
+
+        String query = "*=>[KNN 1 @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 1";
+
+        List<Object> result = redisCommands.dispatch(io.lettuce.core.protocol.CommandType.valueOf("FT.SEARCH"),
+                new io.lettuce.core.output.ArrayOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
+                new io.lettuce.core.protocol.CommandArgs<>(io.lettuce.core.codec.StringCodec.UTF8)
+                        .add(index)
+                        .add(query)
+                        .add("PARAMS").add(2).add("vec_param").add(base64Vec)
+                        .add("DIALECT").add(2)
+        );
+
+        for (int i = 1; i < result.size(); i += 2) {
+            String key = (String) result.get(i);
+            String[] parts = key.split(":");
+            if (parts.length == 2) {
+                return Long.parseLong(parts[1]);
+            }
+        }
+        throw new IllegalStateException("가장 먼 벡터 검색 결과가 없습니다.");
     }
 }
