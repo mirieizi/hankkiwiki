@@ -1,7 +1,10 @@
-package com.hankki.domain.auth.dto;
+package com.hankki.domain.auth.dto.request;
+
+import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.hankki.domain.auth.constant.Role;
 import com.hankki.domain.user.entity.User;
 
 import jakarta.validation.constraints.Email;
@@ -34,12 +37,14 @@ public class SignUpRequest {
       message = "닉네임에 공백이나 특수문자는 사용할 수 없습니다."
     )
     private String nickname;
+    
 
     public User toUser(PasswordEncoder encoder) {
         return User.builder()
             .email(this.email)
             .password(encoder.encode(this.password))
             .nickname(this.nickname)
+            .roles(Set.of(Role.ROLE_USER)) // 모든 유저에게 기본 user 부여
             .build();
     }
 }

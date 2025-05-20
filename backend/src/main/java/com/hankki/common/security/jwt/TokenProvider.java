@@ -1,5 +1,5 @@
 
-package com.hankki.common.jwt;
+package com.hankki.common.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
-import com.hankki.domain.auth.service.UserDetailService;
 import com.hankki.domain.user.entity.User;
 
 import io.jsonwebtoken.Claims;
@@ -38,7 +38,7 @@ public class TokenProvider {
     private static final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
 
     private final JwtProperties     jwtProperties;
-    private final UserDetailService userDetailService;   // [피드백 반영] UserDetailsService 주입
+    private final UserDetailsService userDetailsService;   // [피드백 반영] UserDetailsService 주입
 
     /**
      * 무효화된 토큰을 관리하는 블랙리스트
@@ -140,7 +140,7 @@ public class TokenProvider {
         }
 
         String email = claims.getSubject();
-        UserDetails userDetails = userDetailService.loadUserByUsername(email);  // [피드백 반영] 활성화 상태 등 체크 가능
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);  // [피드백 반영] 활성화 상태 등 체크 가능
         return new UsernamePasswordAuthenticationToken(
             userDetails, token, userDetails.getAuthorities()
         );

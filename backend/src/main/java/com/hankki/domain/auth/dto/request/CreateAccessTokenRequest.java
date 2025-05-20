@@ -1,4 +1,4 @@
-package com.hankki.domain.auth.dto;
+package com.hankki.domain.auth.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -41,4 +41,9 @@ public interface DiaryService {
      * @param diaryId 다이어리 식별자
      */
     void deleteDiary(Long userId, Long diaryId);
+
+	/**
+	 * 주어진 사용자 ID로 전체 다이어리 목록을 조회합니다.
+	 */
+	List<DiaryResponse> getDiariesByUserId(Long userId);
 }

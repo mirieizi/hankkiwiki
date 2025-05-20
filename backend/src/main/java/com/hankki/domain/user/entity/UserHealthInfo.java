@@ -1,10 +1,29 @@
 package com.hankki.domain.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hankki.domain.user.constant.ActivityFactor;
 import com.hankki.domain.user.constant.Gender;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user_health_info")
@@ -43,13 +62,13 @@ public class UserHealthInfo {
     @Column(name = "activity_factor", nullable = false)
     private ActivityFactor activityFactor;
 
-    @OneToOne(fetch=FetchType.LAZY) // FK 소유하는 엔티티 lazy 로딩 설정
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     // 저장된 일일 권장 칼로리 (자동 갱신)
     @Column(name = "recommended_calorie", nullable = false)
     private Double recommendedCalorie;
+    
+    // FK만 관리
+    @Column(name = "user_id", nullable = false, unique = true)
+    private Long userId;
 
     /**
      * 엔티티 생성 전/수정 전마다 자동으로 호출되어 권장 칼로리 업데이트
