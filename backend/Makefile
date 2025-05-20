@@ -31,6 +31,7 @@ detect-os:
 
 
 # Maven 빌드 (테스트 생략)
+# 로컬 개발 시 사용: Docker 이미지와 무관
 build:
 	./mvnw clean package -DskipTests
 
@@ -70,7 +71,7 @@ re:
 	@make build
 	$(DOCKER_COMPOSE_CMD) up -d --build
 
-# 로컬 Spring Boot 실행 (Docker 사용 안 함)
+# 로컬 Spring Boot 실행 (기본 포트: 8080, Docker 사용 안 함)
 run:
 	./mvnw spring-boot:run
 
