@@ -21,6 +21,7 @@ public class RecommendController {
     public ResponseEntity<FoodResponseDto> recommendRandom(
             @CurrentUser UserPrincipal userPrincipal
     ) {
-        return ResponseEntity.ok(recommendFacade.recommendRandom(userPrincipal.getUserId(), userPrincipal.getGender()));
+        return ResponseEntity.ok(recommendFacade.recommendRandom(
+                userPrincipal.getUserId(), userPrincipal.getGender()));
     }
 }

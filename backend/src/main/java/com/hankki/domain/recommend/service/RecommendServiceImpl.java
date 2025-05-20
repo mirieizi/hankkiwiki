@@ -6,6 +6,7 @@ import com.hankki.domain.food.entity.Food;
 import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.recommend.dto.FoodResponseDto;
 import com.hankki.domain.user.constant.Gender;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class RecommendServiceImpl implements RecommendService {
 
     private final FoodRepository foodRepository;
 
+    @Transactional
     @Override
     public FoodResponseDto recommendRandomFood(Gender gender) {
         Food food = foodRepository.findRandomFood()

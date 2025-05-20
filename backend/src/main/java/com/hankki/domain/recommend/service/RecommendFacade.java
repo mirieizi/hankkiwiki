@@ -17,7 +17,7 @@ public class RecommendFacade {
     public FoodResponseDto recommendRandom(Long userId, Gender gender) {
         userLogService.checkQuota(userId); // 남은 횟수 체크
         FoodResponseDto foodResponseDto = recommendService.recommendRandomFood(gender);
-        userLogService.recordRecommendation(userId);
+        userLogService.recordRecommendation(userId); // 추천 횟수 기록
         return foodResponseDto;
     }
 }
