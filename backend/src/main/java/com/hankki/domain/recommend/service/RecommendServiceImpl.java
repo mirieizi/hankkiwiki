@@ -16,6 +16,9 @@ public class RecommendServiceImpl implements RecommendService {
 
     private final FoodRepository foodRepository;
 
+    /**
+     * 무작위 음식 1개 추천
+     */
     @Transactional
     @Override
     public FoodResponseDto recommendRandomFood(Gender gender) {
@@ -23,4 +26,16 @@ public class RecommendServiceImpl implements RecommendService {
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_FOOD));
         return FoodResponseDto.fromEntity(food);
     }
+
+    /**
+     * 음식 ID로 조회 후 DTO 변환
+     */
+    @Transactional
+    @Override
+    public FoodResponseDto findFoodDtoById(Long foodId) {
+        Food food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new IllegalStateException("해당 음식이 존재하지 않습니다."));
+        return FoodResponseDto.fromEntity(food);
+    }
+
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RecommendFacade {
 
+    private final RecommendVectorFacade recommendVectorFacade;
     private final RecommendService recommendService;
     private UserLogServiceImpl userLogService;
 
@@ -20,4 +21,26 @@ public class RecommendFacade {
         userLogService.recordRecommendation(userId); // 추천 횟수 기록
         return foodResponseDto;
     }
+
+    public FoodResponseDto recommendFurthest(Long userId, Gender gender) {
+        userLogService.checkQuota(userId);
+        Long furthestId = recommendVectorFacade.findFurthestFoodFromRecent(userId, gender);
+        userLogService.recordRecommendation(userId);
+        return recommendService.findFoodDtoById(furthestId);
+    }
+
+    public FoodResponseDto recommendNeutral(Long userId, Gender gender) {
+        userLogService.checkQuota(userId);
+        Long neutralId = recommendVectorFacade.findNeutralFoodFromRecent(userId, gender);
+        userLogService.recordRecommendation(userId);
+        return recommendService.findFoodDtoById(neutralId);
+    }
+
+    public FoodResponseDto recommendMostSimilar(Long userId, Gender gender) {
+        userLogService.checkQuota(userId);
+        Long mostSimilarId = recommendVectorFacade.findMostSimilarFoodFromRecent(userId, gender);
+        userLogService.recordRecommendation(userId);
+        return recommendService.findFoodDtoById(mostSimilarId);
+    }
+
 }

@@ -5,4 +5,6 @@ import com.hankki.domain.user.constant.Gender;
 
 public interface RecommendService {
     FoodResponseDto recommendRandomFood(Gender gender);
+
+    FoodResponseDto findFoodDtoById(Long foodId);
 }
