@@ -1,11 +1,13 @@
 package com.hankki.domain.recommend.dto;
 
 import com.hankki.domain.food.entity.Food;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 @Builder
 @AllArgsConstructor
+@Schema(description = "음식 추천 응답 DTO", implementation = FoodResponseDto.class)
 public class FoodResponseDto {
     private Long id;
     private String foodName;
