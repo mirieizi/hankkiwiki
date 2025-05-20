@@ -8,7 +8,6 @@ import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.entity.DietMealItem;
 import com.hankki.domain.diet.mapper.DietMealItemMapper;
 import com.hankki.domain.diet.repository.DietRepository;
-import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,7 @@ public class DietServiceImpl implements DietService {
         for (Long itemId : requestDto.getMealItemIds()) {
             DietMealItem dietMealItem = DietMealItem.builder()
                     .dietId(createdDiet.getId())
-                    .mealItemId(itemId)
+                    .foodId(itemId)
                     .build();
             dietMealItemMapper.insertDietMealItem(dietMealItem);
         }
@@ -65,14 +64,14 @@ public class DietServiceImpl implements DietService {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
         dietRepository.deleteById(dietId);
-        log.info("[DietService] Diet 삭제 성공");
+        log.info("[DietService] Diet 삭제 성공: {}", dietId);
     }
 
     @Override
     @Transactional
     public void deleteDietByDietId(Long dietId) {
         dietRepository.deleteById(dietId);
-        log.info("[DietService] Diet 삭제 성공");
+        log.info("[DietService] Diet 삭제 성공: {}", dietId);
     }
 
     @Override
