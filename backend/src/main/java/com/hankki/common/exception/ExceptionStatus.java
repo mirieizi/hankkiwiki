@@ -31,7 +31,10 @@ public enum ExceptionStatus {
 	NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, 404, "음식을 찾지 못했습니다."),
 
 	// RECOMMEND
-	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다.");
+	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다."),
+
+	// REDIS
+	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다.");
 
 	private final HttpStatus httpStatus;
 	private final int errorCode;
