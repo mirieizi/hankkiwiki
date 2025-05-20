@@ -42,6 +42,5 @@ public class RecommendVectorFacade {
         if (foodIds.isEmpty()) throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
         return foodIds;
     }
-}
 
 }
