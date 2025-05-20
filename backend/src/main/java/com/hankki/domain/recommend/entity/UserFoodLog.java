@@ -1,5 +1,6 @@
 package com.hankki.domain.recommend.entity;
 
+import com.hankki.domain.diet.constant.MealType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,4 +29,8 @@ public class UserFoodLog {
 
     @Column(name = "take_at", nullable = false)
     private LocalDate takeAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meal_type", nullable = false)
+    private MealType mealType;
 }
