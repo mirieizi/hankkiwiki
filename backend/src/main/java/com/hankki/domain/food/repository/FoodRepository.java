@@ -11,7 +11,7 @@ import java.util.List;
 
 @Repository
 public interface FoodRepository extends JpaRepository<Food, Long> {
-    // DTO Projection으로 조회
+
     @Query("""
         SELECT new com.hankki.domain.food.dto.FoodPreviewResponseDto(
             f.id, f.foodName, f.majorCategory, f.kcal
