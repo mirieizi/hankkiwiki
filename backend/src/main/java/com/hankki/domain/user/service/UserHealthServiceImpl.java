@@ -43,11 +43,7 @@ public class UserHealthServiceImpl implements UserHealthService {
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
 		UserHealthInfo info = UserHealthInfo.builder().gender(request.getGender()).height(request.getHeight())
-				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).build(); // recommendedCalorie는
-																														// 엔티티
-																														// 콜백으로
-																														// 자동
-																														// 계산
+				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).build();
 
 		return healthRepo.save(info).getId();
 	}
@@ -112,5 +108,4 @@ public class UserHealthServiceImpl implements UserHealthService {
 		return healthRepo.findDailyCalorieByUserId(userId)
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
 	}
-
 }

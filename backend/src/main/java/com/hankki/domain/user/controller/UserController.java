@@ -3,6 +3,11 @@ package com.hankki.domain.user.controller;
 import java.net.URI;
 import java.util.List;
 
+import com.hankki.domain.user.constant.Gender;
+import com.hankki.domain.user.dto.UserResponse;
+import com.hankki.domain.user.entity.UserHealthInfo;
+import com.hankki.domain.user.service.UserHealthService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +38,11 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class UserController {
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    private final UserHealthService userHealthService;
+
 
 //    /**
 //     * 1) 회원 가입
@@ -96,9 +103,13 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<UserPrincipal> getCurrentUser(@CurrentUser UserPrincipal principal) {
+    public ResponseEntity<UserResponse> getCurrentUser(@CurrentUser UserPrincipal principal) {
         log.info("Request to get current user: {}", principal.getUserId());
-        return ResponseEntity.ok(principal);
+        return ResponseEntity.ok(UserResponse.builder()
+                .id(principal.getUserId())
+                .email(principal.getEmail())
+                .nickname(principal.getNickname())
+                .build());
     }
 
     /**
@@ -112,14 +123,18 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "입력 값 오류"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<UserPrincipal> updateCurrentUser(
+    public ResponseEntity<UserResponse> updateCurrentUser(
         @CurrentUser UserPrincipal principal,
         @RequestBody UpdateUserRequest request
     ) {
         log.info("Request to update current user {}: email={}, nickname={} ",
             principal.getUserId(), request.getEmail(), request.getNickname());
         User updated = userService.updateUser(principal.getUserId(), request);
-        return ResponseEntity.ok(UserPrincipal.from(updated));
+        return ResponseEntity.ok(UserResponse.builder()
+                .id(updated.getId())
+                .email(updated.getEmail())
+                .nickname(updated.getNickname())
+                .build());
     }
 
     /**
@@ -129,13 +144,13 @@ public class UserController {
     @DeleteMapping("/me")
     @Operation(summary = "회원 탈퇴", description = "로그인한 사용자를 탈퇴 처리합니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "탈퇴 성공"),
+        @ApiResponse(responseCode = "200", description = "탈퇴 성공"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Void> deleteCurrentUser(@CurrentUser UserPrincipal principal) {
+    public ResponseEntity<String> deleteCurrentUser(@CurrentUser UserPrincipal principal) {
         log.info("Request to delete current user: {}", principal.getUserId());
         userService.deleteUser(principal.getUserId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("사용자 탈퇴 처리를 완료했습니다.");
     }
 
     /**
@@ -144,9 +159,13 @@ public class UserController {
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/admin/{userId}")
-    public ResponseEntity<UserPrincipal> getAnyUser(@PathVariable Long userId) {
+    public ResponseEntity<UserResponse> getAnyUser(@PathVariable Long userId) {
         User user = userService.findById(userId);
-        return ResponseEntity.ok(UserPrincipal.from(user));
+        return ResponseEntity.ok(UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .build());
     }
 
     /**
@@ -156,10 +175,14 @@ public class UserController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/admin")
     @Transactional
-    public ResponseEntity<List<UserPrincipal>> getAllUsers() {
-        List<UserPrincipal> users = userService.findAllUsers()
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        List<UserResponse> users = userService.findAllUsers()
                 .stream()
-                .map(UserPrincipal::from)
+                .map(user -> UserResponse.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .nickname(user.getNickname())
+                .build())
                 .toList();
         return ResponseEntity.ok(users);
     }
