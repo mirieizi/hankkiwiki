@@ -1,6 +1,8 @@
 package com.hankki.domain.recommend.service;
 
+import com.hankki.domain.recommend.dto.FoodResponseDto;
+import com.hankki.domain.user.constant.Gender;
 
-
-public class RecommendService {
+public interface RecommendService {
+    FoodResponseDto recommendRandomFood(Gender gender);
 }

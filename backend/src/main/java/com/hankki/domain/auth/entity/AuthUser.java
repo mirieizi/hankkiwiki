@@ -1,5 +1,7 @@
 package com.hankki.domain.auth.entity;
 
+import com.hankki.domain.user.constant.Gender;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.hankki.domain.user.entity.User;
@@ -8,17 +10,21 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Getter
 public class AuthUser implements UserDetails {
-    private final User user;
 
-    public AuthUser(User user) {
+    private final User user;
+    private final Gender gender;
+
+    public AuthUser(User user, Gender gender) {
         this.user = user;
+        this.gender = gender;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return user.getRoles().stream()
-            .map(role -> (GrantedAuthority) () -> role.name())
+            .map(role -> (GrantedAuthority) role::name)
             .collect(Collectors.toSet());
     }
 
@@ -56,11 +62,7 @@ public class AuthUser implements UserDetails {
      * 직접 User를 반환하지 않고 UserPrincipal로 감싸서 반환
      */
     public UserPrincipal getUserPrincipal() {
-        return new UserPrincipal(this.user);
-    }
-
-    public User getUser() {
-        return this.user;
+        return new UserPrincipal(this.user, this.gender);
     }
 
 }
