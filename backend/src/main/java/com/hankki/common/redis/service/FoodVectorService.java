@@ -2,6 +2,7 @@ package com.hankki.common.redis.service;
 
 import com.hankki.common.redis.util.RedisVectorUtil;
 import com.hankki.domain.food.repository.FoodRepository;
+import com.hankki.domain.user.constant.Gender;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,51 +10,78 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+
+/**
+ * 벡터 CSV 파일을 읽고, 음식 정보와 매핑하여 Redis에 벡터 데이터를 저장하는 서비스입니다.
+ *
+ * - 벡터 파일은 성별(gender)에 따라 구분된 CSV 파일로 제공되며,
+ *   각 행에는 food_name과 PCA 기반의 벡터 값(PC1~PC9)이 포함되어 있습니다.
+ *
+ * - CSV 파일의 food_name을 기준으로 MySQL의 food 테이블과 매칭한 뒤,
+ *   해당 food.id를 Redis의 key로 사용하여 벡터를 저장합니다.
+ *
+ * - 저장된 Redis 키 형식은 다음과 같습니다:
+ *   food_male:{foodId}, food_female:{foodId}
+ *
+ * - 저장되는 필드 이름은 "vector"이며, float[] 벡터는 float32 byte 배열로 변환되어 저장됩니다.
+ *
+ * - 애플리케이션 시작 시 자동으로 실행되며, 잘못된 데이터나 매핑 실패는 로그로 출력됩니다.
+ */
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FoodVectorService {
 
+    private static final int VECTOR_DIMENSION = 9;
+
     private final FoodRepository foodRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @PostConstruct
     public void loadAllVectors() {
-        loadVectors("/vectors/male_vectors.csv", "male");
-        loadVectors("/vectors/female_vectors.csv", "female");
+        loadVectors(Gender.MALE);
+        loadVectors(Gender.FEMALE);
     }
 
-    private void loadVectors(String resourcePath, String gender) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream(resourcePath), StandardCharsets.UTF_8))) {
+    private void loadVectors(Gender gender) {
+        String resourcePath = String.format("/vectors/%s_vectors.csv", gender.key());
 
-            String header = reader.readLine(); // skip header
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                String[] tokens = line.split(",");
-                String foodName = tokens[0].trim();
-                float[] vector = new float[9];
-                for (int i = 0; i < 9; i++) {
-                    vector[i] = Float.parseFloat(tokens[i + 1]);
-                }
-
-                foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
-                    String redisKey = String.format("food_%s:%d", gender, food.getId());
-                    byte[] vectorBytes = RedisVectorUtil.floatArrayToBytes(vector);
-                    redisTemplate.opsForHash().put(redisKey, "vector", vectorBytes);
-                }, () -> {
-                    log.warn("[FoodVectorService] DB 조회 실패: {} - {}", gender, foodName);
-                });
+        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                log.error("[FoodVectorService] 벡터 파일이 존재하지 않습니다: {}", resourcePath);
+                return;
             }
 
-            log.info("[FoodVectorService] DB 조회 성공: {}", gender);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
 
+                String line = reader.readLine(); // header
+
+                while ((line = reader.readLine()) != null) {
+                    String[] tokens = line.split(",");
+                    String foodName = tokens[0].trim();
+                    float[] vector = new float[VECTOR_DIMENSION];
+                    for (int i = 0; i < VECTOR_DIMENSION; i++) {
+                        vector[i] = Float.parseFloat(tokens[i + 1]);
+                    }
+
+                    foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
+                        String redisKey = String.format("food_%s:%d", gender.key(), food.getId());
+                        byte[] vectorBytes = RedisVectorUtil.floatArrayToBytes(vector);
+                        redisTemplate.opsForHash().put(redisKey, "vector", vectorBytes);
+                    }, () -> {
+                        log.warn("[FoodVectorService] 매칭 실패 - gender={}, foodName={}", gender.key(), foodName);
+
+                    });
+                }
+
+                log.info("[FoodVectorService] 벡터 로딩 완료 - gender={}", gender.key());
+            }
         } catch (Exception e) {
-            log.error("[FoodVectorService] DB 저장 실패: {} - {}", gender, e.getMessage(), e);
+            log.error("[FoodVectorService] 벡터 로딩 실패 - gender={}, 이유={}", gender.key(), e.getMessage(), e);
         }
     }
 
