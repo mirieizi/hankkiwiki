@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hankki.domain.auth.entity.AuthUser;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
+import com.hankki.domain.diet.dto.DietResponseDto;
 import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
+import com.hankki.domain.diet.dto.DietUpdateRequestDto;
 import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.diet.service.DietFacade;
 import com.hankki.domain.user.entity.User;
@@ -98,7 +100,7 @@ public class DietController {
             @AuthenticationPrincipal User userDetails,
             @RequestParam Long dietId
     ){
-        dietFacade.deleteDietById(userDetails.getUsername(), dietId);
+//        dietFacade.deleteDietById(userDetails.getUsername(), dietId);
         return ResponseEntity.ok("Diet 삭제 성공");
     }
 
