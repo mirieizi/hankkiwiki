@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hankki.domain.user.dto.UserProfileResponse;
-import com.hankki.domain.user.dto.UpdateUserResponse;
+import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.repository.UserHealthInfoRepository;
 import com.hankki.domain.user.repository.UserRepository;
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public User updateUser(Long userId, UpdateUserResponse request) {
+    public User updateUser(Long userId, UpdateUserRequest request) {
         log.info("Request to update user ID {}: newEmail={}, newNickname={}, newPassword={}",
                  userId, request.getEmail(), request.getNickname(), request.getPassword());
 

@@ -2,7 +2,7 @@ package com.hankki.domain.user.service;
 
 import java.util.List;
 
-import com.hankki.domain.user.dto.UpdateUserResponse;
+import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.dto.UserProfileResponse;
 
@@ -17,7 +17,7 @@ public interface UserService {
     User findById(Long userId);
 
     /** 사용자 정보 수정 */
-    User updateUser(Long userId, UpdateUserResponse request);
+    User updateUser(Long userId, UpdateUserRequest request);
 
     /** 사용자 삭제 */
     void deleteUser(Long userId);

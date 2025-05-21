@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class FoodInitializer {
 
-    private static final String CSV_FILE_NAME = "/food_data.csv";
+    private static final String CSV_FILE_NAME = "/mini_food_data.csv";
 
     private final FoodRepository foodRepository;
 
