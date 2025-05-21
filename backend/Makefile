@@ -141,19 +141,19 @@ wre-notebook: wdown wbuild-notebook
 
 # mysql
 
-include .env
-export
-
 DB_CONTAINER = mysql-1
 CSV_FILE = ./src/main/resources/food_data.csv
 CSV_CONTAINER_PATH = /var/lib/mysql-files/food_data.csv
 
+# wimport-food: .env 파일 자동 export 후 커맨드 실행
 wimport-food:
-	docker cp $(CSV_FILE) $(DB_CONTAINER):$(CSV_CONTAINER_PATH)
-	docker exec -i $(DB_CONTAINER) mysql -u$(HANKKI_USERNAME) -p$(HANKKI_PASSWORD) $(HANKKI_DATABASE) -e "\
+	@set -o allexport && source .env && set +o allexport; \
+	docker cp $(CSV_FILE) $(DB_CONTAINER):$(CSV_CONTAINER_PATH); \
+	docker exec -i $(DB_CONTAINER) mysql -u$$HANKKI_USERNAME -p$$HANKKI_PASSWORD $$HANKKI_DATABASE -e "\
 	LOAD DATA INFILE '$(CSV_CONTAINER_PATH)' \
 	INTO TABLE food \
 	FIELDS TERMINATED BY ',' ENCLOSED BY '\"' \
 	LINES TERMINATED BY '\n' \
 	IGNORE 1 LINES \
 	(food_name, major_category, sub_category, serving_size, kcal, moisture, carbohydrate, protein, fat, sugar, sodium, cholesterol);"
+	
