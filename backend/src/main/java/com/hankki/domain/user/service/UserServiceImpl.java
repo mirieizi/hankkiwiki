@@ -22,6 +22,7 @@ import com.hankki.domain.auth.entity.RefreshToken;
 import com.hankki.domain.auth.repository.RefreshTokenRepository;
 import com.hankki.domain.user.dto.UpdateUserResponse;
 import com.hankki.domain.user.entity.User;
+import com.hankki.domain.user.repository.UserHealthInfoRepository;
 import com.hankki.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    private final UserHealthInfoRepository userHealthInfoRepository;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -175,6 +177,7 @@ public class UserServiceImpl implements UserService {
             log.error("Cannot delete, user not found ID: {}", userId);
             throw new IllegalArgumentException("User not found: " + userId);
         }
+        userHealthInfoRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
         log.debug("Deleted user with ID: {}", userId);
     }
