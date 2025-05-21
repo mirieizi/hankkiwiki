@@ -2,7 +2,7 @@ package com.hankki.domain.user.service;
 
 import com.hankki.domain.user.dto.DailyCalorieResponse;
 import com.hankki.domain.user.dto.UpdateUserHealthRequest;
-import com.hankki.domain.user.dto.UpdateUserResponse;
+import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.dto.UserHealthInfoResponse;
 import com.hankki.domain.user.dto.UserHealthRequest;
 import com.hankki.domain.user.entity.UserHealthInfo;

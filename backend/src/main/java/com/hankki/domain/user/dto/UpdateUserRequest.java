@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class UpdateUserResponse {
+public class UpdateUserRequest {
 
     @Email(message = "올바른 이메일 형식이어야 합니다.")
     @NotBlank(message = "이메일은 필수 입력입니다.")
