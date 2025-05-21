@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * 사용자가 추천받은 음식 로그(중복 추천 방지용)
+ */
 @Entity
 @Table(name = "user_food_log")
 @Getter

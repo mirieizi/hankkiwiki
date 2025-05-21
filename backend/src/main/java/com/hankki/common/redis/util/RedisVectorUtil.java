@@ -12,22 +12,22 @@ import java.nio.ByteBuffer;
  */
 public class RedisVectorUtil {
 
-    // float 배열을 Redis 저장용 byte 배열로 변환 (float32 → 4 bytes × N)
-    public static byte[] floatArrayToBytes(float[] vector) {
-        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4);
-        for (float value : vector) {
-            buffer.putFloat(value);
+    // double 배열을 Redis 저장용 byte 배열로 변환 (float32 → 4 bytes × N)
+    public static byte[] doubleArrayToBytes(double[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(Double.BYTES * vector.length);
+        for (double v : vector) {
+            buffer.putDouble(v);
         }
         return buffer.array();
     }
 
-    // Redis에서 가져온 byte[]를 다시 float[]로 변환
-    public static float[] bytesToFloatArray(byte[] bytes) {
-        int length = bytes.length / 4;
-        float[] result = new float[length];
+    // Redis에서 가져온 byte[]를 다시 double[]로 변환
+    public static double[] bytesToDoubleArray(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        for (int i = 0; i < length; i++) {
-            result[i] = buffer.getFloat();
+        int len = bytes.length / Double.BYTES;
+        double[] result = new double[len];
+        for (int i = 0; i < len; i++) {
+            result[i] = buffer.getDouble();
         }
         return result;
     }

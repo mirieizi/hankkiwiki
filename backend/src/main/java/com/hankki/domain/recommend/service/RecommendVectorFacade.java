@@ -18,20 +18,20 @@ public class RecommendVectorFacade {
 
     public Long findNeutralFoodFromRecent(Long userId, Gender gender) {
         List<Long> recentFoodIds = loadRecentFoodIds(userId);
-        float[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
         List<Long> sortedIds = redisVectorSearcher.knnSearch(gender, avgVector, 11);
         return sortedIds.get(sortedIds.size() / 2); // 중간값
     }
 
     public Long findMostSimilarFoodFromRecent(Long userId, Gender gender) {
         List<Long> recentFoodIds = loadRecentFoodIds(userId);
-        float[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
         return redisVectorSearcher.knnSearch(gender, avgVector, 1).get(0);
     }
 
     public Long findFurthestFoodFromRecent(Long userId, Gender gender) {
         List<Long> recentFoodIds = loadRecentFoodIds(userId);
-        float[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
         return redisVectorSearcher.furthestSearch(gender, avgVector);
     }
 

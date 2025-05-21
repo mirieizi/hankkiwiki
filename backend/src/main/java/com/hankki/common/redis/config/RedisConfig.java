@@ -12,7 +12,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  * Spring Boot 애플리케이션에서 Redis와의 연결을 설정하는 구성 클래스입니다.
  *
  * - Redis 서버와의 연결을 위한 `LettuceConnectionFactory`를 정의합니다.
- *   기본 설정은 localhost:6379이며, application.yml에서 오버라이드할 수 있습니다.
+ *   기본 설정은 redis:6379이며, application.yml에서 오버라이드할 수 있습니다.
  *
  * - Redis와 데이터를 주고받기 위한 `RedisTemplate<String, Object>` Bean을 제공합니다.
  *   이 템플릿은 해시(Hash) 구조에서 vector 데이터를 저장하거나 조회할 때 사용됩니다.
@@ -28,7 +28,7 @@ public class RedisConfig {
 
     @Bean
     public LettuceConnectionFactory redistConnectionFactory() {
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", 6379));
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration("redis", 6379));
     }
 
     @Bean

@@ -21,23 +21,23 @@ public class Food {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String foodName;
 	
 	@Column(nullable = false)
 	private String majorCategory;
 	
-	@Column
+	@Column(nullable = false)
 	private String subCategory;
 	
-	@Column
-	private int amountStandard;
+	@Column(nullable = false)
+	private double servingSize;
+	
+	@Column(nullable = false)
+	private double kcal;
 	
 	@Column
-	private int kcal;
-	
-	@Column
-	private int moisture;
+	private double moisture;
 	
 	@Column(nullable = false)
 	private double carbohydrate;

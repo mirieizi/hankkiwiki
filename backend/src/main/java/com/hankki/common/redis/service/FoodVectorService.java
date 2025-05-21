@@ -37,22 +37,15 @@ import java.nio.charset.StandardCharsets;
 public class FoodVectorService {
 
     private static final int VECTOR_DIMENSION = 9;
+    private static final String VECTOR_FILE_PATH = "/vectors/food_embeddings.csv";
 
     private final FoodRepository foodRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @PostConstruct
-    public void loadAllVectors() {
-        loadVectors(Gender.MALE);
-        loadVectors(Gender.FEMALE);
-    }
-
-    private void loadVectors(Gender gender) {
-        String resourcePath = String.format("/vectors/%s_vectors.csv", gender.key());
-
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+    public void loadVectors() {
+        try (InputStream is = getClass().getResourceAsStream(VECTOR_FILE_PATH)) {
             if (is == null) {
-                log.error("[FoodVectorService] 벡터 파일이 존재하지 않습니다: {}", resourcePath);
+                log.error("[FoodVectorService] 벡터 파일이 존재하지 않습니다: {}", VECTOR_FILE_PATH);
                 return;
             }
 
@@ -62,26 +55,39 @@ public class FoodVectorService {
 
                 while ((line = reader.readLine()) != null) {
                     String[] tokens = line.split(",");
-                    String foodName = tokens[0].trim();
-                    float[] vector = new float[VECTOR_DIMENSION];
+
+                    String foodName = tokens[0].replaceAll("[\\s_]", "").trim();
+                    String genderStr = tokens[1].trim();
+
+                    Gender gender;
+                    try {
+                        gender = Gender.valueOf(genderStr.toUpperCase());
+                    } catch (IllegalArgumentException ex) {
+                        log.warn("[FoodVectorService] 잘못된 gender 값: '{}'", genderStr);
+                        continue;
+                    }
+
+                    double[] vector = new double[VECTOR_DIMENSION];
                     for (int i = 0; i < VECTOR_DIMENSION; i++) {
-                        vector[i] = Float.parseFloat(tokens[i + 1]);
+                        vector[i] = Double.parseDouble(tokens[i + 2]);
                     }
 
                     foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
                         String redisKey = String.format("food_%s:%d", gender.key(), food.getId());
-                        byte[] vectorBytes = RedisVectorUtil.floatArrayToBytes(vector);
+                        byte[] vectorBytes = RedisVectorUtil.doubleArrayToBytes(vector);
                         redisTemplate.opsForHash().put(redisKey, "vector", vectorBytes);
                     }, () -> {
-                        log.warn("[FoodVectorService] 매칭 실패 - gender={}, foodName={}", gender.key(), foodName);
-
+                        log.warn("[FoodVectorService] 매칭 실패 - foodName='{}', gender='{}'", foodName, genderStr);
+                        for (char c : foodName.toCharArray()) {
+                            log.warn("char='{}', code={}", c, (int)c);
+                        }
                     });
                 }
 
-                log.info("[FoodVectorService] 벡터 로딩 완료 - gender={}", gender.key());
+                log.info("[FoodVectorService] 벡터 로딩 완료");
             }
         } catch (Exception e) {
-            log.error("[FoodVectorService] 벡터 로딩 실패 - gender={}, 이유={}", gender.key(), e.getMessage(), e);
+            log.error("[FoodVectorService] 벡터 로딩 중 예외 발생: {}", e.getMessage(), e);
         }
     }
 

@@ -23,14 +23,14 @@ public class RedisVectorSearcher {
     /**
      * 주어진 음식 ID 리스트를 기반으로 벡터를 조회하고 평균 벡터 생성
      */
-    public float[] computeAverageVector(List<Long> foodIds, Gender gender) {
-        List<float[]> vectors = foodIds.stream()
+    public double[] computeAverageVector(List<Long> foodIds, Gender gender) {
+        List<double[]> vectors = foodIds.stream()
                 .map(id -> {
                     String key = String.format("food_%s:%d", gender.key(), id);
                     String encoded = redisCommands.get(key + "::vector");
                     if (encoded == null) throw new IllegalStateException("벡터가 존재하지 않음: " + key);
                     byte[] raw = Base64.getDecoder().decode(encoded);
-                    return RedisVectorUtil.bytesToFloatArray(raw);
+                    return RedisVectorUtil.bytesToDoubleArray(raw);
                 })
                 .collect(Collectors.toList());
 
@@ -44,9 +44,9 @@ public class RedisVectorSearcher {
      * @param topK 검색할 유사 음식 수
      * @return 유사한 foodId 리스트
      */
-    public List<Long> knnSearch(Gender gender, float[] queryVector, int topK) {
+    public List<Long> knnSearch(Gender gender, double[] queryVector, int topK) {
         String index = String.format("idx:food_%s", gender.key());
-        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.floatArrayToBytes(queryVector));
+        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
 
         String query = String.format(
                 "*=>[KNN %d @vector $vec_param] RETURN 1 food_id SORTBY __vector_score ASC LIMIT 0 %d",
@@ -84,9 +84,9 @@ public class RedisVectorSearcher {
     /**
      * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 1개 반환
      */
-    public Long furthestSearch(Gender gender, float[] queryVector) {
+    public Long furthestSearch(Gender gender, double[] queryVector) {
         String index = String.format("idx:food_%s", gender.name().toLowerCase());
-        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.floatArrayToBytes(queryVector));
+        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
 
         String query = "*=>[KNN 1 @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 1";
 

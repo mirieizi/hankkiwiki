@@ -2,12 +2,14 @@ package com.hankki.domain.food.service;
 
 import com.hankki.domain.food.entity.Food;
 import com.hankki.domain.food.repository.FoodRepository;
+import com.opencsv.CSVReader;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
@@ -26,42 +28,65 @@ import java.nio.charset.StandardCharsets;
  */
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
 public class FoodInitializer {
 
+    private static final String CSV_FILE_NAME = "/food_data.csv";
+
     private final FoodRepository foodRepository;
 
-    @PostConstruct
     public void init() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream("/food_data.csv"), StandardCharsets.UTF_8))) {
+        try (InputStream is = getClass().getResourceAsStream(CSV_FILE_NAME);
+             CSVReader reader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
 
-            String line = reader.readLine(); // header
-            while ((line = reader.readLine()) != null) {
-                String[] tokens = line.split(",");
+            String[] tokens;
+            reader.readNext(); // skip header
+
+            while ((tokens = reader.readNext()) != null) {
+                if (tokens.length < 12) {
+                    log.warn("[FoodInitializer] 컬럼 수 부족 - skip: {}", String.join(",", tokens));
+                    continue;
+                }
+
+                String foodName = tokens[0].replaceAll("[\\s_]", "").trim();
+                if (foodRepository.findByFoodName(foodName).isPresent()) {
+                    log.info("이미 존재: {}", foodName);
+                    continue;
+                }
 
                 Food food = Food.builder()
-                        .foodName(tokens[0])
-                        .majorCategory(tokens[1])
-                        .subCategory(tokens[2])
-                        .amountStandard(Integer.parseInt(tokens[3]))
-                        .kcal(Integer.parseInt(tokens[4]))
-                        .moisture(Integer.parseInt(tokens[5]))
-                        .carbohydrate(Double.parseDouble(tokens[6]))
-                        .protein(Double.parseDouble(tokens[7]))
-                        .fat(Double.parseDouble(tokens[8]))
-                        .sugar(Double.parseDouble(tokens[9]))
-                        .sodium(Double.parseDouble(tokens[10]))
-                        .cholesterol(Double.parseDouble(tokens[11]))
+                        .foodName(foodName)
+                        .majorCategory(tokens[1].trim())
+                        .subCategory(tokens[2].trim())
+                        .servingSize(safeParseDouble(tokens[3], 0))
+                        .kcal(safeParseDouble(tokens[4], 0))
+                        .moisture(safeParseDouble(tokens[5], 0))
+                        .carbohydrate(safeParseDouble(tokens[6], 0))
+                        .protein(safeParseDouble(tokens[7], 0))
+                        .fat(safeParseDouble(tokens[8], 0))
+                        .sugar(safeParseDouble(tokens[9], 0))
+                        .sodium(safeParseDouble(tokens[10], 0))
+                        .cholesterol(safeParseDouble(tokens[11], 0))
                         .build();
 
                 foodRepository.save(food);
             }
             log.info("[FoodInitializer] Food Data 로드 성공");
+
         } catch (Exception e) {
-            log.warn("[FoodInitializer] Food Date 로드 실패: {}", e.getMessage(), e);
+            log.warn("[FoodInitializer] Food Data 로드 실패: {}", e.getMessage(), e);
         }
 
+    }
+
+    private double safeParseDouble(String value, double defaultValue) {
+        try {
+            return value == null || value.trim().isEmpty()
+                    ? defaultValue
+                    : Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

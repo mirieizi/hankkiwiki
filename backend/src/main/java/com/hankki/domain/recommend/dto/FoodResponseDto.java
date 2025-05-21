@@ -13,9 +13,9 @@ public class FoodResponseDto {
     private String foodName;
     private String majorCategory;
     private String subCategory;
-    private int amountStandard;
-    private int kcal;
-    private int moisture;
+    private Double servingSize;
+    private double kcal;
+    private double moisture;
     private double carbohydrate;
     private double protein;
     private double fat;
@@ -29,7 +29,7 @@ public class FoodResponseDto {
                 .foodName(food.getFoodName())
                 .majorCategory(food.getMajorCategory())
                 .subCategory(food.getSubCategory())
-                .amountStandard(food.getAmountStandard())
+                .servingSize(food.getServingSize())
                 .kcal(food.getKcal())
                 .moisture(food.getMoisture())
                 .carbohydrate(food.getCarbohydrate())
