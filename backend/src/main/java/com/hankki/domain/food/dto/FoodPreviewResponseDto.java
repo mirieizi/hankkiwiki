@@ -1,6 +1,5 @@
 package com.hankki.domain.food.dto;
 
-import com.hankki.domain.food.constant.MajorCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,7 @@ public class FoodPreviewResponseDto {
 
     @NotBlank
     @Schema(description = "대분류", example = "밥류")
-    private MajorCategory majorCategory;
+    private String majorCategory;
 
     @NotBlank
     @Schema(description = "1인분 기준 칼로리", example = "300")

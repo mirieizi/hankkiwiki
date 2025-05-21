@@ -61,7 +61,14 @@ public class WebSecurityConfig {
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // 에러 핸들러
-                .requestMatchers("/error").permitAll()
+                .requestMatchers(
+                        "/error",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "/swagger/**"
+                        ).permitAll()
                 // 프리플라이트 OPTIONS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // 인증 불필요 경로 (auth/** 패턴으로 모든 인증 관련 엔드포인트 허용)
@@ -114,5 +121,4 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }

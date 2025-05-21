@@ -18,8 +18,10 @@ public class DietMealItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "diet_id", nullable = false)
     private Long dietId;
 
-    private Long mealItemId;
+    @Column(name = "food_id", nullable = false)
+    private Long foodId;
 
 }

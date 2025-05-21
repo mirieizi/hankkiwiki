@@ -1,10 +1,6 @@
 package com.hankki.domain.food.entity;
 
-import com.hankki.domain.food.constant.MajorCategory;
-import com.hankki.domain.food.constant.MajorCategoryConverter;
-
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,34 +14,33 @@ import lombok.*;
 @Setter
 @Builder
 @Entity
-@Table(name = "meal_item")
+@Table(name = "food")
 public class Food {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String foodName;
 	
 	@Column(nullable = false)
-	@Convert(converter = MajorCategoryConverter.class)
-	private MajorCategory majorCategory;
-	
-	@Column
-	private String subCategory;
-	
-	@Column
-	private int amountStandard;
-	
-	@Column
-	private int kcal;
-	
-	@Column
-	private int moisture;
+	private String majorCategory;
 	
 	@Column(nullable = false)
-	private double carbohydrate; 
+	private String subCategory;
+	
+	@Column(nullable = false)
+	private double servingSize;
+	
+	@Column(nullable = false)
+	private double kcal;
+	
+	@Column
+	private double moisture;
+	
+	@Column(nullable = false)
+	private double carbohydrate;
 
 	@Column(nullable = false)
 	private double protein;

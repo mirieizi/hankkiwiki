@@ -37,7 +37,6 @@ public class AuthController {
      * POST /auth/signup
      */
     @PostMapping("/signup")
-    @Transactional
     public ResponseEntity<Void> signup(@RequestBody SignUpRequest request) {
         log.info("Request to sign up user: {}", request.getEmail());
         authService.signUp(request);
@@ -49,7 +48,6 @@ public class AuthController {
      * POST /auth/login
      */
     @PostMapping("/login")
-    @Transactional
     public ResponseEntity<JwtTokenResponse> login(@RequestBody LoginRequest request) {
         log.info("Request to login user: {}", request.getEmail());
         JwtTokenResponse tokens = authService.login(request);
@@ -61,7 +59,6 @@ public class AuthController {
      * DELETE /auth/logout
      */
     @DeleteMapping("/logout")
-    @Transactional
     public ResponseEntity<Void> logout(@CurrentUser UserPrincipal principal) {
         log.info("Request to logout token: {}", principal.getEmail());
         authService.logout(principal.getUserId());

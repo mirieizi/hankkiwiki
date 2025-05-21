@@ -52,13 +52,18 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-		<!-- Redis -->
-		<!--
+		<!-- Redis (Lettuce 기반) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
-		-->
+
+		<!-- Commons Pool (Lettuce 커넥션 풀 optional) -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.12.0</version>
+		</dependency>
 
 		<!-- MySQL -->
 		<dependency>
@@ -147,6 +152,12 @@
 		  <scope>test</scope>
 		</dependency>
 
+		<!-- opencsv, String[] 배열로 row 읽어 따옴표 처리 정확히 파싱 -->
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.8</version>
+		</dependency>
 
 	</dependencies>
 

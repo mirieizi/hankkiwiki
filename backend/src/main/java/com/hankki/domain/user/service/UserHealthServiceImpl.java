@@ -1,8 +1,6 @@
 package com.hankki.domain.user.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +22,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserHealthServiceImpl implements UserHealthService {
-	private static final Logger log = LoggerFactory.getLogger(UserHealthServiceImpl.class);
 
 	private final UserHealthInfoRepository healthRepo;
 	private final UserRepository userRepo;
@@ -41,12 +39,13 @@ public class UserHealthServiceImpl implements UserHealthService {
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
-		UserHealthInfo info = UserHealthInfo.builder().gender(request.getGender()).height(request.getHeight())
-				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).userId(userId).build(); // recommendedCalorie는
-																														// 엔티티
-																														// 콜백으로
-																														// 자동
-																														// 계산
+		UserHealthInfo info = UserHealthInfo.builder()
+				.gender(request.getGender())
+				.height(request.getHeight())
+				.weight(request.getWeight())
+				.age(request.getAge())
+				.activityFactor(request.getActivityFactor())
+				.build();
 
 		return healthRepo.save(info).getId();
 	}
@@ -107,5 +106,4 @@ public class UserHealthServiceImpl implements UserHealthService {
 		return healthRepo.findDailyCalorieByUserId(userId)
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
 	}
-
 }
