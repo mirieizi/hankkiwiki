@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.auth.dto.UserPrincipal;
 import java.util.Collection;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -23,8 +22,13 @@ public class AuthUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (user.getRoles() == null) {
+            throw new IllegalStateException("User roles must not be null");
+        }
+
         return user.getRoles().stream()
-            .map(role -> (GrantedAuthority) role::name)
+            .filter(role -> role != null)
+            .map(role -> (GrantedAuthority) () -> "ROLE_" + role.name())  // 권한 prefix 명시
             .collect(Collectors.toSet());
     }
 
