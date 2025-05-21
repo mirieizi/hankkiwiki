@@ -3,11 +3,14 @@ package com.hankki.domain.user.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.hankki.domain.user.dto.DailyCalorieResponse;
 import com.hankki.domain.user.entity.UserHealthInfo;
+
+import jakarta.transaction.Transactional;
 
 public interface UserHealthInfoRepository extends JpaRepository<UserHealthInfo, Long> {
     
@@ -21,4 +24,9 @@ public interface UserHealthInfoRepository extends JpaRepository<UserHealthInfo, 
        WHERE u.userId = :userId
     """)
     Optional<DailyCalorieResponse> findDailyCalorieByUserId(@Param("userId") Long userId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM UserHealthInfo u WHERE u.userId = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }

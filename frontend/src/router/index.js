@@ -14,6 +14,7 @@ import HistoryRecommend from "@/views/historyRecommend.vue";
 import AiRecommend from "@/views/AiRecommend.vue";
 import RegisterFood from "@/views/RegisterFood.vue";
 import Calendar from "@/views/Calendar.vue";
+import KakaoMap from "@/views/KakaoMap.vue";
 
 // Route definitions
 const routes = [
@@ -36,6 +37,7 @@ const routes = [
   // Food & Calendar (require auth)
   { path: "/food/register", name: "RegisterFood", component: RegisterFood },
   { path: "/calendar", name: "Calendar", component: Calendar },
+  { path: "/kakao-map", name: "kakaomap", component: KakaoMap },
 ];
 
 const router = createRouter({

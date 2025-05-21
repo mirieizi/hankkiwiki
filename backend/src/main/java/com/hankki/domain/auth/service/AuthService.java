@@ -103,4 +103,13 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(userId);
         log.debug("All refresh tokens invalidated for user ID: {}", userId);
     }
+    
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname);
+    }
+
+
+    public boolean isEmailAvailable(String email) {
+        return !userRepository.existsByEmail(email);
+    }
 }
