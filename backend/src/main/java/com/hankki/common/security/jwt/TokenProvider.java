@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import com.hankki.domain.auth.constant.Role;
 import com.hankki.domain.user.entity.User;
 
 import io.jsonwebtoken.Claims;
@@ -72,7 +74,10 @@ public class TokenProvider {
             jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8)
         );  // [보안] SecretKey는 서버 내에만 보관
 
-        List<String> roles = Collections.singletonList("ROLE_USER");  // [피드백 반영] roles claim 추가
+        // List<String> roles = Collections.singletonList("ROLE_USER");  // [피드백 반영] roles claim 추가
+        List<String> roles = user.getRoles().stream()
+            .map(Role::name)          // Role.ROLE_USER -> "ROLE_USER"
+            .collect(Collectors.toList());
 
         return Jwts.builder()
             .setHeaderParam(Header.TYPE, Header.JWT_TYPE)

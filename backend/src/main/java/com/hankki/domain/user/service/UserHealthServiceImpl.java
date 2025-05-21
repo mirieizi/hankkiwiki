@@ -35,7 +35,6 @@ public class UserHealthServiceImpl implements UserHealthService {
 	 */
 	@Override
 	@Transactional
-	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 	public Long registerHealthInfo(Long userId, UserHealthRequest request) {
 		log.info("Request to register HealthInfo for userId={}", userId);
 
@@ -43,7 +42,7 @@ public class UserHealthServiceImpl implements UserHealthService {
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
 		UserHealthInfo info = UserHealthInfo.builder().gender(request.getGender()).height(request.getHeight())
-				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).build(); // recommendedCalorie는
+				.weight(request.getWeight()).age(request.getAge()).activityFactor(request.getActivityFactor()).userId(userId).build(); // recommendedCalorie는
 																														// 엔티티
 																														// 콜백으로
 																														// 자동
@@ -57,7 +56,6 @@ public class UserHealthServiceImpl implements UserHealthService {
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 	public UserHealthInfoResponse findHealthById(Long userId) {
 		UserHealthInfo info = healthRepo.findByUserId(userId)
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
@@ -69,7 +67,6 @@ public class UserHealthServiceImpl implements UserHealthService {
 	 */
 	@Override
 	@Transactional
-	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 	public UserHealthInfo updateHealthInfo(Long userId, UpdateUserHealthRequest request) {
 		UserHealthInfo info = healthRepo.findByUserId(userId)
 				.orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
@@ -87,7 +84,6 @@ public class UserHealthServiceImpl implements UserHealthService {
 
 	@Override
 	@Transactional
-	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 	public void deleteHealthInfo(Long userId) {
 		// 1) 사용자 존재 여부 확인
 		userRepo.findById(userId).orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
@@ -103,7 +99,6 @@ public class UserHealthServiceImpl implements UserHealthService {
 
 	@Override
 	@Transactional(readOnly = true)
-	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 	public DailyCalorieResponse getUserDailyCalorie(Long userId) {
 		// 1) 사용자 존재 여부 확인
 		userRepo.findById(userId).orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));

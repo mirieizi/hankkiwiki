@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.common.security.principal.CurrentUser;
 import com.hankki.domain.auth.dto.UserPrincipal;
 import com.hankki.domain.user.dto.DailyCalorieResponse;
@@ -34,7 +35,6 @@ public class UserHealthController {
      * POST /user/me/health
      */
     @PostMapping("/health")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Long> registerOwnHealth(@CurrentUser UserPrincipal principal,
                                                   @Validated @RequestBody UserHealthRequest request) {
         Long userId = principal.getUserId();
@@ -48,11 +48,15 @@ public class UserHealthController {
      * GET /user/me/health
      */
     @GetMapping("/health")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<UserHealthInfoResponse> getOwnHealth(@CurrentUser UserPrincipal principal) {
-        Long userId = principal.getUserId();
-        UserHealthInfoResponse info = userHealthService.findHealthById(userId);
-        return ResponseEntity.ok(info);
+
+        try{
+            Long userId = principal.getUserId();
+            UserHealthInfoResponse info = userHealthService.findHealthById(userId);
+            return ResponseEntity.ok(info);
+        } catch(HankkiWikiException e){
+            return ResponseEntity.noContent().build();
+        }
     }
 
     /**
@@ -60,7 +64,6 @@ public class UserHealthController {
      * PATCH /user/me/health
      */
     @PatchMapping("/health")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<UserHealthInfo> updateOwnHealth(@CurrentUser UserPrincipal principal,
                                                           @Validated @RequestBody UpdateUserHealthRequest request) {
         Long userId = principal.getUserId();
@@ -73,7 +76,6 @@ public class UserHealthController {
      * DELETE /user/me/health
      */
     @DeleteMapping("/health")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOwnHealth(@CurrentUser UserPrincipal principal) {
         Long userId = principal.getUserId();
         userHealthService.deleteHealthInfo(userId);
@@ -85,7 +87,6 @@ public class UserHealthController {
      * GET /user/me/health/dailycalorie
      */
     @GetMapping("/health/dailycalorie")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<DailyCalorieResponse> getUserDailyCalorie(@CurrentUser UserPrincipal principal){
         Long userId = principal.getUserId();
         DailyCalorieResponse calorie =  userHealthService.getUserDailyCalorie(userId);
