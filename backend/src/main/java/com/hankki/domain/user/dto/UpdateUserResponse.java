@@ -11,12 +11,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class UpdateUserRequest {
+public class UpdateUserResponse {
 
     @Email(message = "올바른 이메일 형식이어야 합니다.")
     @NotBlank(message = "이메일은 필수 입력입니다.")

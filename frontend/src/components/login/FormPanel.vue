@@ -1,24 +1,38 @@
-<!-- src/components/login/FormPanel.vue -->
 <template>
   <div class="form-panel">
     <h2>{{ title }}</h2>
     <p>{{ subtitle }}</p>
 
     <form @submit.prevent="onSubmit">
-      <input v-if="!signIn" v-model.trim="form.nickname" @blur="checkNicknameDup" type="text" placeholder="닉네임 (최대10자, 공백·특수문자 금지)" maxlength="10" required />
-      <p v-if="dupError.nickname" class="error">{{ dupError.nickname }}</p>
+      <!-- 닉네임 (회원가입 모드에서만) -->
+      <template v-if="!signIn">
+        <div class="field-group">
+          <input v-model.trim="form.nickname" type="text" placeholder="닉네임 (최대10자, 공백·특수문자 금지)" maxlength="10" required :disabled="isCheckingDup" />
+          <button type="button" @click="onCheckEmailDup" :disabled="isCheckingDup || !form.nickname">중복 확인</button>
+        </div>
+        <p v-if="dupError.nickname" class="error">{{ dupError.nickname }}</p>
+        <p v-else-if="nicknameChecked" class="success">사용 가능한 닉네임입니다.</p>
+      </template>
 
-      <input v-model.trim="form.email" @blur="checkEmailDup" type="email" placeholder="이메일" required />
+      <!-- 이메일 -->
+      <div class="field-group">
+        <input v-model.trim="form.email" type="email" placeholder="이메일" required :disabled="isCheckingDup" />
+        <button v-if="!signIn" type="button" @click="checkEmailDup" :disabled="isCheckingDup || !form.email">중복 확인</button>
+      </div>
       <p v-if="dupError.email" class="error">{{ dupError.email }}</p>
+      <p v-else-if="emailChecked" class="success">사용 가능한 이메일입니다.</p>
 
+      <!-- 비밀번호 -->
       <input v-model="form.password" type="password" placeholder="비밀번호 (8~20자, 영문+특수문자)" required />
       <input v-if="!signIn" v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" required />
       <p v-if="error" class="error">{{ error }}</p>
 
-      <button type="submit" :disabled="isCheckingDup">
+      <!-- 제출 버튼 -->
+      <button type="submit" :disabled="isCheckingDup || (!signIn && (!nicknameChecked || !emailChecked))">
         {{ buttonText }}
       </button>
     </form>
+
     <a href="#" v-if="signIn">비밀번호를 까먹으셨나요?</a>
   </div>
 </template>
@@ -26,55 +40,55 @@
 <script setup>
 import { reactive, ref, computed, defineProps } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
-
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
-axios.defaults.withCredentials = true;
+import axios from "@/plugins/axios";
+import { useAuthStore } from "@/stores/auth";
+const authStore = useAuthStore();
 
 const props = defineProps({ signIn: { type: Boolean, default: true } });
 const router = useRouter();
 
-const title = computed(() => (props.signIn ? "로그인" : "회원가입"));
-const subtitle = computed(() => (props.signIn ? "한끼위키에 로그인하기!" : "새 계정을 만들어보세요!"));
-const buttonText = computed(() => (props.signIn ? "로그인" : "회원가입"));
-
-const form = reactive({ nickname: "", email: "", password: "", passwordConfirm: "" });
+// Form 데이터 & 상태
+const form = reactive({
+  nickname: "",
+  email: "",
+  password: "",
+  passwordConfirm: "",
+});
 const error = ref("");
 const dupError = reactive({ nickname: "", email: "" });
 const isCheckingDup = ref(false);
 
-async function checkNicknameDup() {
-  dupError.nickname = "";
-  if (!form.nickname) return;
-  const nickRe = /^[가-힣A-Za-z0-9]{1,10}$/;
-  if (!nickRe.test(form.nickname)) {
-    dupError.nickname = "닉네임은 최대10자, 공백·특수문자 없이 입력해주세요.";
-    return;
-  }
-  isCheckingDup.value = true;
-  try {
-    const res = await axios.get("/api/user/check-nickname", { params: { nickname: form.nickname } });
-    if (!res.data.available) dupError.nickname = "이미 사용 중인 닉네임입니다.";
-  } catch {
-    dupError.nickname = "닉네임 확인에 실패했습니다.";
-  } finally {
-    isCheckingDup.value = false;
-  }
+// 중복 확인 플래그
+const nicknameChecked = ref(false);
+const emailChecked = ref(false);
+
+// Computed: 타이틀, 버튼 텍스트
+const title = computed(() => (props.signIn ? "로그인" : "회원가입"));
+const subtitle = computed(() => (props.signIn ? "한끼위키에 로그인하기!" : "새 계정을 만들어보세요!"));
+const buttonText = computed(() => (props.signIn ? "로그인" : "회원가입"));
+
+// 닉네임 중복 확인
+async function onCheckEmailDup() {
+  await userStore.checkEmailDup(form.email);
 }
 
+// 이메일 중복 확인
 async function checkEmailDup() {
   dupError.email = "";
+  emailChecked.value = false;
   if (!form.email) return;
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRe.test(form.email)) {
     dupError.email = "유효한 이메일 주소가 아닙니다.";
     return;
   }
-  if (props.signIn) return;
   isCheckingDup.value = true;
   try {
-    const res = await axios.get("/api/user/check-email", { params: { email: form.email } });
-    if (!res.data.available) dupError.email = "이미 사용 중인 이메일입니다.";
+    const res = await axios.get("/auth/check-email", {
+      params: { email: form.email },
+    });
+    if (res.data.available) emailChecked.value = true;
+    else dupError.email = "이미 사용 중인 이메일입니다.";
   } catch {
     dupError.email = "이메일 확인에 실패했습니다.";
   } finally {
@@ -82,14 +96,28 @@ async function checkEmailDup() {
   }
 }
 
+// Validation
 function validate() {
   error.value = "";
   if (!props.signIn) {
-    if (!form.nickname) return (error.value = "닉네임을 입력해주세요."), false;
-    if (dupError.nickname) return false;
+    if (!form.nickname) {
+      error.value = "닉네임을 입력해주세요.";
+      return false;
+    }
+    if (!nicknameChecked.value) {
+      error.value = "닉네임 중복 확인을 해주세요.";
+      return false;
+    }
   }
-  if (!form.email) return (error.value = "이메일을 입력해주세요."), false;
-  if (dupError.email) return false;
+  if (!form.email) {
+    error.value = "이메일을 입력해주세요.";
+    return false;
+  }
+  if (!props.signIn && !emailChecked.value) {
+    error.value = "이메일 중복 확인을 해주세요.";
+    return false;
+  }
+
   const pwdRe = /^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).{8,20}$/;
   if (!pwdRe.test(form.password)) {
     error.value = "비밀번호는 8~20자, 영문자와 특수문자를 포함해야 합니다.";
@@ -102,18 +130,19 @@ function validate() {
   return true;
 }
 
+// Submit 핸들러
 async function onSubmit() {
   if (!validate()) return;
   try {
     if (props.signIn) {
-      const res = await axios.post("/api/user/login", {
+      await authStore.login({
         email: form.email,
         password: form.password,
       });
-      localStorage.setItem("token", res.data.token);
-      await router.push("/");
+      // (login 액션 내부에서 자동으로 토큰저장, 프로필불러오기, 리다이렉트까지 처리)
     } else {
-      await axios.post("/api/user/signup", {
+      // 회원가입은 필요에 따라 authStore.signup 등도 만들면 좋음
+      await axios.post("/auth/signup", {
         nickname: form.nickname,
         email: form.email,
         password: form.password,

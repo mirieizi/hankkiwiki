@@ -16,10 +16,11 @@ import com.hankki.common.security.jwt.TokenProvider;
 import com.hankki.domain.auth.dto.request.LoginRequest;
 import com.hankki.domain.auth.dto.request.SignUpRequest;
 import com.hankki.domain.auth.dto.response.JwtTokenResponse;
+import com.hankki.domain.user.dto.UserProfileResponse;
 import com.hankki.domain.auth.entity.AuthUser;
 import com.hankki.domain.auth.entity.RefreshToken;
 import com.hankki.domain.auth.repository.RefreshTokenRepository;
-import com.hankki.domain.user.dto.UpdateUserRequest;
+import com.hankki.domain.user.dto.UpdateUserResponse;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.repository.UserRepository;
 
@@ -118,12 +119,12 @@ public class UserServiceImpl implements UserService {
     /**
      * 사용자 정보 수정
      * @param userId
-     * @param UpdateUserRequest
+     * @param UpdateUserResponse
      * @return User
      */
     @Override
     @Transactional
-    public User updateUser(Long userId, UpdateUserRequest request) {
+    public User updateUser(Long userId, UpdateUserResponse request) {
         log.info("Request to update user ID {}: newEmail={}, newNickname={}, newPassword={}",
                  userId, request.getEmail(), request.getNickname(), request.getPassword());
 
@@ -210,4 +211,12 @@ public class UserServiceImpl implements UserService {
         log.info("Request to find all users");
         return userRepository.findAll();
     }
+
+    @Override
+    public UserProfileResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        return new UserProfileResponse(user.getNickname());
+    }
+
 }

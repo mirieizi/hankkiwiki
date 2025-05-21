@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -82,11 +83,9 @@ public class WebSecurityConfig {
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
           .authorizeHttpRequests(authz -> authz
               // 로그인·회원가입·토큰 갱신은 모두 인증 없이 접근 허용
-              .requestMatchers(
-                  "/auth/signup",
-                  "/auth/login",
-                  "/auth/refresh"
-              ).permitAll()
+              .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+              .requestMatchers("/auth/logout").authenticated()  // 로그아웃은 인증 필요
+              .requestMatchers("/auth/**", "/actuator/health").permitAll()
               // 그 외 모든 요청은 인증 필요
               .anyRequest().authenticated()
           )

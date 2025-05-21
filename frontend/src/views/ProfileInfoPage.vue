@@ -28,7 +28,7 @@
 // Composition API + 한국어 주석
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import axios from "@/plugins/axios";
 
 const router = useRouter();
 
@@ -56,7 +56,7 @@ async function confirmDelete() {
   if (!ok) return;
 
   try {
-    await axios.delete("/api/user/me");
+    await axios.delete("/user/me");
     alert("탈퇴가 완료되었습니다.");
     router.push({ name: "Login" });
   } catch (e) {
@@ -71,7 +71,7 @@ async function confirmDelete() {
 // 컴포넌트 마운트 시 내 프로필 정보 로드
 onMounted(async () => {
   try {
-    const { data } = await axios.get("/api/user/me");
+    const { data } = await axios.get("/user/me");
     userNickname.value = data.nickname;
   } catch (e) {
     if (e.response?.status === 401) {

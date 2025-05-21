@@ -1,18 +1,22 @@
 <template>
   <header class="app-header">
     <div class="header-content">
-      <!-- 로고: 메인 페이지로 이동 -->
       <RouterLink to="/" class="logo">
         <img src="@/assets/logo.png" alt="한끼위키 로고" />
       </RouterLink>
 
       <nav class="nav-links">
-        <!-- 로그인 상태에 따라 메뉴 변경 -->
-        <RouterLink v-if="!isAuthenticated" to="/login" class="nav-link">로그인</RouterLink>
-        <RouterLink v-if="!isAuthenticated" to="/signup" class="nav-link">회원가입</RouterLink>
+        <!-- 로그인 안 한 상태 -->
+        <template v-if="!isAuthenticated">
+          <RouterLink to="/login" class="nav-link">로그인</RouterLink>
+          <RouterLink to="/signup" class="nav-link">회원가입</RouterLink>
+        </template>
 
-        <RouterLink v-else to="/mypage" class="nav-link">마이페이지</RouterLink>
-        <a v-else href="#" class="nav-link" @click.prevent="logout()">로그아웃</a>
+        <!-- 로그인 한 상태 -->
+        <template v-else>
+          <RouterLink to="/profile/info" class="nav-link">마이페이지</RouterLink>
+          <a href="#" @click.prevent="logout" class="nav-link">로그아웃</a>
+        </template>
       </nav>
     </div>
   </header>

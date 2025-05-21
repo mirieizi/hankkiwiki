@@ -16,7 +16,8 @@ import com.hankki.domain.auth.dto.UserPrincipal;
 import com.hankki.domain.auth.dto.request.LoginRequest;
 import com.hankki.domain.auth.dto.request.SignUpRequest;
 import com.hankki.domain.auth.dto.response.JwtTokenResponse;
-import com.hankki.domain.user.dto.UpdateUserRequest;
+import com.hankki.domain.user.dto.UpdateUserResponse;
+import com.hankki.domain.user.dto.UserProfileResponse;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.service.UserService;
 
@@ -34,8 +35,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Validated
 public class UserController {
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
-    private final UserService userService;
+	private static final Logger log = LoggerFactory.getLogger(UserController.class);
+	private final UserService userService;
 
 //    /**
 //     * 1) 회원 가입
@@ -86,93 +87,83 @@ public class UserController {
 //        return ResponseEntity.noContent().build();
 //    }
 
-    /**
-     * 4) 내 정보 조회
-     * GET /user/me
-     */
-    @GetMapping("/me")
-    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 반환합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    public ResponseEntity<UserPrincipal> getCurrentUser(@CurrentUser UserPrincipal principal) {
-        log.info("Request to get current user: {}", principal.getUserId());
-        return ResponseEntity.ok(principal);
-    }
+	/**
+	 * 4) 내 정보 조회 GET /user/me
+	 */
+	@GetMapping("/me")
+	@Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 반환합니다.")
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content),
+			@ApiResponse(responseCode = "401", description = "인증 실패") })
+	public ResponseEntity<UserPrincipal> getCurrentUser(@CurrentUser UserPrincipal principal) {
+		log.info("Request to get current user: {}", principal.getUserId());
+		return ResponseEntity.ok(principal);
+	}
 
-    /**
-     * 5) 내 정보 수정
-     * PUT /user/me
-     */
-    @PatchMapping("/me")
-    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "수정 성공", content = @Content),
-        @ApiResponse(responseCode = "400", description = "입력 값 오류"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    public ResponseEntity<UserPrincipal> updateCurrentUser(
-        @CurrentUser UserPrincipal principal,
-        @RequestBody UpdateUserRequest request
-    ) {
-        log.info("Request to update current user {}: email={}, nickname={} ",
-            principal.getUserId(), request.getEmail(), request.getNickname());
-        User updated = userService.updateUser(principal.getUserId(), request);
-        return ResponseEntity.ok(UserPrincipal.from(updated));
-    }
+	/**
+	 * 5) 내 정보 수정 PUT /user/me
+	 */
+	@PatchMapping("/me")
+	@Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "수정 성공", content = @Content),
+			@ApiResponse(responseCode = "400", description = "입력 값 오류"),
+			@ApiResponse(responseCode = "401", description = "인증 실패") })
+	public ResponseEntity<UserPrincipal> updateCurrentUser(@CurrentUser UserPrincipal principal,
+			@RequestBody UpdateUserResponse request) {
+		log.info("Request to update current user {}: email={}, nickname={} ", principal.getUserId(), request.getEmail(),
+				request.getNickname());
+		User updated = userService.updateUser(principal.getUserId(), request);
+		return ResponseEntity.ok(UserPrincipal.from(updated));
+	}
 
-    /**
-     * 6) 회원 탈퇴
-     * DELETE /user/me
-     */
-    @DeleteMapping("/me")
-    @Operation(summary = "회원 탈퇴", description = "로그인한 사용자를 탈퇴 처리합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "탈퇴 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    public ResponseEntity<Void> deleteCurrentUser(@CurrentUser UserPrincipal principal) {
-        log.info("Request to delete current user: {}", principal.getUserId());
-        userService.deleteUser(principal.getUserId());
-        return ResponseEntity.noContent().build();
-    }
+	/**
+	 * 6) 회원 탈퇴 DELETE /user/me
+	 */
+	@DeleteMapping("/me")
+	@Operation(summary = "회원 탈퇴", description = "로그인한 사용자를 탈퇴 처리합니다.")
+	@ApiResponses({ @ApiResponse(responseCode = "204", description = "탈퇴 성공"),
+			@ApiResponse(responseCode = "401", description = "인증 실패") })
+	public ResponseEntity<Void> deleteCurrentUser(@CurrentUser UserPrincipal principal) {
+		log.info("Request to delete current user: {}", principal.getUserId());
+		userService.deleteUser(principal.getUserId());
+		return ResponseEntity.noContent().build();
+	}
 
-    /**
-     * 7) 관리자: 특정 사용자 조회
-     * GET /user/admin/{userId}
-     */
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @GetMapping("/admin/{userId}")
-    public ResponseEntity<UserPrincipal> getAnyUser(@PathVariable Long userId) {
-        User user = userService.findById(userId);
-        return ResponseEntity.ok(UserPrincipal.from(user));
-    }
+	/**
+	 * 7) 관리자: 특정 사용자 조회 GET /user/admin/{userId}
+	 */
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@GetMapping("/admin/{userId}")
+	public ResponseEntity<UserPrincipal> getAnyUser(@PathVariable Long userId) {
+		User user = userService.findById(userId);
+		return ResponseEntity.ok(UserPrincipal.from(user));
+	}
 
-    /**
-     * 8) 관리자: 전체 사용자 조회
-     * GET /user/admin
-     */
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @GetMapping("/admin")
-    @Transactional
-    public ResponseEntity<List<UserPrincipal>> getAllUsers() {
-        List<UserPrincipal> users = userService.findAllUsers()
-                .stream()
-                .map(UserPrincipal::from)
-                .toList();
-        return ResponseEntity.ok(users);
-    }
+	/**
+	 * 8) 관리자: 전체 사용자 조회 GET /user/admin
+	 */
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@GetMapping("/admin")
+	@Transactional
+	public ResponseEntity<List<UserPrincipal>> getAllUsers() {
+		List<UserPrincipal> users = userService.findAllUsers().stream().map(UserPrincipal::from).toList();
+		return ResponseEntity.ok(users);
+	}
 
-    /**
-     * 9) 관리자: 특정 사용자 삭제
-     * DELETE /user/admin/{userId}
-     */
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @DeleteMapping("/admin/{userId}")
-    @Transactional
-    public ResponseEntity<Void> deleteAnyUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
-    }
+	/**
+	 * 9) 관리자: 특정 사용자 삭제 DELETE /user/admin/{userId}
+	 */
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@DeleteMapping("/admin/{userId}")
+	@Transactional
+	public ResponseEntity<Void> deleteAnyUser(@PathVariable Long userId) {
+		userService.deleteUser(userId);
+		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/profile")
+	public ResponseEntity<UserProfileResponse> getProfile(@CurrentUser UserPrincipal principal) {
+		UserProfileResponse profile = userService.getProfile(principal.getUserId());
+		return ResponseEntity.ok(profile);
+	}
+
 }

@@ -29,10 +29,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     // 필터를 스킵할 경로를 여기서 정의
     private static final List<String> WHITELIST = List.of(
-        "/user/signup",
-        "/user/login",
-        "/user/refresh",
-        "/actuator/health"
+    "/auth/signup",
+    "/auth/login",
+    "/auth/logout",
+    "/auth/refresh",
+    "/auth/check-email",      // 이메일 중복검사
+    "/auth/check-nickname",   // 닉네임 중복검사
+    "/actuator/health"
     );
 
     // whitelist 경로는 아예 필터 진입 자체를 건너뛴다

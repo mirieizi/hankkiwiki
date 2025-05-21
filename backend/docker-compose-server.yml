@@ -15,11 +15,11 @@ services:
     networks:
       - app-network
     healthcheck:
-        test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
-        start_period: 30s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   app:
     build:
@@ -29,14 +29,26 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-        mysql:
-            condition: service_healthy
+      mysql:
+        condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
       HANKKI_USERNAME: ${HANKKI_USERNAME}
       HANKKI_PASSWORD: ${HANKKI_PASSWORD}
       HANKKI_DATABASE: ${HANKKI_DATABASE}
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: frontend-1
+    ports:
+      - "80:80"
+    depends_on:
+      app:
+        condition: service_started
     networks:
       - app-network
 

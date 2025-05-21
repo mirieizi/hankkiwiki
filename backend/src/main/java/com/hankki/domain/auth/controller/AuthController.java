@@ -1,14 +1,18 @@
 package com.hankki.domain.auth.controller;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hankki.common.security.principal.CurrentUser;
@@ -63,4 +67,17 @@ public class AuthController {
         authService.logout(principal.getUserId());
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam String nickname){
+        boolean available = authService.isNicknameAvailable(nickname);
+        return ResponseEntity.ok(Map.of("available", available));
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email){
+        boolean available = authService.isEmailAvailable(email);
+        return ResponseEntity.ok(Map.of("available", available));
+    }
+
 }
