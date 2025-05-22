@@ -47,7 +47,7 @@ public class UserFoodLogServiceImpl {
         // 최근 섭취 음식 + 추천 음식 조회
         List<Long> recentTakenFoodIds = foodQueryService.findFoodsByUserIdAndTakeAtBetween(userId);
         List<Long> recentRecommendedFoodIds
-                = userFoodLogRepository.findAllFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+                = userFoodLogRepository.findRecommendedFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
 
         Set<Long> recent = new HashSet<>();
         recent.addAll(recentTakenFoodIds);

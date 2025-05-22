@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RedisVectorSearcher {
 
-    private final int TOP_N = 30;
-
     private final RedisCommands<String, String> redisCommands; // FT.SEARCH 실행용
 
     /**
@@ -85,14 +83,14 @@ public class RedisVectorSearcher {
     /**
      * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 1개 반환
      */
-    public List<Long> furthestSearch(Gender gender, double[] queryVector) {
+    public List<Long> furthestSearch(Gender gender, double[] queryVector, int topN) {
         String index = String.format("idx:food_%s", gender.name().toLowerCase());
         String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
 
         // KNN N으로 수정
         String query = String.format(
                 "*=>[KNN %d @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 %d",
-                TOP_N, TOP_N
+                topN, topN
         );
 
         List<Object> result = redisCommands.dispatch(CommandType.valueOf("FT.SEARCH"),
