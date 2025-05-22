@@ -10,6 +10,6 @@ import java.util.Optional;
 
 public interface UserFoodLogRepository extends JpaRepository <UserFoodLog, Long> {
 
-    @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.takeAt BETWEEN :start AND :end")
-    List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate takeAtStart, LocalDate takeAtEnd);
+    @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.date BETWEEN :start AND :end")
+    List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate startDate, LocalDate endDate);
 }

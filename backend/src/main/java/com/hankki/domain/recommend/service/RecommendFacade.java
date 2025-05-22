@@ -1,5 +1,6 @@
 package com.hankki.domain.recommend.service;
 
+import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import org.springframework.stereotype.Service;
 
 import com.hankki.domain.recommend.dto.FoodResponseDto;
@@ -17,22 +18,29 @@ public class RecommendFacade {
     private final RecommendVectorFacade recommendVectorFacade;
     private final RecommendService recommendService;
     private UserLogServiceImpl userLogService;
+    private UserFoodLogServiceImpl userFoodLogService;
 
     /**
      * 랜덤 추천 기능
+     * 남은 횟수 체크 -> 랜덤 뽑기 -> 추천 횟수 기록
      * @param userId
      * @param gender
      * @return
      */
     public FoodResponseDto recommendRandom(Long userId, Gender gender) {
-        userLogService.checkQuota(userId); // 남은 횟수 체크
+        userLogService.checkQuota(userId);
         FoodResponseDto foodResponseDto = recommendService.recommendRandomFood(gender);
-        userLogService.recordRecommendation(userId); // 추천 횟수 기록
+        /**
+         * TO DO (1) 랜덤 추천 불가 시 대처 방식 : 다시 시도, 횟수 돌려놓기 등
+         */
+        userLogService.recordRecommendation(userId);
+        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
         return foodResponseDto;
     }
 
     /**
      * 3일 간 식사에서 벡터로 거리가 가장 먼 음식 추천
+     * 남은 횟수 체크 -> 가장 먼 음식 선택 -> 추천 횟수에 저장
      * @param userId
      * @param gender
      * @return
