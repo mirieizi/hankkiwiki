@@ -38,9 +38,6 @@ public class RecommendController {
         return ResponseEntity.ok(recommendFacade.recommendRandom(user.getUserId(), user.getGender()));
     }
 
-    /**
-     * 유사한 음식 추천
-     */
     @Operation(summary = "유사한 음식 추천", description = "최근 섭취한 음식과 가장 유사한 음식을 추천합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content),
@@ -52,9 +49,6 @@ public class RecommendController {
         return ResponseEntity.ok(recommendFacade.recommendMostSimilar(user.getUserId(), user.getGender()));
     }
 
-    /**
-     * 중립 음식 추천
-     */
     @Operation(summary = "중립 음식 추천", description = "최근 섭취한 음식 벡터 평균과 중간 정도의 유사도를 가진 음식을 추천합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content),
@@ -66,9 +60,6 @@ public class RecommendController {
         return ResponseEntity.ok(recommendFacade.recommendNeutral(user.getUserId(), user.getGender()));
     }
 
-    /**
-     * 가장 먼 음식 추천
-     */
     @Operation(summary = "가장 먼 음식 추천", description = "최근 섭취한 음식 벡터 평균과 가장 유사하지 않은(거리가 먼) 음식을 추천합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content),
@@ -93,8 +84,5 @@ public class RecommendController {
         FoodResponseDto response = recommendFacade.recommendByRag(user.getUserId(), null);
         return ResponseEntity.ok(response);
     }
-
-    
-
 
 }
