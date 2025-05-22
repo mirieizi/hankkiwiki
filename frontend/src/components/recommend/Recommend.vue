@@ -23,7 +23,7 @@
           <p>버튼을 눌러 {{ modeLabel }} 받기</p>
         </div>
         <div v-if="hasRun" class="animation-wrapper">
-          <component :is="animationComponent" :key="mode + '-' + runCount" @done="fetchRecommendation" />
+          <component :is="animationComponent" :key="mode + '-' + runCount" @done="() => fetchRecommendation(mode)" />
         </div>
       </section>
 
@@ -40,12 +40,12 @@
 
     <!-- 로그인 안내 모달 -->
     <transition name="fade">
-      <div v-if="showLoginPrompt" class="modal-overlay" @click.self="showLoginPrompt = false">
+      <div v-if="showLoginPrompt" class="modal-overlay" @click.self="hideLogin">
         <div class="modal" role="alertdialog">
           <p>로그인 후 이용이 가능합니다.</p>
           <div class="modal-buttons">
             <button class="modal-btn" @click="goToLogin">로그인하러 가기</button>
-            <button class="modal-btn" @click="showLoginPrompt = false">닫기</button>
+            <button class="modal-btn" @click="hideLogin">닫기</button>
           </div>
         </div>
       </div>
@@ -53,12 +53,12 @@
 
     <!-- 기록 부족 모달 -->
     <transition name="fade">
-      <div v-if="showNoHistoryPrompt" class="modal-overlay" @click.self="showNoHistoryPrompt = false">
+      <div v-if="showNoHistoryPrompt" class="modal-overlay" @click.self="hideNoHistory">
         <div class="modal" role="alertdialog">
           <p>최근 3일간 식사 기록이 없습니다.</p>
           <div class="modal-buttons">
             <router-link to="/calendar" class="modal-btn">식사 입력하러 가기</router-link>
-            <button class="modal-btn" @click="showNoHistoryPrompt = false">닫기</button>
+            <button class="modal-btn" @click="hideNoHistory">닫기</button>
           </div>
         </div>
       </div>
@@ -67,140 +67,89 @@
 </template>
 
 <script setup>
-// Vue Composition API 불러오기
 import { ref, computed, onMounted, watch, defineProps } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
-
-// 컴포넌트 및 리소스 불러오기
+import { useRecommendStore } from "@/stores/recommend";
 import RecommendButton from "@/components/RecommendButton.vue";
 import RandomAnimation from "@/components/RandomAnimation.vue";
 import AnalysisAnimation from "@/components/AnalysisAnimation.vue";
 import AIAnimation from "@/components/AIAnimation.vue";
 import placeholderImage from "@/assets/eat_bear_logo.png";
 
-// Axios 기본 설정
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
-axios.defaults.withCredentials = true;
+// 스토어
+const store = useRecommendStore();
 
-// props 및 라우터 준비
+// 라우터/props
 const props = defineProps({ initialMode: { type: String, default: null } });
 const route = useRoute();
 const router = useRouter();
 const mode = ref(props.initialMode ?? route.params.mode ?? "random");
 
-// 추천 모드 배열 정의
+// 모드 배열
 const modes = [
   { id: "random", label: "랜덤 추천", icon: "🎲", cost: 1, animation: RandomAnimation },
   { id: "history", label: "최근 3일 기반", icon: "🕓", cost: 1, animation: AnalysisAnimation },
   { id: "ai", label: "AI 추천", icon: "🤖", cost: 2, animation: AIAnimation },
 ];
 
-// 상태 변수 정의
-const remainingSpoons = ref(0); // 남은 추천 가능 횟수
-const loading = ref(false); // 로딩 상태
-const recommendation = ref(null); // 추천 결과
-const hasRun = ref(false); // 추천 시도 플래그
-const runCount = ref(0); // 애니메이션 키용 카운트
-const showNoHistoryPrompt = ref(false); // 기록 부족 팝업
-const showLoginPrompt = ref(false); // 로그인 안내 팝업
-const historyRecords = ref([]); // 최근 기록 데이터
+// 컴포넌트용 computed
+const currentMode = computed(() => modes.find((m) => m.id === mode.value));
+const spoonCost = computed(() => currentMode.value.cost);
+const spoonCount = computed(() => store.spoonCount);
+const loading = computed(() => store.loading);
+const recommendation = computed(() => store.recommendation);
+const hasRun = computed(() => store.hasRun);
+const runCount = computed(() => store.runCount);
+const showNoHistoryPrompt = computed(() => store.showNoHistoryPrompt);
+const showLoginPrompt = computed(() => store.showLoginPrompt);
+const buttonLabel = computed(() => currentMode.value.label);
+const modeLabel = computed(() => currentMode.value.label);
+const resultTitle = computed(() => `${modeLabel.value} 메뉴`);
+const animationComponent = computed(() => currentMode.value.animation);
+const expanded = computed(() => store.expanded);
 
-// 로그인 필요 시 팝업만 띄우는 함수
-function requireLogin() {
-  if (!localStorage.getItem("token")) {
-    showLoginPrompt.value = true;
-    return false;
+// 함수 바인딩
+const { fetchRecommendation, fetchRemainingSpoons, fetchHistoryRecords, resetRecommend, requireLogin, showNoHistory, hideNoHistory, showLogin, hideLogin } = store;
+
+// 실행 버튼 클릭
+function onRun() {
+  if (!requireLogin()) return;
+  if (store.remainingSpoons <= 0) {
+    showNoHistory();
+    return;
   }
-  return true;
+  if ((mode.value === "history" || mode.value === "ai") && store.historyRecords.length === 0) {
+    showNoHistory();
+    return;
+  }
+  store.remainingSpoons -= spoonCost.value;
+  store.hasRun = true;
+  store.loading = true;
+  store.runCount++;
 }
 
-// 남은 추천 호출 가능 횟수 API 조회
-async function fetchRemainingSpoons() {
-  try {
-    const { data } = await axios.get("/api/recommend/remaining");
-    remainingSpoons.value = data.count;
-  } catch (e) {
-    if (e.response?.status === 401) showLoginPrompt.value = true;
-    else console.error("Remaining fetch 실패:", e);
-  }
-}
-
-// 추천 생성 API 호출
-async function fetchRecommendation() {
-  try {
-    const { data } = await axios.post("/api/recommend", null, { params: { mode: mode.value } });
-    recommendation.value = data;
-    await fetchRemainingSpoons();
-  } catch (e) {
-    if (e.response?.status === 401) showLoginPrompt.value = true;
-    else console.error("Recommendation fetch 실패:", e);
-  } finally {
-    loading.value = false;
-  }
-}
-
-// 로그인 페이지 이동
+// 로그인 이동
 function goToLogin() {
   router.push("/login");
 }
 
-// 컴포넌트 마운트 시 초기 데이터 로드
+// 마운트 시 데이터 로드
 onMounted(async () => {
   await fetchRemainingSpoons();
-
-  // 최근 3일 기록 조회
-  const today = new Date().toISOString().split("T")[0];
-  const startDate = new Date(Date.now() - 2 * 864e5).toISOString().split("T")[0];
-  try {
-    const { data } = await axios.get("/api/diet", { params: { startDate, endDate: today } });
-    historyRecords.value = data;
-  } catch {
-    historyRecords.value = [];
-  }
+  await fetchHistoryRecords();
 });
 
-// 라우터 모드 변경 감지
+// 라우트 모드 변경 감지
 watch(
   () => route.params.mode,
   (m) => {
     if (!props.initialMode && m) {
       mode.value = m;
-      recommendation.value = null;
-      hasRun.value = false;
-      runCount.value = 0;
+      resetRecommend();
       fetchRemainingSpoons();
     }
   }
 );
-
-// 계산된 속성 준비
-const currentMode = computed(() => modes.find((m) => m.id === mode.value));
-const spoonCost = computed(() => currentMode.value.cost);
-const spoonCount = remainingSpoons; // 템플릿 호환 alias
-const result = recommendation; // 템플릿 호환 alias
-const buttonLabel = computed(() => currentMode.value.label);
-const modeLabel = computed(() => currentMode.value.label);
-const resultTitle = computed(() => `${modeLabel.value} 메뉴`);
-const animationComponent = computed(() => currentMode.value.animation);
-const expanded = computed(() => loading.value || !!recommendation.value);
-
-// 실행 버튼 클릭 핸들러
-function onRun() {
-  if (!requireLogin()) return;
-  if (remainingSpoons.value <= 0) {
-    showNoHistoryPrompt.value = true;
-    return;
-  }
-  if ((mode.value === "history" || mode.value === "ai") && historyRecords.value.length === 0) {
-    showNoHistoryPrompt.value = true;
-    return;
-  }
-  remainingSpoons.value -= spoonCost.value;
-  hasRun.value = true;
-  loading.value = true;
-  runCount.value++;
-}
 </script>
 <style scoped>
 .recommend-page {

@@ -1,10 +1,13 @@
 package com.hankki.domain.recommend.service;
 
+import org.springframework.stereotype.Service;
+
 import com.hankki.domain.recommend.dto.FoodResponseDto;
+import com.hankki.domain.recommend.dto.RagRecommendRequest;
 import com.hankki.domain.user.constant.Gender;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -42,5 +45,9 @@ public class RecommendFacade {
         userLogService.recordRecommendation(userId);
         return recommendService.findFoodDtoById(mostSimilarId);
     }
+
+	public FoodResponseDto recommendByRag(Long userId, RagRecommendRequest request) {
+		return recommendService.recommendByRag(userId, request);
+	}
 
 }
