@@ -1,12 +1,12 @@
+<!-- src/views/UserInfoPage.vue -->
 <script setup>
-import { ref, watchEffect, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
-const userStore = useUserStore();
+const authStore = useAuthStore();
 
-// 로컬 폼 상태
 const form = ref({
   email: "",
   nickname: "",
@@ -14,34 +14,55 @@ const form = ref({
   passwordConfirm: "",
 });
 const isChecking = ref(false);
+const nicknameChecked = ref(true);
 
-// 초기 데이터 로드
+// 최초 정보 로드 (authStore에 내 정보 fetchProfile로 저장해놓는다고 가정)
 onMounted(async () => {
-  await userStore.fetchProfile();
-  form.value.email = userStore.email;
-  form.value.nickname = userStore.nickname;
+  await authStore.fetchProfile?.(); // 이 함수가 없으면 빼도 됨 (authStore.userInfo가 이미 세팅된 상태면 필요 없음)
+  // userInfo에 있는 값으로 form 세팅
+  form.value.email = authStore.userInfo?.email || "";
+  form.value.nickname = authStore.userInfo?.nickname || "";
+  nicknameChecked.value = true;
+  authStore.dupError = "";
 });
 
-// 닉네임 입력할 때마다 Pinia로 검사
-watchEffect(async () => {
+// 닉네임 입력 변경 시 중복체크 flag 초기화
+watch(
+  () => form.value.nickname,
+  (newNick) => {
+    nicknameChecked.value = newNick === (authStore.userInfo?.nickname || "");
+    authStore.dupError = "";
+  }
+);
+
+// 닉네임 중복 확인 버튼 이벤트
+async function checkNicknameDup() {
+  authStore.dupError = "";
+  nicknameChecked.value = false;
   const nick = form.value.nickname.trim();
-  if (!nick || nick === userStore.nickname) {
-    userStore.dupError = "";
+  if (!nick) return;
+  if (nick === (authStore.userInfo?.nickname || "")) {
+    nicknameChecked.value = true;
     return;
   }
   isChecking.value = true;
-  await userStore.checkNickname(nick, userStore.nickname);
+  await authStore.checkNickname(nick);
+  if (!authStore.dupError) nicknameChecked.value = true;
   isChecking.value = false;
-});
+}
 
 // 유효성 검사
 function validate() {
-  if (userStore.dupError) return false;
+  if (!nicknameChecked.value) {
+    authStore.error = "닉네임 중복 확인을 해주세요.";
+    return false;
+  }
+  if (authStore.dupError) return false;
   const pwd = form.value.password;
   if (pwd) {
     const pwdRe = /^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).{8,20}$/;
     if (!pwdRe.test(pwd) || pwd !== form.value.passwordConfirm) {
-      userStore.error = pwdRe.test(pwd) ? "비밀번호가 일치하지 않습니다." : "비밀번호는 8~20자, 영문자+특수문자 조합이어야 합니다.";
+      authStore.error = pwdRe.test(pwd) ? "비밀번호가 일치하지 않습니다." : "비밀번호는 8~20자, 영문자+특수문자 조합이어야 합니다.";
       return false;
     }
   }
@@ -54,7 +75,8 @@ async function onSubmit() {
   const payload = { nickname: form.value.nickname };
   if (form.value.password) payload.password = form.value.password;
 
-  const ok = await userStore.updateProfile(payload);
+  // authStore에 updateProfile 구현되어 있다고 가정
+  const ok = await authStore.updateProfile(payload);
   if (ok) {
     alert("개인 정보가 저장되었습니다.");
     router.replace({ name: "ProfileInfo" });
@@ -65,7 +87,7 @@ async function onSubmit() {
 <template>
   <div class="info-page">
     <h2>개인 정보 수정</h2>
-    <p class="greeting">{{ userStore.nickname }}님, 정보 수정 페이지입니다.</p>
+    <p class="greeting">{{ authStore.userInfo?.nickname }}님, 정보 수정 페이지입니다.</p>
 
     <form @submit.prevent="onSubmit" class="info-form">
       <label>
@@ -75,9 +97,13 @@ async function onSubmit() {
 
       <label>
         닉네임
-        <input v-model="form.nickname" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required />
+        <div style="display: flex; gap: 0.5rem">
+          <input v-model="form.nickname" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required />
+          <button type="button" @click="checkNicknameDup" :disabled="isChecking || !form.nickname">중복 확인</button>
+        </div>
       </label>
-      <p v-if="userStore.dupError" class="error">{{ userStore.dupError }}</p>
+      <p v-if="authStore.dupError" class="error">{{ authStore.dupError }}</p>
+      <p v-else-if="nicknameChecked" class="success">사용 가능한 닉네임입니다.</p>
 
       <label>
         새 비밀번호
@@ -88,7 +114,7 @@ async function onSubmit() {
         <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" />
       </label>
 
-      <p v-if="userStore.error" class="error">{{ userStore.error }}</p>
+      <p v-if="authStore.error" class="error">{{ authStore.error }}</p>
 
       <button type="submit" :disabled="isChecking">저장하기</button>
     </form>
@@ -152,6 +178,12 @@ button {
 
 .error {
   color: #d32f2f;
+  font-size: 0.9rem;
+  text-align: left;
+  margin: -0.5rem 0 0.5rem;
+}
+.success {
+  color: #4caf50;
   font-size: 0.9rem;
   text-align: left;
   margin: -0.5rem 0 0.5rem;

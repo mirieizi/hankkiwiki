@@ -4,10 +4,12 @@ import axios from "axios";
 
 // 기본 설정
 const instance = axios.create({
-  baseURL: "http://localhost:8081/api",
+  // baseURL: "http://localhost:8081/api",
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    withCredentials: false, // ← JWT 용도라면 false 로 고정
   },
   // withCredentials 제거 (JWT는 Stateless)
 });

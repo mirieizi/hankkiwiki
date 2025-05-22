@@ -70,7 +70,7 @@
 // Vue Composition API 불러오기
 import { ref, computed, onMounted, watch, defineProps } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import axios from "@/plugins/axios";
 
 // 컴포넌트 및 리소스 불러오기
 import RecommendButton from "@/components/RecommendButton.vue";
@@ -81,7 +81,6 @@ import placeholderImage from "@/assets/eat_bear_logo.png";
 
 // Axios 기본 설정
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
-axios.defaults.withCredentials = true;
 
 // props 및 라우터 준비
 const props = defineProps({ initialMode: { type: String, default: null } });
@@ -108,7 +107,7 @@ const historyRecords = ref([]); // 최근 기록 데이터
 
 // 로그인 필요 시 팝업만 띄우는 함수
 function requireLogin() {
-  if (!localStorage.getItem("token")) {
+  if (!localStorage.getItem("accessToken")) {
     showLoginPrompt.value = true;
     return false;
   }
