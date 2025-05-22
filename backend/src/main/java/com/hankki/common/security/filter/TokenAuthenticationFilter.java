@@ -33,7 +33,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     // 필터를 스킵할 경로 패턴
     private static final List<String> WHITELIST_PATTERNS = List.of(
-        "/auth/**",
+        "/auth/login",
+        "/auth/signup",
+        "/auth/check-email",
+        "/auth/check-nickname",
         "/actuator/health"
     );
 

@@ -45,6 +45,7 @@ public class UserHealthServiceImpl implements UserHealthService {
 				.weight(request.getWeight())
 				.age(request.getAge())
 				.activityFactor(request.getActivityFactor())
+				.userId(userId)
 				.build();
 
 		return healthRepo.save(info).getId();

@@ -1,5 +1,7 @@
 package com.hankki.domain.auth.service;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.common.security.jwt.TokenProvider;
+import com.hankki.domain.auth.constant.Role;
 import com.hankki.domain.auth.dto.request.LoginRequest;
 import com.hankki.domain.auth.dto.request.SignUpRequest;
 import com.hankki.domain.auth.dto.response.JwtTokenResponse;
@@ -58,6 +61,7 @@ public class AuthService {
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .nickname(request.getNickname())
+            .roles(Set.of(Role.ROLE_USER))
             .build();
 
         Long id = userRepository.save(user).getId();

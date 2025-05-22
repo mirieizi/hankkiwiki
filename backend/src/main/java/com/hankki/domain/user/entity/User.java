@@ -1,23 +1,24 @@
 package com.hankki.domain.user.entity;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.hankki.domain.auth.constant.Role;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -63,9 +64,10 @@ public class User {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
     @Builder.Default
-    private Set<Role> roles = EnumSet.of(Role.ROLE_USER);
+    private Set<Role> roles = new HashSet<>(EnumSet.of(Role.ROLE_USER));
 
     /** 이메일 변경 */
     public void changeEmail(String email) {
