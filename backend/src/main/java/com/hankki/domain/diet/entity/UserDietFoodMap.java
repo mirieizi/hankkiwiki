@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "diet_meal_item")
-public class DietMealItem {
+@Table(name = "user_diet_food_map")
+public class UserDietFoodMap {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

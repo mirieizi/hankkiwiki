@@ -5,8 +5,8 @@ import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.diet.entity.Diet;
-import com.hankki.domain.diet.entity.DietMealItem;
-import com.hankki.domain.diet.mapper.DietMealItemMapper;
+import com.hankki.domain.diet.entity.UserDietFoodMap;
+import com.hankki.domain.diet.mapper.UserDietFoodMapper;
 import com.hankki.domain.diet.repository.DietRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.List;
 public class DietServiceImpl implements DietService {
 
     private DietRepository dietRepository;
-    private DietMealItemMapper dietMealItemMapper;
+    private UserDietFoodMapper userDietFoodMapper;
 
     @Override
     @Transactional
@@ -33,11 +33,11 @@ public class DietServiceImpl implements DietService {
 
         // Diet에 대한 MealItem(food)의 값 중간 테이블에 저장
         for (Long itemId : requestDto.getMealItemIds()) {
-            DietMealItem dietMealItem = DietMealItem.builder()
+            UserDietFoodMap userDietFoodMap = UserDietFoodMap.builder()
                     .dietId(createdDiet.getId())
                     .foodId(itemId)
                     .build();
-            dietMealItemMapper.insertDietMealItem(dietMealItem);
+            userDietFoodMapper.insertDietMealItem(userDietFoodMap);
         }
         log.info("[DietService] Diet 생성 완료");
     }

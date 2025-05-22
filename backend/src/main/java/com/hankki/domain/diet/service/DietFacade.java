@@ -6,7 +6,7 @@ import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
-import com.hankki.domain.diet.mapper.DietMealItemMapper;
+import com.hankki.domain.diet.mapper.UserDietFoodMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
 import com.hankki.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.List;
 public class DietFacade {
 
     private final DietService dietService;
-    private final DietMealItemMapper dietMealItemMapper;
+    private final UserDietFoodMapper userDietFoodMapper;
     private final FoodQueryServiceImpl foodQueryService;
     private final UserRepository userRepository;
 
@@ -48,7 +48,7 @@ public class DietFacade {
 
         List<FoodGroupDto> foods = dietList.stream()
                 .map(diet -> {
-                    List<Long> foodIds = dietMealItemMapper.findFoodIdIdsByDietId(diet.getId());
+                    List<Long> foodIds = userDietFoodMapper.findFoodIdIdsByDietId(diet.getId());
                     List<FoodPreviewResponseDto> foodPreviews = foodQueryService.getFoodPreviews(foodIds);
                     return FoodGroupDto.builder()
                             .mealType(diet.getMealType())

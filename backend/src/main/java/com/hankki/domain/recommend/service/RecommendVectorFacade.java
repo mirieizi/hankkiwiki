@@ -35,6 +35,11 @@ public class RecommendVectorFacade {
         return redisVectorSearcher.furthestSearch(gender, avgVector);
     }
 
+    /**
+     * 3일간 유저가 먹은 음식 조회
+     * @param userId @CurrentUser로 받은 현재 사용자의 userId로 조회
+     * @return 사용자가 3일간 먹은 음식의 foodIds
+     */
     private List<Long> loadRecentFoodIds(Long userId) {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
