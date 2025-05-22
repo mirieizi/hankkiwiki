@@ -9,11 +9,8 @@ import java.util.Optional;
 
 public interface DietRepository  extends JpaRepository<Diet, Long> {
 
-    Optional<Diet> findById(Long dietId);
-
     List<Diet> findDietsByUserId(Long userId);
 
     List<Diet> findDietsByUserIdAndTakeAt(Long userId, LocalDate takeAt);
 
-    void deleteByDietId(Long dietId);
 }

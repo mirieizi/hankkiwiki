@@ -1,6 +1,8 @@
 package com.hankki.domain.recommend.service;
 
+import com.hankki.domain.recommend.entity.UserFoodLog;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import com.hankki.domain.recommend.dto.FoodResponseDto;
@@ -17,8 +19,8 @@ public class RecommendFacade {
 
     private final RecommendVectorFacade recommendVectorFacade;
     private final RecommendService recommendService;
-    private UserLogServiceImpl userLogService;
-    private UserFoodLogServiceImpl userFoodLogService;
+    private final UserLogServiceImpl userLogService;
+    private final UserFoodLogRepository userFoodLogRepository;
 
     /**
      * 랜덤 추천 기능
@@ -27,6 +29,7 @@ public class RecommendFacade {
      * @param gender
      * @return
      */
+    @Transactional
     public FoodResponseDto recommendRandom(Long userId, Gender gender) {
         userLogService.checkQuota(userId);
         FoodResponseDto foodResponseDto = recommendService.recommendRandomFood(gender);
@@ -34,7 +37,11 @@ public class RecommendFacade {
          * TO DO (1) 랜덤 추천 불가 시 대처 방식 : 다시 시도, 횟수 돌려놓기 등
          */
         userLogService.recordRecommendation(userId);
-        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
+        UserFoodLog userFoodLog = UserFoodLog.builder()
+                .userId(userId)
+                .foodId(foodResponseDto.getId())
+                .build();
+        userFoodLogRepository.save(userFoodLog);
         return foodResponseDto;
     }
 

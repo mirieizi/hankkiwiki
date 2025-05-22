@@ -21,8 +21,8 @@ import java.util.List;
 @Service
 public class DietServiceImpl implements DietService {
 
-    private DietRepository dietRepository;
-    private UserDietFoodMapper userDietFoodMapper;
+    private final DietRepository dietRepository;
+    private final UserDietFoodMapper userDietFoodMapper;
 
     @Override
     @Transactional
