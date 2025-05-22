@@ -26,7 +26,7 @@ public class DietCreateRequestDto {
 
     @NotBlank
     @Schema(description = "식사 음식들", example = "[1, 2, 3]")
-    private List<Long> mealItemIds;
+    private List<Long> foodIds;
 
     public Diet toEntity(Long userId) {
         return Diet.builder()

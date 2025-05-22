@@ -30,16 +30,17 @@ public class DietServiceImpl implements DietService {
         log.info("[DietService] Diet 생성 Request : {}", requestDto);
         // Diet 요청 값 저장
         Diet createdDiet = requestDto.toEntity(userId);
+        dietRepository.save(createdDiet);
 
         // Diet에 대한 MealItem(food)의 값 중간 테이블에 저장
-        for (Long itemId : requestDto.getMealItemIds()) {
+        for (Long foodId : requestDto.getFoodIds()) {
             UserDietFoodMap userDietFoodMap = UserDietFoodMap.builder()
+                    .userId(userId)
                     .dietId(createdDiet.getId())
-                    .foodId(itemId)
+                    .foodId(foodId)
                     .build();
             userDietFoodMapper.insertUserDietFoodMap(userDietFoodMap);
         }
-        dietRepository.save(createdDiet);
         log.info("[DietService] Diet 생성 완료");
     }
 
