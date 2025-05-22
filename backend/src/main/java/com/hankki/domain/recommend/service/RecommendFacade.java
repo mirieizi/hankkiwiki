@@ -47,6 +47,7 @@ public class RecommendFacade {
     }
 
 	public FoodResponseDto recommendByRag(Long userId, RagRecommendRequest request) {
+        // TO DO: 추천 횟수 체크 여부
 		return recommendService.recommendByRag(userId, request);
 	}
 
