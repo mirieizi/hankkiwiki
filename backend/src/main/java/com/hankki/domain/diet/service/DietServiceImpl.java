@@ -26,10 +26,10 @@ public class DietServiceImpl implements DietService {
 
     @Override
     @Transactional
-    public void createDiet(String email, DietCreateRequestDto requestDto) {
+    public void createDiet(Long userId, DietCreateRequestDto requestDto) {
         log.info("[DietService] Diet 생성 Request : {}", requestDto);
         // Diet 요청 값 저장
-        Diet createdDiet = requestDto.toEntity(email);
+        Diet createdDiet = requestDto.toEntity(userId);
 
         // Diet에 대한 MealItem(food)의 값 중간 테이블에 저장
         for (Long itemId : requestDto.getMealItemIds()) {
@@ -37,30 +37,31 @@ public class DietServiceImpl implements DietService {
                     .dietId(createdDiet.getId())
                     .foodId(itemId)
                     .build();
-            userDietFoodMapper.insertDietMealItem(userDietFoodMap);
+            userDietFoodMapper.insertUserDietFoodMap(userDietFoodMap);
         }
+        dietRepository.save(createdDiet);
         log.info("[DietService] Diet 생성 완료");
     }
 
     @Override
     @Transactional
-    public List<Diet> getDietsByTakeAt(String email, LocalDate takeAt) {
-        return dietRepository.findDietsByEmailAndTakeAt(email, takeAt);
+    public List<Diet> getDietsByTakeAt(Long userId, LocalDate takeAt) {
+        return dietRepository.findDietsByUserIdAndTakeAt(userId, takeAt);
     }
 
     @Override
     @Transactional
-    public List<Diet> getDietsByEmail(String email) {
-        return dietRepository.findDietsByEmail(email);
+    public List<Diet> getDietsByUserId(Long userId) {
+        return dietRepository.findDietsByUserId(userId);
     }
 
     @Override
     @Transactional
-    public void deleteDietByEmailAndId(String email,Long dietId) {
+    public void deleteDietByUserIdAndDietId(Long userId,Long dietId) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
-        if (!diet.getEmail().equals(email)) {
+        if (!diet.getUserId().equals(userId)) {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
         dietRepository.deleteById(dietId);
@@ -69,32 +70,27 @@ public class DietServiceImpl implements DietService {
 
     @Override
     @Transactional
-    public void deleteDietByDietId(Long dietId) {
-        dietRepository.deleteById(dietId);
-        log.info("[DietService] Diet 삭제 성공: {}", dietId);
-    }
-
-    @Override
-    @Transactional
-    public void updateMealType(String email, Long dietId, MealType mealType) {
+    public void updateMealType(Long userId, Long dietId, MealType mealType) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
-        if (!diet.getEmail().equals(email)) {
+        if (!diet.getUserId().equals(userId)) {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
 
         diet.setMealType(mealType);
+        dietRepository.save(diet);
         log.info("[DietService] Diet MealType {}으로 수정 성공", mealType.name());
     }
 
     @Override
     @Transactional
-    public void updateTakeAt(String email, Long dietId, LocalDate takeAt) {
+    public void updateTakeAt(Long userId, Long dietId, LocalDate takeAt) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
         diet.setTakeAt(takeAt);
+        dietRepository.save(diet);
         log.info("[DietService] Diet takeAt {}으로 수정 성공", takeAt.toString());
     }
 

@@ -27,7 +27,7 @@ public class Diet {
 	private Long id;
 	
 	@Column(name = "user_id", unique = true, nullable = false, updatable = false)
-	private String userId;
+	private Long userId;
 	
 	@Column(name = "take_at")
 	private LocalDate takeAt;

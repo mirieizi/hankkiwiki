@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserFoodLogRepository extends JpaRepository <UserFoodLog, Long> {
-    Optional<UserFoodLog> findTopByUserIdOrderByTakeAtDesc(Long userId);
 
     @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.takeAt BETWEEN :start AND :end")
     List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate takeAtStart, LocalDate takeAtEnd);

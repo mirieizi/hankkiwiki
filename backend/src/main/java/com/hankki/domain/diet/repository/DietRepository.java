@@ -11,9 +11,9 @@ public interface DietRepository  extends JpaRepository<Diet, Long> {
 
     Optional<Diet> findById(Long dietId);
 
-    List<Diet> findDietsByEmail(String email);
+    List<Diet> findDietsByUserId(Long userId);
 
-    List<Diet> findDietsByEmailAndTakeAt(String email, LocalDate takeAt);
+    List<Diet> findDietsByUserIdAndTakeAt(Long userId, LocalDate takeAt);
 
-    void deleteById(Long dietId);
+    void deleteByDietId(Long dietId);
 }

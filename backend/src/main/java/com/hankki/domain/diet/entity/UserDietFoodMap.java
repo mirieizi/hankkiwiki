@@ -18,6 +18,9 @@ public class UserDietFoodMap {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "diet_id", nullable = false)
     private Long dietId;
 
