@@ -3,13 +3,13 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.hankki.domain.diet.mapper.UserDietFoodMapper">
+<mapper namespace="com.hankki.domain.recommend.mapperserDietFoodMapper">
 
     <select id="findFoodIdIdsByDietId" resultType="long" parameterType="long">
         SELECT food_id FROM diet_meal_item WHERE diet_id = #{dietId}
     </select>
 
-    <insert id="insertDietMealItem" parameterType="com.hankki.domain.diet.entity.UserDietFoodMap">
+    <insert id="insertDietMealItem" parameterType="com.hankki.domain.recommend.entity.UserDietFoodMap">
         INSERT INTO diet_meal_item (diet_id, meal_item_id)
         VALUES (#{dietId}, #{mealItemId})
     </insert>

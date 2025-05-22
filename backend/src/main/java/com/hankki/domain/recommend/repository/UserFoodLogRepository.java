@@ -6,10 +6,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface UserFoodLogRepository extends JpaRepository <UserFoodLog, Long> {
 
     @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.date BETWEEN :start AND :end")
-    List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate startDate, LocalDate endDate);
+    List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate start, LocalDate endDate);
 }

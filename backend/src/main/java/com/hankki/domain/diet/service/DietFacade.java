@@ -6,7 +6,7 @@ import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
-import com.hankki.domain.diet.mapper.UserDietFoodMapper;
+import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

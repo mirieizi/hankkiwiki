@@ -1,6 +1,5 @@
 package com.hankki.domain.recommend.entity;
 
-import com.hankki.domain.diet.constant.MealType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

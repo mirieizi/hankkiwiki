@@ -1,4 +1,4 @@
-package com.hankki.common.vector;
+package com.hankki.domain.vector.util;
 
 import java.util.List;
 

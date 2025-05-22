@@ -1,4 +1,4 @@
-package com.hankki.common.redis.config;
+package com.hankki.domain.vector.redis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

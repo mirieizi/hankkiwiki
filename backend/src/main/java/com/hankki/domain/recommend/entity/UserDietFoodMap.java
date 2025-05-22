@@ -1,4 +1,4 @@
-package com.hankki.domain.diet.entity;
+package com.hankki.domain.recommend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 사용자가 섭취한 식단, 음식 중간 테이블
+ */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

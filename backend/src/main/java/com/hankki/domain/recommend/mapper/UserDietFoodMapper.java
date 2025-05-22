@@ -1,6 +1,6 @@
-package com.hankki.domain.diet.mapper;
+package com.hankki.domain.recommend.mapper;
 
-import com.hankki.domain.diet.entity.UserDietFoodMap;
+import com.hankki.domain.recommend.entity.UserDietFoodMap;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
