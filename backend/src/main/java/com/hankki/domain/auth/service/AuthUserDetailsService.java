@@ -2,6 +2,7 @@ package com.hankki.domain.auth.service;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
+import com.hankki.domain.user.constant.Gender;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.entity.UserHealthInfo;
 import com.hankki.domain.user.repository.UserHealthInfoRepository;
@@ -25,9 +26,10 @@ public class AuthUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER));
 
-        UserHealthInfo info = userHealthInfoRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
+       Gender gender = userHealthInfoRepository.findByUserId(user.getId())
+        .map(UserHealthInfo::getGender)
+        .orElse(null);
 
-        return new AuthUser(user, info.getGender());
+        return new AuthUser(user, gender);
     }
 }

@@ -3,7 +3,6 @@ package com.hankki.common.redis.service;
 import com.hankki.common.redis.util.RedisVectorUtil;
 import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.user.constant.Gender;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -37,7 +36,7 @@ import java.nio.charset.StandardCharsets;
 public class FoodVectorService {
 
     private static final int VECTOR_DIMENSION = 9;
-    private static final String VECTOR_FILE_PATH = "/vectors/food_embeddings.csv";
+    private static final String VECTOR_FILE_PATH = "/vectors/mini_food_embeddings.csv";
 
     private final FoodRepository foodRepository;
     private final RedisTemplate<String, Object> redisTemplate;
