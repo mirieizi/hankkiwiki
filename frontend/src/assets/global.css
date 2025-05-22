@@ -1,0 +1,103 @@
+/* src/assets/global.css */
+
+/* 1. 색상 키워드 정의 */
+:root {
+  --orange-dark: #ffc085; /* 진한 오렌지 */
+  --orange-light: #ffe2b3; /* 연한 오렌지 */
+  --brown-dark: #dc6936; /* 포인트 진한 갈색 */
+  --blue-info: #a7c1c1; /* 도움말·알림용 파란색 */
+  --butter-bg: #fff1d1; /* 무난한 연한 버터 바탕색 */
+}
+
+/* 2. (선택) 기본 리셋 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 3. 예시 사용법 */
+/* body 전체 배경에 버터 배경색 */
+body {
+  background-color: var(--butter-bg);
+  font-family: sans-serif;
+}
+
+/* 버튼 예시 */
+.button-primary {
+  background-color: var(--orange-dark);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.button-secondary {
+  background-color: var(--orange-light);
+  color: var(--brown-dark);
+}
+
+/* 도움말 텍스트 */
+.help-text {
+  color: var(--blue-info);
+  font-size: 0.9rem;
+}
+
+/* 포인트 박스 */
+.alert-box {
+  background-color: var(--brown-dark);
+  color: white;
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+/* src/assets/global.css */
+/* 1) 커스텀 폰트 불러오기 */
+@font-face {
+  font-family: "Gumi Romance";
+  src: url("./fonts/Gumi Romance.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Dovemayo_gothic";
+  src: url("./fonts/Dovemayo_gothic.ttf") format(".ttf");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EF_Diary";
+  src: url("./fonts/EF_Diary.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hakgyoansim_R";
+  src: url("./fonts/Hakgyoansim_R.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.fancy-font {
+  font-family: "Gumi Romance", sans-serif;
+  font-size: 2rem; /* 필요하다면 크기도 크게 설정 */
+  line-height: 1.2;
+}
+
+.diary-font {
+  font-family: "EF_Diary", sans-serif;
+  font-size: 2rem; /* 필요하다면 크기도 크게 설정 */
+  line-height: 1.2;
+}
+
+/* 2) 전체에 적용하기 */
+body {
+  font-family: "EF-Hakgyoansim_R", sans-serif, "Gumi Romance";
+}
