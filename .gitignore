@@ -88,4 +88,4 @@ ehthumbs.db
 Icon?
 Desktop.ini
 mysql-data/
-/target/
+/backend/target/
