@@ -8,7 +8,6 @@ import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.Diet;
 import com.hankki.domain.diet.mapper.UserDietFoodMapper;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
-import com.hankki.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
