@@ -5,8 +5,8 @@ import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
-import com.hankki.domain.diet.entity.Diet;
-import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
+import com.hankki.domain.diet.entity.DietGroup;
+import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.food.service.FoodQueryServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.List;
 public class DietFacade {
 
     private final DietService dietService;
-    private final UserDietFoodMapper userDietFoodMapper;
+    private final DietFoodRepository dietFoodRepository;
     private final FoodQueryServiceImpl foodQueryService;
 
     /**
@@ -42,14 +42,14 @@ public class DietFacade {
      * @return GroupedDietResponseDto
      */
     public GroupedDietResponseDto getDietsByDate(Long userId, LocalDate takeAt) {
-        List<Diet> dietList = dietService.getDietsByTakeAt(userId, takeAt);
+        List<DietGroup> dietGroupList = dietService.getDietsByTakeAt(userId, takeAt);
 
-        List<FoodGroupDto> foods = dietList.stream()
-                .map(diet -> {
-                    List<Long> foodIds = userDietFoodMapper.findFoodIdIdsByDietId(diet.getId());
+        List<FoodGroupDto> foods = dietGroupList.stream()
+                .map(dietGroup -> {
+                    List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupId(dietGroup.getId());
                     List<FoodPreviewResponseDto> foodPreviews = foodQueryService.getFoodPreviews(foodIds);
                     return FoodGroupDto.builder()
-                            .mealType(diet.getMealType())
+                            .mealType(dietGroup.getMealType())
                             .foods(foodPreviews)
                             .build();
                 })
@@ -80,12 +80,12 @@ public class DietFacade {
 
     public List<DietResponseDto> getDietsByUserId(Long userId) {
         try {
-            List<Diet> dietList = dietService.getDietsByUserId(userId);
-            return dietList.stream()
-                    .map(diet -> DietResponseDto.builder()
-                            .id(diet.getId())
-                            .takeAt(diet.getTakeAt())
-                            .mealType(diet.getMealType())
+            List<DietGroup> dietGroupList = dietService.getDietsByUserId(userId);
+            return dietGroupList.stream()
+                    .map(dietGroup -> DietResponseDto.builder()
+                            .id(dietGroup.getId())
+                            .takeAt(dietGroup.getTakeAt())
+                            .mealType(dietGroup.getMealType())
                             .build())
                     .toList();
         } catch (Exception e) {

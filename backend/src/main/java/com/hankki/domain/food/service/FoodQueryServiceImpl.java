@@ -1,6 +1,6 @@
 package com.hankki.domain.food.service;
 
-import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
+import com.hankki.domain.diet.service.DietServiceImpl;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.food.repository.FoodRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FoodQueryServiceImpl {
 
-    private final UserDietFoodMapper userDietFoodMapper;
+    private final DietServiceImpl dietService;
     private final FoodRepository foodRepository;
 
     /**
@@ -33,7 +33,7 @@ public class FoodQueryServiceImpl {
     public List<Long> findFoodsByUserIdAndTakeAtBetween(Long userId) {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
-        List<Long> foodIds = userDietFoodMapper.findFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+        List<Long> foodIds = dietService.findRecentFoodIdsByUserId(userId, threeDaysAgo, today);
         if (foodIds.isEmpty()) throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
         return foodIds;
     }

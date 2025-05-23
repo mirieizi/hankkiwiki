@@ -30,6 +30,7 @@ public enum ExceptionStatus {
 
 	// FOOD
 	NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, 404, "음식을 찾지 못했습니다."),
+	INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 값을 입력했습니다"),
 
 	// RECOMMEND
 	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다."),

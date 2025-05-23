@@ -1,9 +1,10 @@
 package com.hankki.domain.recommend.service;
 
-import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
+import com.hankki.domain.diet.repository.DietFoodRepository;
+import com.hankki.domain.diet.service.DietService;
+import com.hankki.domain.diet.service.DietServiceImpl;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
-import com.hankki.domain.food.service.FoodQueryServiceImpl;
 import com.hankki.domain.user.constant.Gender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import java.util.Set;
 public class RecommendVectorFacade {
 
     private final UserFoodLogRepository userFoodLogRepository;
-    private final UserDietFoodMapper userDietFoodMapper;
+    private final DietServiceImpl dietService;
     private final RedisVectorSearcher redisVectorSearcher;
 
     /**
@@ -58,7 +59,7 @@ public class RecommendVectorFacade {
     private List<Long> loadRecentUserFoodIds(Long userId) {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
-        return userDietFoodMapper.findFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+        return dietService.findRecentFoodIdsByUserId(userId, threeDaysAgo, today);
     }
 
     private List<Long> loadRecentRecommendedFoodIds(Long userId) {
