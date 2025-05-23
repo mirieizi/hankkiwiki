@@ -11,6 +11,7 @@ import com.hankki.domain.diet.repository.DietRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,23 +26,38 @@ public class DietServiceImpl implements DietService {
     private final UserDietFoodMapper userDietFoodMapper;
 
     @Override
-    @Transactional
     public void createDiet(Long userId, DietCreateRequestDto requestDto) {
         log.info("[DietService] Diet 생성 Request : {}", requestDto);
-        // Diet 요청 값 저장
-        Diet createdDiet = requestDto.toEntity(userId);
-        dietRepository.save(createdDiet);
+            for (DietCreateRequestDto.MealWithFoods meal : requestDto.getFoods()) {
+                try {
+                    if (dietRepository.existsByUserIdAndTakeAtAndMealType(
+                            userId, requestDto.getTakeAt(), meal.getMealType())) {
+                        log.warn("[DietService] 이미 존재하는 식단 - userId: {}, takeAt: {}, mealType: {}",
+                                userId, requestDto.getTakeAt(), meal.getMealType());
+                        throw new HankkiWikiException(ExceptionStatus.INVALID_DIET_INPUT);
+                    }
 
-        // Diet에 대한 MealItem(food)의 값 중간 테이블에 저장
-        for (Long foodId : requestDto.getFoodIds()) {
-            UserDietFoodMap userDietFoodMap = UserDietFoodMap.builder()
-                    .userId(userId)
-                    .dietId(createdDiet.getId())
-                    .foodId(foodId)
-                    .build();
-            userDietFoodMapper.insertUserDietFoodMap(userDietFoodMap);
-        }
-        log.info("[DietService] Diet 생성 완료");
+                    Diet createdDiet = Diet.builder()
+                            .userId(userId)
+                            .takeAt(requestDto.getTakeAt())
+                            .mealType(meal.getMealType())
+                            .build();
+                    dietRepository.save(createdDiet);
+
+                    for (Long foodId : meal.getFoodIds()) {
+                        UserDietFoodMap map = UserDietFoodMap.builder()
+                                .userId(userId)
+                                .dietId(createdDiet.getId())
+                                .foodId(foodId)
+                                .build();
+                        userDietFoodMapper.insertUserDietFoodMap(map);
+                    }
+
+                    log.info("[DietService] {} 식사에 대한 Diet 생성 완료", meal.getMealType());
+                } catch (Exception e) {
+                    log.error("[DietService] {} 식사 생성 중 오류 발생: {}", meal.getMealType(), e.getMessage());
+                }
+            }
     }
 
     @Override

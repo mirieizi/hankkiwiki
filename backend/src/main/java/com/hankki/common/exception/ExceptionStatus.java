@@ -10,6 +10,7 @@ public enum ExceptionStatus {
 	// DIET
 	INVALID_MEAL_TYPE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 종류입니다."),
 	INVALID_MAJOR_CATEGORY(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 대분류입니다."),
+	INVALID_DIET_INPUT(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 입력입니다."),
 	NOT_FOUND_DIET(HttpStatus.NOT_FOUND, 404, "식사 정보가 존재하지 않습니다."),
 	NOT_FOUND_DIET_MEAL_ITEM(HttpStatus.NOT_FOUND, 404, "식사에 대응하는 음식 정보를 찾지 못했습니다."),
 	NOT_FOUND_MEAL_ITEM(HttpStatus.NOT_FOUND, 404, "음식 정보가 존재하지 않습니다."),
