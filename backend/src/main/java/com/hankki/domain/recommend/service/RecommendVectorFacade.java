@@ -1,5 +1,9 @@
 package com.hankki.domain.recommend.service;
 
+
+import com.hankki.common.redis.vector.RedisVectorSearcher;
+import com.hankki.domain.food.entity.Food;
+import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
@@ -20,6 +24,7 @@ public class RecommendVectorFacade {
     private final UserFoodLogRepository userFoodLogRepository;
     private final UserDietFoodMapper userDietFoodMapper;
     private final RedisVectorSearcher redisVectorSearcher;
+    private final FoodRepository foodRepository;
 
     /**
      * 최근 먹은 음식과 가장 거리가 먼 음식 찾기
@@ -59,6 +64,17 @@ public class RecommendVectorFacade {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
         return userDietFoodMapper.findFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+    }
+    
+    public List<Food> getRecentFoods(Long userId){
+        LocalDate today = LocalDate.now();
+        LocalDate threeDaysAgo = today.minusDays(2);
+    	List<Long> recentFoodIds = userFoodLogRepository.findAllFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+        if (recentFoodIds.isEmpty()) {
+            throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
+        }
+        // Food 엔티티 리스트로 변환 반환
+        return foodRepository.findAllById(recentFoodIds);
     }
 
     private List<Long> loadRecentRecommendedFoodIds(Long userId) {

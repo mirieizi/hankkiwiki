@@ -145,15 +145,20 @@ DB_CONTAINER = mysql-1
 CSV_FILE = ./src/main/resources/food_data.csv
 CSV_CONTAINER_PATH = /var/lib/mysql-files/food_data.csv
 
-# wimport-food: .env 파일 자동 export 후 커맨드 실행
 wimport-food:
-	@set -o allexport && source .env && set +o allexport; \
+	@set -o allexport && . .env && set +o allexport; \
+	# 1) CSV를 컨테이너로 복사
 	docker cp $(CSV_FILE) $(DB_CONTAINER):$(CSV_CONTAINER_PATH); \
-	docker exec -i $(DB_CONTAINER) mysql -u$$HANKKI_USERNAME -p$$HANKKI_PASSWORD $$HANKKI_DATABASE -e "\
-	LOAD DATA INFILE '$(CSV_CONTAINER_PATH)' \
-	INTO TABLE food \
-	FIELDS TERMINATED BY ',' ENCLOSED BY '\"' \
-	LINES TERMINATED BY '\n' \
-	IGNORE 1 LINES \
-	(food_name, major_category, sub_category, serving_size, kcal, moisture, carbohydrate, protein, fat, sugar, sodium, cholesterol);"
-	
+	# 2) CSV 로드 & FULLTEXT 인덱스 재생성(존재하면 DROP → CREATE)
+	docker exec -i $(DB_CONTAINER) mysql \
+		-u$$HANKKI_USERNAME -p$$HANKKI_PASSWORD $$HANKKI_DATABASE \
+		-e "\
+LOAD DATA INFILE '$(CSV_CONTAINER_PATH)' \
+INTO TABLE food \
+FIELDS TERMINATED BY ',' ENCLOSED BY '\"' \
+LINES TERMINATED BY '\n' \
+IGNORE 1 LINES \
+(food_name, major_category, sub_category, serving_size, kcal, moisture, carbohydrate, protein, fat, sugar, sodium, cholesterol); \
+DROP INDEX IF EXISTS idx_food_name ON food; \
+ALTER TABLE food ADD FULLTEXT idx_food_name (food_name);"
+

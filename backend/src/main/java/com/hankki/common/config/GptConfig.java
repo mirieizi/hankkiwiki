@@ -7,15 +7,13 @@ import org.springframework.web.client.RestTemplate;
 
 import lombok.Getter;
 import lombok.Setter;
-
-@Configuration
 @Getter
-@Setter
+@Configuration
 public class GptConfig {
-	@Value("${openai.secret-key")
+	@Value("${openai.secret-key}")
 	private String secretKey;
 	
-	@Value("${openai.model")
+	@Value("${openai.model}")
 	private String model;
 	
 	/**
