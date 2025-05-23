@@ -1,7 +1,6 @@
-<!-- src/views/LoginPage.vue -->
 <template>
-  <div class="login-wrapper">
-    <div :class="['login-container', { 'sign-up-mode': !signIn }]">
+  <div class="login-bg">
+    <div class="login-container" :class="{ 'sign-up-mode': !signIn }">
       <FormPanel :signIn="signIn" />
       <ActionPanel :signIn="signIn" @slide="toggleMode" />
     </div>
@@ -20,80 +19,46 @@ function toggleMode() {
 </script>
 
 <style>
-@import "@/assets/global.css"; /* CSS 변수 로드 */
-
-/* LoginPage.vue 끝에 추가 */
-.login-container .action-panel {
-  color: #000000 !important;
-}
-
-/* 전체 배경 + 중앙 배치 + 데코 도형 */
-.login-wrapper {
-  position: relative;
+.login-bg {
+  /* 부모 컨테이너 안에서 여유롭게 중앙 정렬하도록 전체 폭이 아닌 가용 영역 100% 사용 */
   width: 100%;
-  height: 100vh;
-  background-color: #fff;
+  min-height: 100vh;
+  background: linear-gradient(120deg, #ffffff 40%, #ffffff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-/* 원형 데코 (진한 오렌지) */
-.login-wrapper::before {
-  content: "";
-  position: absolute;
-  width: 350px;
-  height: 350px;
-  background: var(--orange-dark);
-  border-radius: 50%;
-  bottom: 50px;
-  left: -150px;
-}
-/* 삼각형 데코 (진한 갈색) */
-.login-wrapper::after {
-  content: "";
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  background: var(--brown-dark);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
-  top: -100px;
-  right: -100px;
-  transform: rotate(20deg);
+  padding: 48px 0;
 }
 
-/* 로그인/회원가입 컨테이너 */
 .login-container {
-  position: relative;
-  width: 1000px;
-  max-width: 90%;
-  min-height: 600px;
-  background: #fff;
-  border-radius: 20px;
   display: flex;
+  /* 화면 가로의 80%만 차지, 최대 1000px */
+  width: 80vw;
+  max-width: 1000px;
+  /* 세로 높이 확보 */
+  min-height: 600px;
+  max-height: none;
+  margin-top: -200px; /* 위로 30px 이동 */
+  border-radius: 28px;
+  box-shadow: 0 15px 40px #20c59c13;
   overflow: hidden;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  background: #e7faf6;
+  transform: translateY(-20px); /* 조금 더 위로 조정 */
 }
 
-/* 내부 패널 기본 스타일 */
 .login-container .form-panel,
 .login-container .action-panel {
+  flex: 1 1 0;
   width: 50%;
-  padding: 2rem;
   transition: transform 0.7s cubic-bezier(0.63, 0.39, 0.54, 0.91);
+  padding: 6rem 2.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
-/* 로그인 패널 배경색 */
-.login-container .form-panel {
-  background-color: #faf1e6;
-}
-
-/* 회원가입 패널 배경색 및 텍스트색 */
-.login-container .action-panel {
-  background-color: #fdfaf6;
-  color: var(--brown-dark);
-}
-
-/* 슬라이드 적용 */
 .login-container.sign-up-mode .form-panel {
   transform: translateX(100%);
 }
@@ -101,13 +66,24 @@ function toggleMode() {
   transform: translateX(-100%);
 }
 
-/* 버튼 컬러 예시 */
-.login-container .form-panel button {
-  background-color: var(--blue-info);
-  color: aliceblue;
-}
-.login-container .action-panel button {
-  background-color: var(--orange-dark);
-  color: white;
+/* 반응형 조정 */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+    width: 95vw;
+    min-height: auto;
+    border-radius: 14px;
+  }
+  .login-container .form-panel,
+  .login-container .action-panel {
+    flex: 1 1 100%;
+    width: 100%;
+    padding: 1.3rem 0.7rem;
+    min-height: 280px;
+    transform: none !important;
+  }
+  .login-container .action-panel {
+    border-top: 1.5px solid #f1f0e8;
+  }
 }
 </style>

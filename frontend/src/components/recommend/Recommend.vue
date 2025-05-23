@@ -113,15 +113,15 @@ const { fetchRecommendation, fetchRemainingSpoons, fetchHistoryRecords, resetRec
 
 // 실행 버튼 클릭
 function onRun() {
-  if (!requireLogin()) return;
-  if (store.remainingSpoons <= 0) {
-    showNoHistory();
-    return;
-  }
-  if ((mode.value === "history" || mode.value === "ai") && store.historyRecords.length === 0) {
-    showNoHistory();
-    return;
-  }
+  // if (!requireLogin()) return;
+  // if (store.remainingSpoons <= 0) {
+  //   showNoHistory();
+  //   return;
+  // }
+  // if ((mode.value === "history" || mode.value === "ai") && store.historyRecords.length === 0) {
+  //   showNoHistory();
+  //   return;
+  // }
   store.remainingSpoons -= spoonCost.value;
   store.hasRun = true;
   store.loading = true;

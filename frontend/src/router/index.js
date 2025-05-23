@@ -25,9 +25,13 @@ const routes = [
   { path: "/signup", name: "Signup", component: LoginPage, props: { signIn: false } },
 
   // Profile pages (require auth)
-  { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: true } },
-  { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: true } },
-  { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
+  // { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: true } },
+  // { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: true } },
+  // { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
+
+  { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: false } },
+  { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: false } },
+  { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: false } },
 
   // Recommendation pages
   { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend },
