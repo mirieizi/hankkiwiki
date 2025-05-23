@@ -1,7 +1,12 @@
 package com.hankki.domain.vector.util;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 
+@Slf4j
 public class VectorAggregator {
 
     /**
@@ -9,7 +14,8 @@ public class VectorAggregator {
      */
     public static double[] average(List<double[]> vectors) {
         if (vectors == null || vectors.isEmpty()) {
-            throw new IllegalArgumentException("벡터 리스트가 비어있습니다.");
+            log.error("[VectorAggregator] 벡터 리스트가 비어있습니다.");
+            throw new HankkiWikiException(ExceptionStatus.EMPTY_DIET_REQUEST);
         }
 
         int dim = vectors.get(0).length;

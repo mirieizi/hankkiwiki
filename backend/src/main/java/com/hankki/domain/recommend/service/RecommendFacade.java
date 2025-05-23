@@ -56,21 +56,6 @@ public class RecommendFacade {
     }
 
     /**
-     * 3일 간 식단에서 벡터로 거리가 가까운 것과 먼 것의 중간 값 추천
-     * @param userId
-     * @param gender
-     * @return
-     */
-    public FoodResponseDto recommendNeutral(Long userId, Gender gender) {
-        userLogService.checkQuota(userId);
-        Long neutralId = recommendVectorFacade.findNeutralFoodFromRecent(userId, gender);
-        FoodResponseDto foodResponseDto =  recommendService.findFoodDtoById(neutralId);
-        userLogService.recordRecommendation(userId);
-        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
-        return foodResponseDto;
-    }
-
-    /**
      * 3일 간 식단에서 벡터로 거리가 가장 가까운 음식 추천
      * @param userId
      * @param gender

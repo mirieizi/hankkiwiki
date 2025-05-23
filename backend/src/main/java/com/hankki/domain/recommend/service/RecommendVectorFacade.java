@@ -1,5 +1,7 @@
 package com.hankki.domain.recommend.service;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.diet.service.DietService;
 import com.hankki.domain.diet.service.DietServiceImpl;
@@ -7,6 +9,7 @@ import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
 import com.hankki.domain.user.constant.Gender;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -14,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RecommendVectorFacade {
@@ -34,26 +38,30 @@ public class RecommendVectorFacade {
     public Long findFurthestFoodFromRecent(Long userId, Gender gender) {
         List<Long> recentFoodIds = loadRecentUserFoodIds(userId);
         List<Long> recentRecommendedFoodIds = loadRecentRecommendedFoodIds(userId);
-        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
-        List<Long> results = redisVectorSearcher.furthestSearch(gender, avgVector, 30);
-        return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
-    }
 
-    public Long findNeutralFoodFromRecent(Long userId, Gender gender) {
-        List<Long> recentFoodIds = loadRecentUserFoodIds(userId);
-        List<Long> recentRecommendedFoodIds = loadRecentRecommendedFoodIds(userId);
-        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
-        List<Long> sortedIds = redisVectorSearcher.knnSearch(gender, avgVector, 21);
+        try {
+            double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+            List<Long> results = redisVectorSearcher.furthestSearch(gender, avgVector, 30);
+            return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
+        } catch (Exception e) {
+            log.error("[RecommendVectorFacade] 가장 먼 음식 찾기 실패: {}", e.getMessage(), e);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+        }
 
-        return checkDuplicatedRecommend(sortedIds, recentFoodIds, recentRecommendedFoodIds);
     }
 
     public Long findMostSimilarFoodFromRecent(Long userId, Gender gender) {
         List<Long> recentFoodIds = loadRecentUserFoodIds(userId);
         List<Long> recentRecommendedFoodIds = loadRecentRecommendedFoodIds(userId);
-        double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
-        List<Long> results = redisVectorSearcher.knnSearch(gender, avgVector, 1);
-        return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
+
+        try {
+            double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+            List<Long> results = redisVectorSearcher.knnSearch(gender, avgVector, 1);
+            return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
+        } catch (Exception e) {
+            log.error("[RecommendVectorFacade] 가장 가까운 음식 찾기 실패: {}", e.getMessage(), e);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+        }
     }
 
     private List<Long> loadRecentUserFoodIds(Long userId) {

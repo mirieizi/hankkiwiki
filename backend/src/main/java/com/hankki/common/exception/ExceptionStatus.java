@@ -34,8 +34,7 @@ public enum ExceptionStatus {
 
 	// RECOMMEND
 	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다."),
-
-	// REDIS
+	EMPTY_DIET_REQUEST(HttpStatus.BAD_REQUEST, 400, "최근 3일 간 식단 기록이 비었습니다."),
 	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다.");
 
 	private final HttpStatus httpStatus;

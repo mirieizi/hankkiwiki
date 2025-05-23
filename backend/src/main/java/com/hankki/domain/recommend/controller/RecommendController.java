@@ -13,7 +13,6 @@ import com.hankki.domain.recommend.service.RecommendFacade;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,17 +46,6 @@ public class RecommendController {
     @GetMapping("/furthest")
     public ResponseEntity<FoodResponseDto> recommendFurthest(@CurrentUser UserPrincipal user) {
         return ResponseEntity.ok(recommendFacade.recommendFurthest(user.getUserId(), user.getGender()));
-    }
-
-    @Operation(summary = "중립 음식 추천", description = "최근 섭취한 음식 벡터 평균과 중간 정도의 유사도를 가진 음식을 추천합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content),
-            @ApiResponse(responseCode = "429", description = "추천 가능 횟수 초과"),
-            @ApiResponse(responseCode = "404", description = "추천할 음식 없음 또는 최근 섭취 내역 없음")
-    })
-    @GetMapping("/neutral")
-    public ResponseEntity<FoodResponseDto> recommendNeutral(@CurrentUser UserPrincipal user) {
-        return ResponseEntity.ok(recommendFacade.recommendNeutral(user.getUserId(), user.getGender()));
     }
 
     @Operation(summary = "유사한 음식 추천", description = "최근 섭취한 음식과 가장 유사한 음식을 추천합니다.")

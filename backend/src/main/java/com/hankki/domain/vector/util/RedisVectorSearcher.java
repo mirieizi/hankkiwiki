@@ -1,5 +1,7 @@
 package com.hankki.domain.vector.util;
 
+import com.hankki.common.exception.ExceptionStatus;
+import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.user.constant.Gender;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.CommandType;
@@ -27,7 +29,10 @@ public class RedisVectorSearcher {
                 .map(id -> {
                     String key = String.format("food_%s:%d", gender.key(), id);
                     String encoded = redisCommands.get(key + "::vector");
-                    if (encoded == null) throw new IllegalStateException("벡터가 존재하지 않음: " + key);
+                    if (encoded == null) {
+                        log.error("[RedisVectorSearcher] 벡터를 찾지 못했습니다. key: {}", key);
+                        throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+                    }
                     byte[] raw = Base64.getDecoder().decode(encoded);
                     return RedisVectorUtil.bytesToDoubleArray(raw);
                 })
