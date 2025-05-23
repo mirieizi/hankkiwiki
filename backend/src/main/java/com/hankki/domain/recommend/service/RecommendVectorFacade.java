@@ -81,6 +81,11 @@ public class RecommendVectorFacade {
             List<Long> recentTakenFoodIds,
             List<Long> recentRecommendedFoodIds
     ) {
+        if (foodIds == null || foodIds.isEmpty()) {
+            log.warn("[checkDuplicatedRecommend] 추천 후보군이 비어 있습니다. (벡터 검색 실패 또는 Redis 문제)");
+            throw new IllegalStateException("추천할 음식이 없습니다.");
+        }
+
         Set<Long> recent = new HashSet<>();
         recent.addAll(recentTakenFoodIds);
         recent.addAll(recentRecommendedFoodIds);
@@ -88,7 +93,10 @@ public class RecommendVectorFacade {
         return foodIds.stream()
                 .filter(id -> !recent.contains(id))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("중복을 제외한 추천 후보가 없습니다."));
+                .orElseThrow(() -> {
+                    log.warn("[checkDuplicatedRecommend] 모든 후보가 최근 섭취 또는 추천 목록에 포함됨");
+                    return new IllegalStateException("중복을 제외한 추천 후보가 없습니다.");
+                });
 
     }
 }
