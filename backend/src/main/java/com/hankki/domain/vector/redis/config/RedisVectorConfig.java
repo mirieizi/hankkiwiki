@@ -1,4 +1,4 @@
-package com.hankki.common.redis.config;
+package com.hankki.domain.vector.redis.config;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;

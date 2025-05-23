@@ -45,10 +45,10 @@ backend/redis-data/
 backend/dump.rdb
 
 # Eclipse IDE
-backend/.classpath
-backend/.project
-backend/.factorypath
-backend/.settings/
+/backend/.classpath
+/backend/.project
+/backend/.factorypath
+/backend/.settings/
 
 ##################################
 # 🌐 Frontend (Vue.js, Node.js)
@@ -88,3 +88,4 @@ ehthumbs.db
 Icon?
 Desktop.ini
 mysql-data/
+/backend/target/

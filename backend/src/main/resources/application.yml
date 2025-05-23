@@ -30,6 +30,17 @@ spring:
       host: redis
       port: 6379
 
+  mysql:
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./backend/mysql-init:/docker-entrypoint-initdb.d
+
+  ai:
+    openai:
+      api-key: ${SPRING_AI_OPENAI_API_KEY}
+      model: ${SPRING_AI_OPENAI_MODEL}
+
+
 mybatis:
   mapper-locations: classpath:mappers/**/*.xml
   type-aliases-package: com.hankki.domain.diet.entity.DietMealItem
@@ -48,10 +59,10 @@ logging:
     org.springframework.security: DEBUG
 
 jwt:
-  issuer: ajufresh@gmail.com
-  secret_key: 7HCyfxKBs3gYpoUQ5wVVcMFde7juyVfYbLGYVW4ZgU0=
-  access-token-validity: 3600000 # 1시간 (밀리초 단위)
-  refresh-token-validity: 604800000 # 7일 (밀리초 단위)
+  issuer: ${HANKKI_JWT_ISSURE}
+  secret_key: ${HANKKI_JWT_SECRET_KEY}
+  access-token-validity: ${HANKKI_JWT_ACCESS_TOKEN_VALIDITY}
+  refresh-token-validity: ${HANKKI_JWT_REFRESH_TOKEN_VALIDITY}
 
 server:
   port: 8081

@@ -1,4 +1,4 @@
-package com.hankki.common.redis.vector;
+package com.hankki.domain.vector.redis.config;
 
 import com.hankki.domain.user.constant.Gender;
 import jakarta.annotation.PostConstruct;
