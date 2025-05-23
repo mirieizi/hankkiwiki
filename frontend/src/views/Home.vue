@@ -30,10 +30,13 @@
         <div class="tech-modal-sheet">
           <!-- 닫기 버튼 -->
           <button class="modal-close-btn" @click="closeModal">✕</button>
-          <div class="modal-notch"></div>
-          <div class="modal-title">
-            <span class="point2">우리가 직접 구현한 한끼위키의</span>
-            <span class="point3">핵심 기술들</span>
+          <!-- 상단 노란 헤더 -->
+          <div class="modal-header-accent">
+            <div class="modal-notch"></div>
+            <div class="modal-title">
+              <span class="point2">우리가 직접 구현한 한끼위키의</span>
+              <span class="point3">핵심 기술들</span>
+            </div>
           </div>
           <ul class="tech-list">
             <li>
@@ -122,7 +125,7 @@ function closeModal() {
 </script>
 
 <style scoped>
-/* 기존 홈 스타일 유지 + peek 추가 */
+/* ===== 홈/버튼/타이틀 ===== */
 .home-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #6faf9b 60%, #fff 100%);
@@ -134,7 +137,16 @@ function closeModal() {
   position: relative;
 }
 .mascot-box {
-  /* ...이전과 동일 ... */
+  /* 마스코트 */
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 6px 24px 0 #21d59b30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 24px;
 }
 .mascot-face {
   font-size: 48px;
@@ -208,8 +220,7 @@ function closeModal() {
   color: #fff;
 }
 
-/* ======================= */
-/* peek(살짝 보이는) 영역  */
+/* ===== 아래 살짝 보이는 미리보기 ===== */
 .tech-modal-peek {
   position: fixed;
   left: 0;
@@ -264,8 +275,7 @@ function closeModal() {
   font-weight: 900;
 }
 
-/* ======================= */
-/* 토스 모달 */
+/* ===== 모달 ===== */
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.33s cubic-bezier(0.68, 1.3, 0.43, 0.92);
@@ -298,26 +308,57 @@ function closeModal() {
   align-items: flex-end;
   justify-content: center;
 }
+/* 가로 넓게 (최대 880px) */
 .tech-modal-sheet {
-  width: 98vw;
-  max-width: 430px;
+  width: 96vw;
+  max-width: 880px;
   background: #fff;
   border-radius: 32px 32px 0 0;
   box-shadow: 0 -2px 32px #0ad4a920;
-  padding: 34px 28px 32px 28px;
+  padding: 0;
   margin-bottom: 0;
-  min-height: 390px;
+  min-height: 470px;
   animation: slide-up 0.3s cubic-bezier(0.43, 1.3, 0.53, 0.97);
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
 }
+
+/* 상단 노란 배경 헤더 */
+.modal-header-accent {
+  width: 100%;
+  background: linear-gradient(90deg, #fff4c4 40%, #ffe69b 100%);
+  border-radius: 32px 32px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 14px #ffe38e11;
+  border-bottom: 1.2px solid #ffe299;
+  padding-top: 30px;
+  padding-bottom: 17px;
+  margin-bottom: 12px;
+}
+.modal-header-accent .modal-notch {
+  margin-bottom: 10px;
+}
+.modal-title {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #17b1a2;
+  letter-spacing: 0.7px;
+  text-align: center;
+}
+.modal-title .point3 {
+  font-size: 1.32rem;
+}
+
+/* 닫기 버튼 */
 .modal-close-btn {
   position: absolute;
-  top: 19px;
-  right: 22px;
-  font-size: 1.42rem;
+  top: 27px;
+  right: 36px;
+  font-size: 1.65rem;
   background: none;
   border: none;
   color: #acb8c2;
@@ -329,71 +370,53 @@ function closeModal() {
 .modal-close-btn:hover {
   color: #ff7e4b;
 }
-.modal-notch {
-  width: 56px;
-  height: 7px;
-  background: #ececec;
-  border-radius: 7px;
-  margin: 0 auto 18px auto;
-}
-.modal-title {
-  font-size: 1.23rem;
-  font-weight: 800;
-  color: #17b1a2;
-  margin-bottom: 18px;
-  letter-spacing: 0.7px;
-  text-align: center;
-}
-.point2 {
-  color: #17b1a2;
-  font-weight: 800;
-}
-.point3 {
-  color: #ffc83d;
-  font-weight: 800;
-  margin-left: 4px;
-}
+
 .tech-list {
-  width: 100%;
-  margin: 0 0 18px 0;
+  width: 90%;
+  margin: 0 0 20px 0;
   padding: 0;
   list-style: none;
 }
 .tech-list li {
-  margin-bottom: 16px;
-  font-size: 1.04rem;
-  background: #f7fefc;
-  border-radius: 15px;
-  padding: 15px 16px 12px 14px;
-  box-shadow: 0 2px 8px #22e2d514;
+  margin-bottom: 18px;
+  font-size: 1.15rem;
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 26px 14px 18px;
+  box-shadow: 0 2px 10px #e4e4e408;
+  border: 1.3px solid #f5f5f7;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 .tech-list .emoji {
-  font-size: 1.21rem;
-  margin-right: 7px;
+  font-size: 1.22rem;
+  margin-right: 10px;
 }
 .tech-list .tech-title {
-  font-weight: 800;
   color: #15b099;
-  margin-right: 6px;
+  margin: 0 0 3px 0;
+  font-weight: 800;
 }
 .tech-list .desc {
   display: block;
   color: #7fa1b5;
-  font-size: 0.98rem;
-  margin-top: 3px;
-  font-weight: 400;
+  font-size: 1.03rem;
+  margin-top: 2px;
+  font-weight: 500;
   letter-spacing: 0;
 }
 .modal-main-btn {
-  background: #21d59b;
+  background: #17b1a2;
   color: #fff;
   border: none;
   border-radius: 17px;
-  font-size: 1.07rem;
-  padding: 14px 0;
-  font-weight: 700;
-  width: 100%;
-  margin-top: 14px;
+  font-size: 1.15rem;
+  padding: 18px 0;
+  font-weight: 800;
+  width: 90%;
+  margin: 17px 0 30px 0;
   box-shadow: 0 2px 12px #21d59b20;
   transition: background 0.18s;
 }
@@ -402,25 +425,44 @@ function closeModal() {
   color: #233048;
 }
 
+@media (max-width: 1200px) {
+  .tech-modal-sheet {
+    max-width: 97vw;
+  }
+  .modal-title {
+    font-size: 1.13rem;
+  }
+  .tech-list {
+    width: 98%;
+  }
+}
+@media (max-width: 900px) {
+  .tech-modal-sheet {
+    max-width: 99vw;
+  }
+  .modal-header-accent {
+    padding-top: 20px;
+  }
+  .modal-close-btn {
+    top: 17px;
+    right: 17px;
+  }
+}
 @media (max-width: 600px) {
-  .title {
-    font-size: 1.6rem;
-  }
-  .mascot-box {
-    width: 66px;
-    height: 66px;
-  }
-  .mascot-face {
-    font-size: 36px;
+  .modal-header-accent {
+    border-radius: 19px 19px 0 0;
+    padding-top: 14px;
   }
   .tech-modal-sheet {
-    max-width: 100vw;
-    border-radius: 26px 26px 0 0;
-    padding: 23px 6vw 18px 6vw;
+    border-radius: 18px 18px 0 0;
+    min-width: 100vw;
   }
-  .tech-modal-peek .peek-title {
+  .tech-list {
+    width: 98%;
+  }
+  .peek-title {
     font-size: 0.99rem;
-    padding: 11px 14vw 10px 14vw;
+    padding: 11px 9vw 10px 9vw;
   }
 }
 </style>
