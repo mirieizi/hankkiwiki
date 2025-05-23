@@ -32,4 +32,10 @@ public class UserFoodLog {
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.date == null) {
+            this.date = LocalDate.now();
+        }
+    }
 }

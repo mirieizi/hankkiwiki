@@ -70,6 +70,7 @@ public class RecommendServiceImpl implements RecommendService {
         // 후처리 메서드 호출 (파싱, DB 검증, 재요청)
         return handleGptResponseWithRetry(userId, request, gptResponse, new ArrayList<>(), 3);
     }
+
     /**
      * DB에서 정보를 찾지 못했을 때, 최대 3회 다시 요청하기
      * @param userId
@@ -79,7 +80,6 @@ public class RecommendServiceImpl implements RecommendService {
      * @param retriesLeft
      * @return
      */
-
     private FoodResponseDto handleGptResponseWithRetry(Long userId, RagRecommendRequest request, String gptResponse, List<String> triedFoods, int retriesLeft) {
         if (retriesLeft <= 0) {
             throw new IllegalStateException("추천 가능한 음식이 없습니다. 재시도 횟수 초과");
