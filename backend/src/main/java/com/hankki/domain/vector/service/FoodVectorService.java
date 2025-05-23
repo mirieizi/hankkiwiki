@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * 벡터 CSV 파일을 읽고, 음식 정보와 매핑하여 Redis에 벡터 데이터를 저장하는 서비스입니다.
@@ -74,7 +75,8 @@ public class FoodVectorService {
                     foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
                         String redisKey = String.format("food_%s:%d", gender.key(), food.getId());
                         byte[] vectorBytes = RedisVectorUtil.doubleArrayToBytes(vector);
-                        redisTemplate.opsForHash().put(redisKey, "vector", vectorBytes);
+                        String base64Vector = Base64.getEncoder().encodeToString(vectorBytes);
+                        redisTemplate.opsForHash().put(redisKey, "vector", base64Vector);
                     }, () -> {
                         log.warn("[FoodVectorService] 매칭 실패 - foodName='{}', gender='{}'", foodName, genderStr);
                         for (char c : foodName.toCharArray()) {
