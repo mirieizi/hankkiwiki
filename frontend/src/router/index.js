@@ -15,6 +15,7 @@ import AiRecommend from "@/views/AiRecommend.vue";
 import RegisterFood from "@/views/RegisterFood.vue";
 import Calendar from "@/views/Calendar.vue";
 import KakaoMap from "@/views/KakaoMap.vue";
+import CustomRecommend from "../views/CustomRecommend.vue";
 
 // Route definitions
 const routes = [
@@ -37,6 +38,7 @@ const routes = [
   { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend },
   { path: "/recommend/history", name: "HistoryRecommend", component: HistoryRecommend },
   { path: "/recommend/ai", name: "AiRecommend", component: AiRecommend },
+  { path: "/recommend/custom", name: "CustomRecommend", component: CustomRecommend },
 
   // Food & Calendar (require auth)
   { path: "/food/register", name: "RegisterFood", component: RegisterFood },

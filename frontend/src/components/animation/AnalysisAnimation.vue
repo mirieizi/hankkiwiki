@@ -18,10 +18,11 @@ export default {
     return {
       fullMessages: [
         { sender: "user", text: "오늘 뭐 먹을까" },
-        { sender: "user", text: "음 오늘은 뭔가 랜덤으로 하나 딱 추천해줘!" },
+        { sender: "user", text: "뭔가 그동안 안 먹었던 걸 먹고 싶어." },
+        { sender: "user", text: "3일동안 내가 안 먹었던것 확인해서 추천해줄래?" },
         { sender: "bot", text: "어떤 메뉴를 정할지 고민이시군요!" },
-        { sender: "bot", text: "랜덤으로 음식 데이터를 불러와서 이 중 하나를 선택하는 중이에요" },
-        { sender: "bot", text: ".... (랜덤 추출 중) ..." },
+        { sender: "bot", text: "지난 3일간의 메뉴를 확인하는 중이에요." },
+        { sender: "bot", text: ".... (지난 3일간 메뉴 확인 중) ..." },
       ],
       displayedMessages: [],
       intervalId: null,
@@ -88,11 +89,12 @@ export default {
 }
 .chat-bubble.user {
   align-self: flex-start;
-  background: #3b5bac;
+  background: #57b4b4;
 }
 .chat-bubble.bot {
   align-self: flex-end;
-  background: #4567a1;
+  background: #ffffff;
+  color: #0b193f;
 }
 @keyframes fadeIn {
   from {

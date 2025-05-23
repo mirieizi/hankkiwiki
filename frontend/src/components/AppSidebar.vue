@@ -1,7 +1,10 @@
 <template>
   <aside class="app-sidebar">
     <!-- 사이드바 로고 및 타이틀 -->
-    <div class="sidebar-header"></div>
+    <div class="sidebar-header">
+      <!-- <img src="@/assets/sidebar_logo.png" alt="로고" /> -->
+      <!-- <h2 class="sidebar-title">한끼위키</h2> -->
+    </div>
 
     <!-- 사이드바 메뉴 -->
     <nav class="sidebar-nav">
@@ -10,8 +13,9 @@
           오늘 뭐 먹지?
           <ul>
             <li><RouterLink to="/recommend/random" class="sidebar-link">랜덤 추천</RouterLink></li>
-            <li><RouterLink to="/recommend/history" class="sidebar-link">최근에 먹은 거</RouterLink></li>
-            <li><RouterLink to="/recommend/ai" class="sidebar-link">AI 맛추 추천</RouterLink></li>
+            <li><RouterLink to="/recommend/history" class="sidebar-link">새로운 맛</RouterLink></li>
+            <li><RouterLink to="/recommend/ai" class="sidebar-link">AI 추천</RouterLink></li>
+            <li><RouterLink to="/recommend/custom" class="sidebar-link">취향 맞춤</RouterLink></li>
           </ul>
         </li>
         <li>
@@ -20,8 +24,12 @@
         <li>
           <RouterLink to="/calendar" class="sidebar-link">캘린더</RouterLink>
         </li>
-        <li><RouterLink :to="{ name: 'ProfileInfo' }" class="sidebar-link">마이페이지</RouterLink></li>
+        <li>
+          <RouterLink :to="{ name: 'ProfileInfo' }" class="sidebar-link">마이페이지</RouterLink>
+        </li>
       </ul>
+      <!-- 사이드바 전체를 커버하는 오버레이: loading이 true면 표시 -->
+      <div v-if="loading" class="sidebar-lock"></div>
     </nav>
   </aside>
 </template>
@@ -29,9 +37,20 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
 import { RouterLink, useRouter } from "vue-router";
+import { ref, computed, toRefs } from "vue";
 
+// (아래 부분 필요하면 props로 주입, 아니면 store에서 받아도 됨)
 const authStore = useAuthStore();
 const router = useRouter();
+// 아래 부분이 사이드바 비활성화 상태를 props 등으로 받을 경우 예시
+// defineProps({ loading: Boolean }); // ← props로 주입받을 때
+// const { loading } = toRefs(props);
+
+// 실제 프로젝트에서는 전역 loading 또는 recommendStore.loading 등 활용
+import { useRecommendStore } from "@/stores/recommend";
+const recommendStore = useRecommendStore();
+const loading = computed(() => recommendStore.loading);
+
 const logout = () => {
   authStore.logout();
   router.push("/");
@@ -78,6 +97,7 @@ const logout = () => {
 
 .sidebar-nav {
   width: 100%;
+  position: relative; /* 오버레이용 */
 }
 .sidebar-nav > ul {
   display: flex;
@@ -135,6 +155,7 @@ const logout = () => {
   font-weight: 500;
   margin-bottom: 1.5px;
   transition: background 0.13s, color 0.14s;
+  cursor: pointer;
 }
 .sidebar-link.router-link-active {
   background: #f8faee;
@@ -148,7 +169,7 @@ const logout = () => {
   text-decoration: underline;
 }
 
-/* 더 정보성 위키 느낌 아이콘, 구분선, 색조정 */
+/* 정보성 위키 느낌 아이콘, 구분선, 색조정 */
 .sidebar-nav > ul > li::before {
   content: "📚";
   margin-right: 0.35em;
@@ -167,6 +188,20 @@ const logout = () => {
 }
 .sidebar-nav > ul > li:last-child::before {
   content: "👤";
+}
+
+/* 오버레이(로딩 시 사이드바 비활성화) */
+.sidebar-lock {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.44);
+  cursor: not-allowed;
+  border-radius: 18px;
+  pointer-events: all; /* 무조건 클릭 막기 */
 }
 
 /* 모바일 */
