@@ -25,28 +25,31 @@ public class RedisVectorSearcher {
      * 주어진 음식 ID 리스트를 기반으로 벡터를 조회하고 평균 벡터 생성
      */
     public double[] computeAverageVector(List<Long> foodIds, Gender gender) {
-        List<double[]> vectors = foodIds.stream()
-                .map(id -> {
-                    String key = String.format("food_%s:%d", gender.key(), id);
-                    String encoded = redisCommands.get(key + "::vector");
-                    if (encoded == null) {
-                        log.error("[RedisVectorSearcher] 벡터를 찾지 못했습니다. key: {}", key);
-                        throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
-                    }
-                    byte[] raw = Base64.getDecoder().decode(encoded);
-                    return RedisVectorUtil.bytesToDoubleArray(raw);
-                })
-                .collect(Collectors.toList());
+        List<double[]> vectors = new ArrayList<>();
+
+        for (Long id : foodIds) {
+            String key = String.format("food_%s:%d", gender.key(), id);
+            String encoded = redisCommands.hget(key, "vector");
+
+            if (encoded == null) {
+                log.error("[RedisVectorSearcher] 벡터를 찾지 못했습니다. key: {}, gender: {}, id: {}", key, gender, id);
+                throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+            }
+
+            try {
+                byte[] raw = Base64.getDecoder().decode(encoded);
+                vectors.add(RedisVectorUtil.bytesToDoubleArray(raw));
+            } catch (Exception e) {
+                log.error("[RedisVectorSearcher] 벡터 디코딩 실패: key={}, cause={}", key, e.getMessage());
+                throw new HankkiWikiException(ExceptionStatus.INVALID_INPUT_VALUE);
+            }
+        }
 
         return VectorAggregator.average(vectors);
     }
 
     /**
      * Redis 벡터 인덱스에서 평균 벡터 기반으로 유사한 음식 ID를 검색
-     * @param gender 성별 인덱스 구분용 키 (예: "male", "female")
-     * @param queryVector 기준 벡터
-     * @param topK 검색할 유사 음식 수
-     * @return 유사한 foodId 리스트
      */
     public List<Long> knnSearch(Gender gender, double[] queryVector, int topK) {
         String index = String.format("idx:food_%s", gender.key());
@@ -57,12 +60,10 @@ public class RedisVectorSearcher {
                 topK, topK
         );
 
-        // 디버깅 용
-        String command = String.format(
-                "FT.SEARCH %s \"%s\" PARAMS 2 vec_param \"%s\" DIALECT 2",
-                index, query, base64Vec
-        );
-        log.debug("[RedisVectorSearcher] FT.SEARCH command: {}", command);
+        if (log.isTraceEnabled()) {
+            log.trace("[RedisVectorSearcher] FT.SEARCH command: " +
+                    "FT.SEARCH {} \"{}\" PARAMS 2 vec_param \"{}\" DIALECT 2", index, query, base64Vec);
+        }
 
         List<Object> result = redisCommands.dispatch(CommandType.valueOf("FT.SEARCH"),
                 new io.lettuce.core.output.ArrayOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
@@ -73,26 +74,16 @@ public class RedisVectorSearcher {
                         .add("DIALECT").add(2)
         );
 
-        List<Long> foodIds = new ArrayList<>();
-        for (int i = 1; i < result.size(); i += 2) {
-            String key = (String) result.get(i);
-            String[] parts = key.split(":");
-            if (parts.length == 2) {
-                foodIds.add(Long.parseLong(parts[1]));
-            }
-        }
-
-        return foodIds;
+        return extractIdsFromSearchResult(result);
     }
 
     /**
-     * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 1개 반환
+     * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 반환
      */
     public List<Long> furthestSearch(Gender gender, double[] queryVector, int topN) {
-        String index = String.format("idx:food_%s", gender.name().toLowerCase());
+        String index = String.format("idx:food_%s", gender.key());
         String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
 
-        // KNN N으로 수정
         String query = String.format(
                 "*=>[KNN %d @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 %d",
                 topN, topN
@@ -107,20 +98,33 @@ public class RedisVectorSearcher {
                         .add("DIALECT").add(2)
         );
 
-        List<Long> ids = new ArrayList<>();
-        for (int i = 1; i < result.size(); i += 2) {
-            String key = (String) result.get(i);
-            String[] parts = key.split(":");
-            if (parts.length == 2) {
-                ids.add(Long.parseLong(parts[1]));
-            }
-        }
+        List<Long> ids = extractIdsFromSearchResult(result);
 
         if (ids.isEmpty()) {
-            throw new IllegalStateException("가장 먼 벡터 검색 결과가 없습니다.");
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
         }
 
         return ids;
     }
 
+    /**
+     * Redis FT.SEARCH 결과에서 foodId만 추출
+     */
+    private List<Long> extractIdsFromSearchResult(List<Object> result) {
+        List<Long> foodIds = new ArrayList<>();
+        for (int i = 1; i < result.size(); i += 2) {
+            String key = (String) result.get(i);
+            String[] parts = key.split(":");
+            if (parts.length == 2) {
+                try {
+                    foodIds.add(Long.parseLong(parts[1]));
+                } catch (NumberFormatException e) {
+                    log.warn("[RedisVectorSearcher] 음식 ID 파싱 실패: key={}", key);
+                }
+            } else {
+                log.warn("[RedisVectorSearcher] 예상치 못한 Redis 키 형식: {}", key);
+            }
+        }
+        return foodIds;
+    }
 }
