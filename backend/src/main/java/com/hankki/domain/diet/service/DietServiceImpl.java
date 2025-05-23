@@ -27,37 +27,40 @@ public class DietServiceImpl implements DietService {
 
     @Override
     public void createDiet(Long userId, DietCreateRequestDto requestDto) {
-        log.info("[DietService] Diet 생성 Request : {}", requestDto);
-            for (DietCreateRequestDto.MealWithFoods meal : requestDto.getFoods()) {
-                try {
-                    if (dietRepository.existsByUserIdAndTakeAtAndMealType(
-                            userId, requestDto.getTakeAt(), meal.getMealType())) {
-                        log.warn("[DietService] 이미 존재하는 식단 - userId: {}, takeAt: {}, mealType: {}",
-                                userId, requestDto.getTakeAt(), meal.getMealType());
-                        throw new HankkiWikiException(ExceptionStatus.INVALID_DIET_INPUT);
-                    }
-
-                    Diet createdDiet = Diet.builder()
-                            .userId(userId)
-                            .takeAt(requestDto.getTakeAt())
-                            .mealType(meal.getMealType())
-                            .build();
-                    dietRepository.save(createdDiet);
-
-                    for (Long foodId : meal.getFoodIds()) {
-                        UserDietFoodMap map = UserDietFoodMap.builder()
-                                .userId(userId)
-                                .dietId(createdDiet.getId())
-                                .foodId(foodId)
-                                .build();
-                        userDietFoodMapper.insertUserDietFoodMap(map);
-                    }
-
-                    log.info("[DietService] {} 식사에 대한 Diet 생성 완료", meal.getMealType());
-                } catch (Exception e) {
-                    log.error("[DietService] {} 식사 생성 중 오류 발생: {}", meal.getMealType(), e.getMessage());
-                }
+        for (DietCreateRequestDto.MealWithFoods meal : requestDto.getFoods()) {
+            try {
+                dietOneMeal(userId, requestDto.getTakeAt(), meal); // 내부에서 트랜잭션
+            } catch (Exception e) {
+                log.error("[DietService] {} 식사 생성 중 오류 발생: {}", meal.getMealType(), e.getMessage());
             }
+        }
+    }
+
+    @Transactional
+    private void dietOneMeal(Long userId, LocalDate takeAt, DietCreateRequestDto.MealWithFoods meal) {
+        if (dietRepository.existsByUserIdAndTakeAtAndMealType(userId, takeAt, meal.getMealType())) {
+            log.warn("[DietService] 이미 존재하는 식단 - userId: {}, takeAt: {}, mealType: {}", userId, takeAt, meal.getMealType());
+            throw new HankkiWikiException(ExceptionStatus.INVALID_DIET_INPUT);
+        }
+
+        Diet createdDiet = dietRepository.save(
+                Diet.builder()
+                        .userId(userId)
+                        .takeAt(takeAt)
+                        .mealType(meal.getMealType())
+                        .build()
+        );
+
+        for (Long foodId : meal.getFoodIds()) {
+            UserDietFoodMap map = UserDietFoodMap.builder()
+                    .userId(userId)
+                    .dietId(createdDiet.getId())
+                    .foodId(foodId)
+                    .build();
+            userDietFoodMapper.insertUserDietFoodMap(map);
+        }
+
+        log.info("[DietService] {} 식사 저장 완료", meal.getMealType());
     }
 
     @Override
