@@ -26,7 +26,13 @@ public class RedisVectorIndexInitializer {
     private final RedisConnectionFactory redisConnectionFactory;
 
     @PostConstruct
-    public void createIndexIfNotExists(Gender gender) {
+    public void createVectorIndexes() {
+        for (Gender gender : Gender.values()) {
+            createIndexIfNotExists(gender);
+        }
+    }
+
+    private void createIndexIfNotExists(Gender gender) {
         String indexName = "idx_" + gender.key();
         String prefix = "food_" + gender.key() + ":";
 
