@@ -45,6 +45,8 @@ services:
       HANKKI_JWT_REFRESH_TOKEN_VALIDITY: ${HANKKI_JWT_REFRESH_TOKEN_VALIDITY}
     networks:
       - app-network
+    volumes:
+      - ~/.m2:/root/.m2
 
   redis:
     image: redis/redis-stack-server:7.2.0-v15

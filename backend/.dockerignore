@@ -2,11 +2,6 @@
 target/
 *.jar
 
-# Maven wrapper
-.mvn/
-mvnw
-mvnw.cmd
-
 # IDE files
 .idea/
 *.iml
@@ -24,3 +19,4 @@ application-*.properties
 # 데이터베이스 임시 파일
 mysql-data/
 dump.rdb
+
