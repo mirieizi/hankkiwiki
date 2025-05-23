@@ -74,9 +74,11 @@ public class FoodVectorService {
 
                     foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
                         String redisKey = String.format("food_%s:%d", gender.key(), food.getId());
+
                         byte[] vectorBytes = RedisVectorUtil.doubleArrayToBytes(vector);
                         String base64Vector = Base64.getEncoder().encodeToString(vectorBytes);
                         redisTemplate.opsForHash().put(redisKey, "vector", base64Vector);
+
                     }, () -> {
                         log.warn("[FoodVectorService] 매칭 실패 - foodName='{}', gender='{}'", foodName, genderStr);
                         for (char c : foodName.toCharArray()) {

@@ -36,13 +36,10 @@ public class RedisConfig {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
-        // 문자열 키/값 직렬화 설정
         redisTemplate.setKeySerializer(RedisSerializer.string());
-        redisTemplate.setValueSerializer(RedisSerializer.string()); // Base64 인코딩 문자열 저장
-
-        // Base64 문자열 저장을 위해 valueSerializer도 string으로 변환
-        redisTemplate.setHashValueSerializer(RedisSerializer.string()); // Hash 구조에서도 문자열로 저장
-        redisTemplate.setHashValueSerializer(RedisSerializer.byteArray());
+        redisTemplate.setHashKeySerializer(RedisSerializer.string());
+        redisTemplate.setValueSerializer(RedisSerializer.string());
+        redisTemplate.setHashValueSerializer(RedisSerializer.string());
 
         return redisTemplate;
     }

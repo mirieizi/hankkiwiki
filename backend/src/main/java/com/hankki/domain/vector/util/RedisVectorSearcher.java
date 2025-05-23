@@ -25,22 +25,30 @@ public class RedisVectorSearcher {
      * 주어진 음식 ID 리스트를 기반으로 벡터를 조회하고 평균 벡터 생성
      */
     public double[] computeAverageVector(List<Long> foodIds, Gender gender) {
+        String genderKey = gender.key();
+        log.debug("조회 대상 foodIds: {}", foodIds);
+        log.debug("성별: {}", genderKey);
+
+        List<Long> validFoodIds = foodIds.stream()
+                .filter(id -> redisCommands.hexists(String.format("food_%s:%d", genderKey, id), "vector"))
+                .toList();
+
+        if (validFoodIds.isEmpty()) {
+            log.error("[RedisVectorSearcher] 평균 벡터 계산 실패 - 유효한 벡터 없음. 요청 ID: {}", foodIds);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+        }
+
+        // ✅ 벡터 디코딩 및 평균 계산
         List<double[]> vectors = new ArrayList<>();
-
-        for (Long id : foodIds) {
-            String key = String.format("food_%s:%d", gender.key(), id);
+        for (Long id : validFoodIds) {
+            String key = String.format("food_%s:%d", genderKey, id);
             String encoded = redisCommands.hget(key, "vector");
-
-            if (encoded == null) {
-                log.error("[RedisVectorSearcher] 벡터를 찾지 못했습니다. key: {}, gender: {}, id: {}", key, gender, id);
-                throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
-            }
 
             try {
                 byte[] raw = Base64.getDecoder().decode(encoded);
                 vectors.add(RedisVectorUtil.bytesToDoubleArray(raw));
             } catch (Exception e) {
-                log.error("[RedisVectorSearcher] 벡터 디코딩 실패: key={}, cause={}", key, e.getMessage());
+                log.error("[RedisVectorSearcher] 벡터 디코딩 실패 - key: {}, cause: {}", key, e.getMessage());
                 throw new HankkiWikiException(ExceptionStatus.INVALID_INPUT_VALUE);
             }
         }
