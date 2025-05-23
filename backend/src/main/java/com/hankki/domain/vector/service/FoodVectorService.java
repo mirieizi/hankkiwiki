@@ -1,6 +1,6 @@
-package com.hankki.common.redis.service;
+package com.hankki.domain.vector.service;
 
-import com.hankki.common.redis.util.RedisVectorUtil;
+import com.hankki.domain.vector.util.RedisVectorUtil;
 import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.user.constant.Gender;
 import lombok.RequiredArgsConstructor;

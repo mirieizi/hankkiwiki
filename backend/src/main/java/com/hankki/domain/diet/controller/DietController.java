@@ -1,42 +1,29 @@
 package com.hankki.domain.diet.controller;
 
-import java.time.LocalDate;
 
-import org.springframework.format.annotation.DateTimeFormat;
+import com.hankki.common.security.principal.CurrentUser;
+import com.hankki.domain.auth.dto.UserPrincipal;
+import com.hankki.domain.diet.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hankki.domain.auth.entity.AuthUser;
-import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.dto.DietResponseDto;
-import com.hankki.domain.diet.dto.DietUpdateMealTypeRequestDto;
-import com.hankki.domain.diet.dto.DietUpdateRequestDto;
-import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.diet.service.DietFacade;
-import com.hankki.domain.user.entity.User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -53,10 +40,10 @@ public class DietController {
     })
     @PostMapping
     public ResponseEntity<String> createDiet(
-            @AuthenticationPrincipal AuthUser  authUser,
+            @CurrentUser UserPrincipal authUser,
             @RequestBody DietCreateRequestDto requestDto
     ) {
-        dietFacade.createDiet(authUser.getUsername(), requestDto);
+        dietFacade.createDiet(authUser.getUserId(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body("Diet 생성 성공 응답");
     }
 
@@ -67,12 +54,12 @@ public class DietController {
     })
     @GetMapping("/get-by-date")
     public ResponseEntity<GroupedDietResponseDto> getDietsByDate(
-            @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate takeAt
+            @CurrentUser UserPrincipal authUser,
+            @RequestBody DietGetByTakeAtRequestDto requestDto
     ) {
         GroupedDietResponseDto responseDto = dietFacade.getDietsByDate(
-        		authUser.getUsername(),
-                takeAt);
+        		authUser.getUserId(),
+                requestDto.getTakeAt());
         return ResponseEntity.ok(responseDto);
     }
 
@@ -83,10 +70,10 @@ public class DietController {
     })
     @PatchMapping("/update/meal-type")
     public ResponseEntity<String> updateDietInfo(
-            @AuthenticationPrincipal AuthUser authUser,
+            @CurrentUser UserPrincipal authUser,
             @RequestBody DietUpdateMealTypeRequestDto requestDto
     ){
-        dietFacade.updateMealType(authUser.getUsername(), requestDto);
+        dietFacade.updateMealType(authUser.getUserId(), requestDto);
         return ResponseEntity.ok("Diet 정보 수정 성공");
     }
 
@@ -97,10 +84,10 @@ public class DietController {
     })
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteDiet(
-            @AuthenticationPrincipal User userDetails,
-            @RequestParam Long dietId
+            @CurrentUser UserPrincipal authUser,
+            @RequestBody DietDeleteRequestDto requestDto
     ){
-//        dietFacade.deleteDietById(userDetails.getUsername(), dietId);
+        dietFacade.deleteDietById(authUser.getUserId(), requestDto.getDietId());
         return ResponseEntity.ok("Diet 삭제 성공");
     }
 
@@ -127,12 +114,13 @@ public class DietController {
             @ApiResponse(responseCode = "404", description = "해당하는 사용자를 찾지 못했습니다.")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/admin/{dietId}")
+    @PatchMapping("/admin/{userId}/{dietId}")
     public ResponseEntity<String> updateDietByAdmin(
-            @RequestParam Long dietId,
+            @PathVariable Long userId,
+            @PathVariable Long dietId,
             @RequestBody DietUpdateRequestDto requestDto
     ){
-        dietFacade.updateDietInfo(dietId, requestDto);
+        dietFacade.updateDietInfo(userId, dietId, requestDto);
         return ResponseEntity.ok("Diet 정보 수정 성공");
     }
 
@@ -142,11 +130,13 @@ public class DietController {
             @ApiResponse(responseCode = "404", description = "해당하는 사용자를 찾지 못했습니다.")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{dietId}")
+    @DeleteMapping("/delete/{userId}/{dietId}")
     public ResponseEntity<String> deleteDietByAdmin(
-            @RequestParam Long dietId
+            @PathVariable Long userId,
+            @PathVariable Long dietId
     ){
-        dietFacade.deleteDietByIdByAdmin(dietId);
+        dietFacade.deleteDietByIdByAdmin(userId, dietId);
         return ResponseEntity.ok("Diet 삭제 성공");
     }
+
 }

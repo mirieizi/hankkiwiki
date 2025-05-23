@@ -28,5 +28,5 @@ public class FoodPreviewResponseDto {
 
     @NotBlank
     @Schema(description = "1인분 기준 칼로리", example = "300")
-    private int kcal;
+    private double kcal;
 }

@@ -9,17 +9,15 @@ import java.util.List;
 
 public interface DietService {
 
-    void createDiet(String email, DietCreateRequestDto requestDto);
+    void createDiet(Long userId, DietCreateRequestDto requestDto);
 
-    List<Diet> getDietsByTakeAt(String email, LocalDate takeAt);
+    List<Diet> getDietsByTakeAt(Long userId, LocalDate takeAt);
 
-    List<Diet> getDietsByEmail(String email);
+    List<Diet> getDietsByUserId(Long userId);
 
-    void deleteDietByEmailAndId(String email, Long dietId);
+    void deleteDietByUserIdAndDietId(Long userId, Long dietId);
 
-    void deleteDietByDietId(Long dietId);
+    void updateMealType(Long userId, Long dietId, MealType mealType);
 
-    void updateMealType(String email, Long dietId, MealType mealType);
-
-    void updateTakeAt(String email, Long dietId, LocalDate takeAt);
+    void updateTakeAt(Long userId, Long dietId, LocalDate takeAt);
 }

@@ -3,20 +3,24 @@ package com.hankki.domain.recommend.dto;
 import com.hankki.domain.food.entity.Food;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+@Getter
 @Builder
 @Getter
 @AllArgsConstructor
 @Schema(description = "음식 추천 응답 DTO", implementation = FoodResponseDto.class)
 public class FoodResponseDto {
+
+    @NotBlank
     private Long id;
     private String foodName;
     private String majorCategory;
     private String subCategory;
-    private Double servingSize;
+    private double servingSize;
     private double kcal;
     private double moisture;
     private double carbohydrate;

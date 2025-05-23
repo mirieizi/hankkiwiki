@@ -1,4 +1,4 @@
-package com.hankki.common.redis.util;
+package com.hankki.domain.vector.util;
 
 import java.nio.ByteBuffer;
 

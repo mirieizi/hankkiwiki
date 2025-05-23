@@ -15,10 +15,6 @@ public class DietUpdateRequestDto {
     @Schema(description = "식단 ID", example = "1")
     private Long dietId;
 
-    @NotBlank
-    @Schema(description = "사용자 이메일", example = "test@example.com")
-    private String email;
-
     @Schema(description = "식사 일자", example = "2025-05-28")
     private LocalDate takeAt;
 

@@ -1,9 +1,8 @@
-package com.hankki.common.redis.vector;
+package com.hankki.domain.vector.util;
 
-import com.hankki.common.redis.util.RedisVectorUtil;
-import com.hankki.common.vector.VectorAggregator;
 import com.hankki.domain.user.constant.Gender;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.CommandType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,7 +59,7 @@ public class RedisVectorSearcher {
         );
         log.debug("[RedisVectorSearcher] FT.SEARCH command: {}", command);
 
-        List<Object> result = redisCommands.dispatch(io.lettuce.core.protocol.CommandType.valueOf("FT.SEARCH"),
+        List<Object> result = redisCommands.dispatch(CommandType.valueOf("FT.SEARCH"),
                 new io.lettuce.core.output.ArrayOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
                 new io.lettuce.core.protocol.CommandArgs<>(io.lettuce.core.codec.StringCodec.UTF8)
                         .add(index)
@@ -84,13 +83,17 @@ public class RedisVectorSearcher {
     /**
      * Redis 벡터 인덱스에서 평균 벡터 기반으로 가장 먼 음식 ID를 1개 반환
      */
-    public Long furthestSearch(Gender gender, double[] queryVector) {
+    public List<Long> furthestSearch(Gender gender, double[] queryVector, int topN) {
         String index = String.format("idx:food_%s", gender.name().toLowerCase());
         String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
 
-        String query = "*=>[KNN 1 @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 1";
+        // KNN N으로 수정
+        String query = String.format(
+                "*=>[KNN %d @vector $vec_param] RETURN 1 food_id SORTBY __vector_score DESC LIMIT 0 %d",
+                topN, topN
+        );
 
-        List<Object> result = redisCommands.dispatch(io.lettuce.core.protocol.CommandType.valueOf("FT.SEARCH"),
+        List<Object> result = redisCommands.dispatch(CommandType.valueOf("FT.SEARCH"),
                 new io.lettuce.core.output.ArrayOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
                 new io.lettuce.core.protocol.CommandArgs<>(io.lettuce.core.codec.StringCodec.UTF8)
                         .add(index)
@@ -99,13 +102,20 @@ public class RedisVectorSearcher {
                         .add("DIALECT").add(2)
         );
 
+        List<Long> ids = new ArrayList<>();
         for (int i = 1; i < result.size(); i += 2) {
             String key = (String) result.get(i);
             String[] parts = key.split(":");
             if (parts.length == 2) {
-                return Long.parseLong(parts[1]);
+                ids.add(Long.parseLong(parts[1]));
             }
         }
-        throw new IllegalStateException("가장 먼 벡터 검색 결과가 없습니다.");
+
+        if (ids.isEmpty()) {
+            throw new IllegalStateException("가장 먼 벡터 검색 결과가 없습니다.");
+        }
+
+        return ids;
     }
+
 }

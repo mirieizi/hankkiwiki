@@ -6,7 +6,11 @@ import org.springframework.stereotype.Component;
 
 import com.hankki.domain.food.entity.Food;
 import com.hankki.domain.user.entity.UserHealthInfo;
+import org.springframework.stereotype.Component;
 
+/**
+ * 건강정보, 최근 음식, 유저 입력(옵션)을 받아서 open ai에 전달할 프롬프트 제작
+ */
 @Component
 public class GptPromptBuilder {
 
