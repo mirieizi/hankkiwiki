@@ -37,7 +37,7 @@ public class DietServiceImpl implements DietService {
     }
 
     @Transactional
-    private void dietOneMeal(Long userId, LocalDate takeAt, DietCreateRequestDto.MealWithFoods meal) {
+    public void dietOneMeal(Long userId, LocalDate takeAt, DietCreateRequestDto.MealWithFoods meal) {
         if (dietRepository.existsByUserIdAndTakeAtAndMealType(userId, takeAt, meal.getMealType())) {
             log.warn("[DietService] 이미 존재하는 식단 - userId: {}, takeAt: {}, mealType: {}", userId, takeAt, meal.getMealType());
             throw new HankkiWikiException(ExceptionStatus.INVALID_DIET_INPUT);
