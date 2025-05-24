@@ -4,27 +4,30 @@ import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.user.constant.Gender;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class RedisVectorSearcher {
 
-    private final RedisCommands<String, String> redisCommands; // FT.SEARCH 실행용
+    private static  final int EXPECTED_VECTOR_BYTES = 36;
+
+    private final RedisCommands<byte[], byte[]> redisCommands;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 주어진 음식 ID 리스트를 기반으로 벡터를 조회하고 평균 벡터 생성
@@ -34,31 +37,34 @@ public class RedisVectorSearcher {
         log.debug("조회 대상 foodIds: {}", foodIds);
         log.debug("성별: {}", genderKey);
 
-        List<Long> validFoodIds = foodIds.stream()
-                .filter(id -> redisCommands.hexists(String.format("food_%s:%d", genderKey, id), "vector"))
-                .toList();
+        List<double[]> vectors = new ArrayList<>();
+        for (Long id : foodIds) {
+            String key = String.format("food_%s:%d", genderKey, id);
+            Object rawObj = redisTemplate.opsForHash().get(key, "vector");
 
-        if (validFoodIds.isEmpty()) {
+            if (!(rawObj instanceof byte[] rawBytes)) {
+                log.warn("[RedisVectorSearcher] 벡터 누락 또는 타입 불일치: id={}, class={}", id, rawObj != null ? rawObj.getClass().getName() : "null");
+                continue;
+            }
+
+            if (rawBytes.length != EXPECTED_VECTOR_BYTES) {
+                log.warn("[RedisVectorSearcher] 벡터 크기 불일치: id={}, bytesLength={}", id, rawBytes.length);
+                continue;
+            }
+
+            double[] vector = RedisVectorUtil.bytesToDoubleArray(rawBytes);
+            log.debug("[VECTOR CHECK] id={}, vector.length={}", id, vector.length);
+            vectors.add(vector);
+        }
+
+        if (vectors.isEmpty()) {
             log.error("[RedisVectorSearcher] 평균 벡터 계산 실패 - 유효한 벡터 없음. 요청 ID: {}", foodIds);
             throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
         }
 
-        // ✅ 벡터 디코딩 및 평균 계산
-        List<double[]> vectors = new ArrayList<>();
-        for (Long id : validFoodIds) {
-            String key = String.format("food_%s:%d", genderKey, id);
-            String encoded = redisCommands.hget(key, "vector");
-
-            try {
-                byte[] raw = Base64.getDecoder().decode(encoded);
-                vectors.add(RedisVectorUtil.bytesToDoubleArray(raw));
-            } catch (Exception e) {
-                log.error("[RedisVectorSearcher] 벡터 디코딩 실패 - key: {}, cause: {}", key, e.getMessage());
-                throw new HankkiWikiException(ExceptionStatus.INVALID_INPUT_VALUE);
-            }
-        }
-
-        return VectorAggregator.average(vectors);
+        double[] avgVector = VectorAggregator.average(vectors);
+        log.debug("[DEBUG] 최종 평균 벡터 차원: {}", avgVector.length);
+        return avgVector;
     }
 
     private static final ProtocolKeyword FT_SEARCH = new ProtocolKeyword() {
@@ -80,25 +86,25 @@ public class RedisVectorSearcher {
      */
     public List<Long> knnSearch(Gender gender, double[] queryVector, int topK) {
         String index = String.format("idx_%s", gender.key());
-        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
+
+        byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
+        log.debug("[VECTOR SEND] vectorBytes.length: {}", vectorBytes.length);
 
         String query = String.format("*=>[KNN %d @vector $vec_param]", topK);
-
-        if (log.isTraceEnabled()) {
-            log.trace("[RedisVectorSearcher] FT.SEARCH 실행 - index={}, query={}, vec={}", index, query, base64Vec);
-        }
+        log.debug("[VECTOR SEND] FT.SEARCH query: {}", query);
 
         List<Object> result = redisCommands.dispatch(
                 FT_SEARCH,
-                new ArrayOutput<>(StringCodec.UTF8),
-                new CommandArgs<>(StringCodec.UTF8)
-                        .add(index)
-                        .add(query)
-                        .add("PARAMS").add(2).add("vec_param").add(base64Vec)
-                        .add("SORTBY").add("__vector_score").add("DESC")
-                        .add("RETURN").add(1).add("food_id")
-                        .add("LIMIT").add(0).add(topK)
-                        .add("DIALECT").add(2)
+                new ArrayOutput<>(ByteArrayCodec.INSTANCE),  // ✅ 바꿔야 함
+                new CommandArgs<>(ByteArrayCodec.INSTANCE)  // ✅ 여기!
+                        .add(index.getBytes())
+                        .add(query.getBytes())
+                        .add("PARAMS".getBytes()).add(2)
+                        .add("vec_param".getBytes()).add(vectorBytes) // ✅ 여기 binary
+                        .add("SORTBY".getBytes()).add("__vector_score".getBytes()).add("DESC".getBytes())
+                        .add("RETURN".getBytes()).add(1).add("food_id".getBytes())
+                        .add("LIMIT".getBytes()).add(0).add(topK)
+                        .add("DIALECT".getBytes()).add(2)
         );
 
         return extractIdsFromSearchResult(result);
@@ -109,21 +115,25 @@ public class RedisVectorSearcher {
      */
     public List<Long> furthestSearch(Gender gender, double[] queryVector, int topN) {
         String index = String.format("idx_%s", gender.key());
-        String base64Vec = Base64.getEncoder().encodeToString(RedisVectorUtil.doubleArrayToBytes(queryVector));
-
         String query = String.format("*=>[KNN %d @vector $vec_param]", topN);
+
+        byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
+
+        log.debug("[VECTOR SEND] queryVector.length: {}", queryVector.length);
+        log.debug("[VECTOR SEND] vectorBytes.length: {}", vectorBytes.length);
 
         List<Object> result = redisCommands.dispatch(
                 FT_SEARCH,
-                new ArrayOutput<>(StringCodec.UTF8),
-                new CommandArgs<>(StringCodec.UTF8)
-                        .add(index)
-                        .add(query)
-                        .add("PARAMS").add(2).add("vec_param").add(base64Vec)
-                        .add("SORTBY").add("__vector_score").add("DESC")
-                        .add("RETURN").add(1).add("food_id")
-                        .add("LIMIT").add(0).add(topN)
-                        .add("DIALECT").add(2)
+                new ArrayOutput<>(ByteArrayCodec.INSTANCE),
+                new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                        .add(index.getBytes())
+                        .add(query.getBytes())
+                        .add("PARAMS".getBytes()).add(2)
+                        .add("vec_param".getBytes()).add(vectorBytes)
+                        .add("SORTBY".getBytes()).add("__vector_score".getBytes()).add("DESC".getBytes())
+                        .add("RETURN".getBytes()).add(1).add("food_id".getBytes())
+                        .add("LIMIT".getBytes()).add(0).add(topN)
+                        .add("DIALECT".getBytes()).add(2)
         );
 
         return extractIdsFromSearchResult(result);

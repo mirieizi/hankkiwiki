@@ -2,8 +2,6 @@ package com.hankki.domain.recommend.service;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
-import com.hankki.domain.diet.repository.DietFoodRepository;
-import com.hankki.domain.diet.service.DietService;
 import com.hankki.domain.diet.service.DietServiceImpl;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
@@ -21,6 +19,8 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class RecommendVectorFacade {
+
+    private static final int EXPECTED_VECTOR_DIMENSION = 9;
 
     private final UserFoodLogRepository userFoodLogRepository;
     private final DietServiceImpl dietService;
@@ -41,6 +41,12 @@ public class RecommendVectorFacade {
 
         try {
             double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
+            if (avgVector == null || avgVector.length != EXPECTED_VECTOR_DIMENSION) {
+                log.error("[RecommendVectorFacade] 벡터 차원 오류: 예상={}, 실제={}",
+                        EXPECTED_VECTOR_DIMENSION, (avgVector == null ? "null" : avgVector.length));
+                throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+            }
+
             List<Long> results = redisVectorSearcher.furthestSearch(gender, avgVector, 30);
             return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
         } catch (Exception e) {
@@ -56,7 +62,14 @@ public class RecommendVectorFacade {
 
         try {
             double[] avgVector = redisVectorSearcher.computeAverageVector(recentFoodIds, gender);
-            List<Long> results = redisVectorSearcher.knnSearch(gender, avgVector, 1);
+
+            if (avgVector == null || avgVector.length != EXPECTED_VECTOR_DIMENSION) {
+                log.error("[RecommendVectorFacade] 벡터 차원 오류: 예상={}, 실제={}",
+                        EXPECTED_VECTOR_DIMENSION, (avgVector == null ? "null" : avgVector.length));
+                throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+            }
+
+            List<Long> results = redisVectorSearcher.knnSearch(gender, avgVector, 30);
             return checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
         } catch (Exception e) {
             log.error("[RecommendVectorFacade] 가장 가까운 음식 찾기 실패: {}", e.getMessage(), e);
@@ -97,6 +110,6 @@ public class RecommendVectorFacade {
                     log.warn("[checkDuplicatedRecommend] 모든 후보가 최근 섭취 또는 추천 목록에 포함됨");
                     return new IllegalStateException("중복을 제외한 추천 후보가 없습니다.");
                 });
-
     }
+
 }

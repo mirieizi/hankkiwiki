@@ -39,7 +39,7 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(RedisSerializer.string());
         redisTemplate.setHashKeySerializer(RedisSerializer.string());
         redisTemplate.setValueSerializer(RedisSerializer.string());
-        redisTemplate.setHashValueSerializer(RedisSerializer.string());
+        redisTemplate.setHashValueSerializer(RedisSerializer.byteArray());
 
         return redisTemplate;
     }
