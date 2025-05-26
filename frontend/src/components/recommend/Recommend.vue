@@ -35,69 +35,73 @@
           </div>
         </div>
       </div>
-      <!-- 오른쪽: 추천 결과 카드 -->
+      <!-- 오른쪽: 추천 결과 카드 + 차트(나란히) -->
       <transition name="fade">
-        <div v-if="isResultReady && recommendation" class="result-outer">
+        <div v-if="isResultReady" class="result-outer result-row-flex">
           <aside class="result-box" :class="{ expanded }">
             <h3>{{ resultTitle }}</h3>
             <div class="food-card">
               <img :src="foodImage" alt="추천 음식" />
               <div class="food-main-info">
-                <p class="food-name">{{ recommendation.foodName }}</p>
-                <p class="food-desc">{{ recommendation.majorCategory }} / {{ recommendation.subCategory }}</p>
+                <p class="food-name">{{ safeRecommendation.foodName }}</p>
+                <p class="food-desc">{{ safeRecommendation.majorCategory }} / {{ safeRecommendation.subCategory }}</p>
               </div>
               <div class="food-nutrition">
                 <span>
                   <span class="nutri-label">칼로리</span>
                   🔥
-                  <b>{{ recommendation.kcal }}</b>
+                  <b>{{ safeRecommendation.kcal }}</b>
                   kcal
                 </span>
                 <span>
                   <span class="nutri-label">탄수화물</span>
                   🍚
-                  <b>{{ recommendation.carbohydrate }}</b>
+                  <b>{{ safeRecommendation.carbohydrate }}</b>
                   g
                 </span>
                 <span>
                   <span class="nutri-label">단백질</span>
                   🥩
-                  <b>{{ recommendation.protein }}</b>
+                  <b>{{ safeRecommendation.protein }}</b>
                   g
                 </span>
                 <span>
                   <span class="nutri-label">지방</span>
                   🥑
-                  <b>{{ recommendation.fat }}</b>
+                  <b>{{ safeRecommendation.fat }}</b>
                   g
                 </span>
               </div>
               <div class="food-etc">
                 <span>
                   <span class="nutri-label">수분</span>
-                  💧 {{ recommendation.moisture }}g
+                  💧 {{ safeRecommendation.moisture }}g
                 </span>
                 <span>
                   <span class="nutri-label">당류</span>
-                  🍬 {{ recommendation.sugar }}g
+                  🍬 {{ safeRecommendation.sugar }}g
                 </span>
                 <span>
                   <span class="nutri-label">나트륨</span>
-                  🧂 {{ recommendation.sodium }}mg
+                  🧂 {{ safeRecommendation.sodium }}mg
                 </span>
                 <span>
                   <span class="nutri-label">콜레스테롤</span>
-                  🥚 {{ recommendation.cholesterol }}mg
+                  🥚 {{ safeRecommendation.cholesterol }}mg
                 </span>
                 <span>
                   <span class="nutri-label">1회 제공량</span>
-                  🥄 {{ recommendation.servingSize }}g
+                  🥄 {{ safeRecommendation.servingSize }}g
                 </span>
               </div>
+              <a class="coupang-link-btn" :href="coupangUrl" target="_blank" rel="noopener">🛒 쿠팡에서 "{{ searchKeyword }}" 검색하기</a>
             </div>
           </aside>
+          <!-- ⭐ 카드 옆에 차트! ⭐ -->
+          <NutritionCompareChart :food="safeRecommendation" />
         </div>
       </transition>
+      <!-- 기존 NutritionCompareChart는 이곳에서 삭제 -->
     </div>
   </div>
 </template>
@@ -113,6 +117,7 @@ import CustomAnimation from "@/components/animation/CustomAnimation.vue";
 import AIAnimation from "@/components/animation/AIAnimation.vue";
 import placeholderImage from "@/assets/loading_logo.png";
 import recommend_sucess_logo from "@/assets/recommend_sucess_logo.png";
+import NutritionCompareChart from "@/components/NutritionCompareChart.vue"; // ⭐ import 추가
 
 // 추천 모드 정보
 const modes = [
@@ -148,6 +153,29 @@ const expanded = computed(() => store.expanded);
 const foodImage = computed(() => recommend_sucess_logo);
 
 const { fetchRecommendation, fetchAiRecommendation, fetchRemainingSpoons, fetchHistoryRecords, resetRecommend } = store;
+
+// ----- 임시 recommendation 더미 -----
+const dummyRecommendation = {
+  foodName: "요거트 샐러드",
+  majorCategory: "샐러드",
+  subCategory: "요거트",
+  kcal: 250,
+  carbohydrate: 30,
+  protein: 12,
+  fat: 8,
+  moisture: 80,
+  sugar: 16,
+  sodium: 120,
+  cholesterol: 25,
+  servingSize: 180,
+};
+// 없으면 더미로 대체
+const safeRecommendation = computed(() => (recommendation.value && recommendation.value.foodName ? recommendation.value : dummyRecommendation));
+
+// 쿠팡 파트너스 링크 관련 변수
+const partnerTag = "AF2910783";
+const searchKeyword = computed(() => (recommendation.value && recommendation.value.foodName ? recommendation.value.foodName : "요거트 샐러드"));
+const coupangUrl = computed(() => `https://www.coupang.com/np/search?q=${encodeURIComponent(searchKeyword.value)}`);
 
 // 실행 버튼
 function onRun() {
@@ -459,6 +487,32 @@ watch(
   color: #17cfa6;
 }
 
+/* 쿠팡 파트너스 버튼 스타일 */
+.coupang-link-btn {
+  display: inline-block;
+  margin: 22px auto 0 auto;
+  background: linear-gradient(90deg, #ffe972 0%, #ffb18c 100%);
+  color: #1a1a1a;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 12px 26px;
+  font-size: 1.08rem;
+  text-decoration: none;
+  box-shadow: 0 2px 14px #ffbf2f33;
+  transition: background 0.18s, transform 0.14s;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  letter-spacing: 0.03em;
+  position: relative;
+}
+.coupang-link-btn:hover {
+  background: linear-gradient(90deg, #ffdb4a 0%, #ff8640 100%);
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 28px #ffbf2f44;
+}
+
 /* 반응형 */
 @media (max-width: 1100px) {
   .main-layout {
@@ -512,6 +566,32 @@ watch(
     max-width: 100px;
     min-width: 52px;
     margin: 24vw auto 16px auto;
+  }
+  .result-outer.result-row-flex {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 34px; /* 카드-차트 간격 조정 */
+  }
+  .nutrition-chart-horizontal {
+    margin: 38px 0 0 0;
+    padding: 0 8px 10px 8px;
+    width: 900px;
+    min-width: 900px;
+    max-width: 100%;
+    height: 700px; /* 추가: 높이 명확히 */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* 반응형: 좁은 화면에서는 세로 쌓기 */
+  @media (max-width: 700px) {
+    .result-outer.result-row-flex {
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
   }
 }
 </style>
