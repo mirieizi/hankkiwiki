@@ -22,7 +22,7 @@ export const useRecommendStore = defineStore("recommend", {
   }),
 
   actions: {
-    // 랜덤 / 히스토리 / 커스텀 추천
+    // 랜덤 / 히스토리 / 커스텀 추천 (추천 후 스푼 동기화)
     async fetchRecommendation(mode) {
       this.loading = true;
       let url = "";
@@ -39,19 +39,29 @@ export const useRecommendStore = defineStore("recommend", {
         default:
           url = "/recommend/random";
       }
-      const { data } = await axios.get(url);
-      this.recommendation = data;
-      this.hasRun = true;
-      this.loading = false;
+      try {
+        const { data } = await axios.get(url);
+        this.recommendation = data;
+        this.hasRun = true;
+      } finally {
+        this.loading = false;
+        // 추천 끝나고 스푼 동기화
+        await this.fetchRemainingSpoons();
+      }
     },
 
-    // AI 추천 (RAG 기반)
+    // AI 추천 (RAG 기반, 추천 후 스푼 동기화)
     async fetchAiRecommendation(payload) {
       this.loading = true;
-      const { data } = await axios.post("/recommend/rag", payload);
-      this.recommendation = data;
-      this.hasRun = true;
-      this.loading = false;
+      try {
+        const { data } = await axios.post("/recommend/rag", payload);
+        this.recommendation = data;
+        this.hasRun = true;
+      } finally {
+        this.loading = false;
+        // 추천 끝나고 스푼 동기화
+        await this.fetchRemainingSpoons();
+      }
     },
 
     // 남은 스푼 개수 조회
@@ -65,15 +75,15 @@ export const useRecommendStore = defineStore("recommend", {
       }
     },
 
-    // 최근 3일간의 식단 기록 불러오기
+    // 최근 3일간의 식단 기록 유무(T/F)로 받음
     async fetchHistoryRecords() {
       try {
-        const { data } = await axios.get("/recommend/history-records");
-        this.historyRecords = data;
-        this.showNoHistoryPrompt = Array.isArray(data) && data.length === 0;
+        const { data } = await axios.get("/diet/history-records");
+        // data === true or false
+        this.showNoHistoryPrompt = !data; // 기록 없으면 true(프롬프트 노출)
       } catch (e) {
         console.error("fetchHistoryRecords error:", e);
-        this.historyRecords = [];
+        // 네트워크/예외 시에는 일단 "없음" 처리
         this.showNoHistoryPrompt = true;
       }
     },
