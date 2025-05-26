@@ -1,5 +1,7 @@
 package com.hankki.domain.recommend.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +12,7 @@ import com.hankki.common.security.principal.CurrentUser;
 import com.hankki.domain.auth.dto.UserPrincipal;
 import com.hankki.domain.recommend.dto.FoodResponseDto;
 import com.hankki.domain.recommend.service.RecommendFacade;
+import com.hankki.domain.recommend.service.UserLogServiceImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,7 +28,15 @@ import lombok.RequiredArgsConstructor;
 public class RecommendController {
 
     private final RecommendFacade recommendFacade;
+    private final UserLogServiceImpl userLogServiceImpl;
+    
+    @GetMapping("/spoons")
+    public Map<String, Integer> getRemainingSpoons(@CurrentUser UserPrincipal user) {
+        int remaining = userLogServiceImpl.checkSpoon(user.getUserId());
+        return Map.of("remainingSpoons", remaining); // JSON 형태 반환!
+    }
 
+    
     @Operation(summary = "무작위 음식 추천", description = "무작위로 하나의 음식을 추천합니다.")
     @ApiResponses({
                     @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content),

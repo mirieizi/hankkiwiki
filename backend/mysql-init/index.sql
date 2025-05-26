@@ -13,6 +13,8 @@ CREATE INDEX IF NOT EXISTS idx_food_major_category
 
 CREATE INDEX IF NOT EXISTS idx_food_sub_category
     ON food(sub_category);
+    
+ALTER TABLE food ADD FULLTEXT INDEX IF NOT EXISTS ft_food_name (food_name);
 
 ALTER TABLE food ADD FULLTEXT INDEX IF NOT EXISTS ft_food_name (food_name);
 

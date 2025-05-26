@@ -30,14 +30,14 @@ spring:
       host: redis
       port: 6379
 
-      timeout: 10000ms        # 타임아웃 설정 추가
+      timeout: 10000ms # 타임아웃 설정 추가
       connect-timeout: 5000ms # 연결 타임아웃 추가
       lettuce:
         pool:
-          max-active: 8      # 최대 연결 수
-          max-idle: 8        # 최대 유휴 연결 수
-          min-idle: 2        # 최소 유휴 연결 수
-          max-wait: 5000ms   # 연결 대기 시간
+          max-active: 8 # 최대 연결 수
+          max-idle: 8 # 최대 유휴 연결 수
+          min-idle: 2 # 최소 유휴 연결 수
+          max-wait: 5000ms # 연결 대기 시간
 
   mysql:
     volumes:
@@ -49,15 +49,14 @@ spring:
       api-key: ${SPRING_AI_OPENAI_API_KEY}
       model: ${SPRING_AI_OPENAI_MODEL}
 
-
 # 벡터 관련 설정 추가
 vector:
   redis:
-    dimension: 9              # 벡터 차원
-    search-timeout: 5000      # 검색 타임아웃 (ms)
-    batch-size: 100           # 배치 크기
-    index-prefix: "idx_"      # 인덱스 접두사
-    key-prefix: "food_"       # 키 접두사
+    dimension: 9 # 벡터 차원
+    search-timeout: 5000 # 검색 타임아웃 (ms)
+    batch-size: 100 # 배치 크기
+    index-prefix: "idx_" # 인덱스 접두사
+    key-prefix: "food_" # 키 접두사
 
 logging:
   level:
@@ -67,8 +66,7 @@ logging:
     org.springframework.context.annotation: DEBUG
     com.hankki.common.security.filter.TokenAuthenticationFilter: DEBUG
     org.springframework.security: DEBUG
-    io.lettuce.core: WARN     # Lettuce 로그 레벨 조정
-
+    io.lettuce.core: WARN # Lettuce 로그 레벨 조정
 
 jwt:
   issuer: ${HANKKI_JWT_ISSURE}
@@ -81,3 +79,6 @@ server:
   servlet:
     context-path: /api # 중요: 이 설정으로 인해 모든 경로 앞에 /api가 붙습니다
 
+openai:
+  secret-key: ${SPRING_AI_OPENAI_API_KEY}
+  model: ${SPRING_AI_OPENAI_MODEL}
