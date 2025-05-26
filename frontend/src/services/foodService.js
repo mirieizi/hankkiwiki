@@ -44,4 +44,21 @@ export const foodService = {
       const response = await axios.patch('/diet/update/meal-type', dietUpdateData);
       return response.data;
     } catch (error) {
-      console.error('식단 수정 실패:', error
+      console.error('식단 수정 실패:', error);
+      throw error;
+    }
+  },
+
+  // 식단 삭제
+  async deleteDiet(dietId) {
+    try {
+      const response = await axios.delete('/diet/delete', {
+        data: { dietId: dietId }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('식단 삭제 실패:', error);
+      throw error;
+    }
+  }
+};
