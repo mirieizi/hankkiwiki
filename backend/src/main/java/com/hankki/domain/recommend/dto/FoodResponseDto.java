@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-@Getter
 @Builder
 @AllArgsConstructor
 @Schema(description = "음식 추천 응답 DTO", implementation = FoodResponseDto.class)

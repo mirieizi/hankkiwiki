@@ -16,6 +16,8 @@ CREATE INDEX IF NOT EXISTS idx_food_sub_category
     
 ALTER TABLE food ADD FULLTEXT INDEX IF NOT EXISTS ft_food_name (food_name);
 
+ALTER TABLE food ADD FULLTEXT INDEX IF NOT EXISTS ft_food_name (food_name);
+
 -- 복합 인덱스 (카테고리 조합 검색용)
 CREATE INDEX IF NOT EXISTS idx_food_categories
     ON food(major_category, sub_category);
@@ -43,9 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_food_serving_size
 
 -- food_embedding 메타 테이블
 CREATE TABLE IF NOT EXISTS food_embedding (
-                                              id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                              food_id BIGINT NOT NULL,
-                                              embedding_key VARCHAR(255) NOT NULL UNIQUE,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    food_id BIGINT NOT NULL,
+    embedding_key VARCHAR(255) NOT NULL UNIQUE,
     dimension_count INT NOT NULL DEFAULT 9, -- 실제 데이터는 PC1~PC9 (9차원)
     gender ENUM('male', 'female', 'unknown') DEFAULT 'unknown',
     checksum VARCHAR(64),
@@ -91,8 +93,8 @@ VALUES
 
 -- Redis 성능 최적화를 위한 추가 설정값 저장
 CREATE TABLE IF NOT EXISTS system_config (
-                                             id INT AUTO_INCREMENT PRIMARY KEY,
-                                             config_key VARCHAR(100) NOT NULL UNIQUE,
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     config_key VARCHAR(100) NOT NULL UNIQUE,
     config_value TEXT,
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -105,8 +107,8 @@ VALUES
     ('redis_key_prefix_male', 'food_male:', '남성용 Redis 키 접두사'),
     ('redis_key_prefix_female', 'food_female:', '여성용 Redis 키 접두사')
     ON DUPLICATE KEY UPDATE
-                         config_value = VALUES(config_value),
-                         description = VALUES(description);
+     config_value = VALUES(config_value),
+     description = VALUES(description);
 
 -- 성능 분석용 쿼리 실행 계획 확인 (주석 처리)
 -- EXPLAIN SELECT * FROM food WHERE major_category = '음료류' AND sub_category = '커피류';
