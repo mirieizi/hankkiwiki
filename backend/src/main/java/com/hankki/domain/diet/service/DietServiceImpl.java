@@ -5,10 +5,9 @@ import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.dto.*;
 import com.hankki.domain.diet.entity.Diet;
-import com.hankki.domain.diet.entity.DietMealItem;
-import com.hankki.domain.diet.mapper.DietMealItemMapper;
+import com.hankki.domain.recommend.entity.UserDietFoodMap;
+import com.hankki.domain.recommend.mapper.UserDietFoodMapper;
 import com.hankki.domain.diet.repository.DietRepository;
-import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,58 +21,78 @@ import java.util.List;
 @Service
 public class DietServiceImpl implements DietService {
 
-    private DietRepository dietRepository;
-    private DietMealItemMapper dietMealItemMapper;
+    private final DietRepository dietRepository;
+    private final UserDietFoodMapper userDietFoodMapper;
 
     @Override
     @Transactional
-    public void createDiet(String email, DietCreateRequestDto requestDto) {
+    public void createDiet(Long userId, DietCreateRequestDto requestDto) {
         log.info("[DietService] Diet 생성 Request : {}", requestDto);
         // Diet 요청 값 저장
-        Diet createdDiet = requestDto.toEntity(email);
+        Diet createdDiet = requestDto.toEntity(userId);
+        dietRepository.save(createdDiet);
 
         // Diet에 대한 MealItem(food)의 값 중간 테이블에 저장
-        for (Long itemId : requestDto.getMealItemIds()) {
-            DietMealItem dietMealItem = DietMealItem.builder()
+        for (Long foodId : requestDto.getFoodIds()) {
+            UserDietFoodMap userDietFoodMap = UserDietFoodMap.builder()
+                    .userId(userId)
                     .dietId(createdDiet.getId())
-                    .mealItemId(itemId)
+                    .foodId(foodId)
                     .build();
-            dietMealItemMapper.insertDietMealItem(dietMealItem);
+            userDietFoodMapper.insertUserDietFoodMap(userDietFoodMap);
         }
         log.info("[DietService] Diet 생성 완료");
     }
 
     @Override
     @Transactional
-    public List<Diet> getDietsByTakeAt(String email, LocalDate takeAt) {
-        return dietRepository.findDietsByEmailAndTakeAt(email, takeAt);
+    public List<Diet> getDietsByTakeAt(Long userId, LocalDate takeAt) {
+        return dietRepository.findDietsByUserIdAndTakeAt(userId, takeAt);
     }
 
     @Override
     @Transactional
-    public void deleteDietById(String email,Long dietId) {
+    public List<Diet> getDietsByUserId(Long userId) {
+        return dietRepository.findDietsByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDietByUserIdAndDietId(Long userId,Long dietId) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
-        if (!diet.getEmail().equals(email)) {
+        if (!diet.getUserId().equals(userId)) {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
         dietRepository.deleteById(dietId);
-        log.info("[DietService] Diet 삭제 성공");
+        log.info("[DietService] Diet 삭제 성공: {}", dietId);
     }
 
     @Override
     @Transactional
-    public void updateMealType(String email, Long dietId, MealType mealType) {
+    public void updateMealType(Long userId, Long dietId, MealType mealType) {
         Diet diet = dietRepository.findById(dietId)
                 .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
 
-        if (!diet.getEmail().equals(email)) {
+        if (!diet.getUserId().equals(userId)) {
             throw new HankkiWikiException(ExceptionStatus.ACCESS_DENIED);
         }
 
         diet.setMealType(mealType);
+        dietRepository.save(diet);
         log.info("[DietService] Diet MealType {}으로 수정 성공", mealType.name());
+    }
+
+    @Override
+    @Transactional
+    public void updateTakeAt(Long userId, Long dietId, LocalDate takeAt) {
+        Diet diet = dietRepository.findById(dietId)
+                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_DIET));
+
+        diet.setTakeAt(takeAt);
+        dietRepository.save(diet);
+        log.info("[DietService] Diet takeAt {}으로 수정 성공", takeAt.toString());
     }
 
 }

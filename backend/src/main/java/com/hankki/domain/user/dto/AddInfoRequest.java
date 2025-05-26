@@ -41,7 +41,6 @@ public class AddInfoRequest {
 
     public UserHealthInfo toHealthInfo(User user) {
         return UserHealthInfo.builder()
-            .user(user)
             .gender(this.gender)
             .height(this.height)
             .weight(this.weight)

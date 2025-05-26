@@ -26,10 +26,10 @@ public class Diet {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "user_email", unique = true, nullable = false, updatable = false)
-	private String email;
+	@Column(name = "user_id", unique = true, nullable = false, updatable = false)
+	private Long userId;
 	
-	@Column(name = "user_take_at")
+	@Column(name = "take_at")
 	private LocalDate takeAt;
 
 	@Column(
