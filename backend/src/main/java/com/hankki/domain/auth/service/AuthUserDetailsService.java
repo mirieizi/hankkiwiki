@@ -2,12 +2,12 @@ package com.hankki.domain.auth.service;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
+import com.hankki.domain.auth.entity.AuthUser;
 import com.hankki.domain.user.constant.Gender;
 import com.hankki.domain.user.entity.User;
 import com.hankki.domain.user.entity.UserHealthInfo;
 import com.hankki.domain.user.repository.UserHealthInfoRepository;
 import com.hankki.domain.user.repository.UserRepository;
-import com.hankki.domain.auth.entity.AuthUser;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

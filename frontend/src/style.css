@@ -1,11 +1,11 @@
 @font-face {
   font-family: "GumiRomance";
-  src: url("@/assets/fonts/Gumi Romance.otf") format("opentype");
+  src: url("@/fonts/Gumi Romance.otf") format("opentype");
   font-display: swap;
 }
 @font-face {
   font-family: "EFDiary";
-  src: url("@/assets/fonts/EF_Diary.otf") format("opentype");
+  src: url("/fonts/EF_Diary.otf") format("opentype");
   font-display: swap;
 }
 body {

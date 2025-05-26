@@ -39,7 +39,14 @@ public class WebSecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-            .requestMatchers("/static/**", "/h2-console/**");
+            .requestMatchers("/static/**",
+                    "/h2-console/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-resources/**",
+                    "/webjars/**",
+                    "/swagger/**"
+            );
     }
 
     /**
@@ -61,13 +68,7 @@ public class WebSecurityConfig {
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // 에러 핸들러
-                .requestMatchers(
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/swagger-resources/**",
-                        "/webjars/**",
-                        "/swagger/**"
-                        ).permitAll()
+                .requestMatchers("/error").permitAll()
                 // 프리플라이트 OPTIONS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // 인증 불필요 경로 (auth/** 패턴으로 모든 인증 관련 엔드포인트 허용)

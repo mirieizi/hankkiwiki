@@ -36,9 +36,8 @@ Thumbs.db
 /backend/*.dump
 
 # 데이터 폴더 (MySQL, Redis 등)
-backend/mysql-data/
-backend/redis-data/
-backend/dump.rdb
+/backend/mysql-data/
+/backend/redis/data/dump.rdb
 
 # Eclipse IDE
 /backend/.classpath
