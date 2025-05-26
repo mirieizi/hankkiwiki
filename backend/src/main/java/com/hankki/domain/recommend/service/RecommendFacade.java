@@ -22,6 +22,7 @@ public class RecommendFacade {
     private final RecommendService recommendService;
     private final UserLogServiceImpl userLogService;
     private final UserFoodLogServiceImpl userFoodLogService;
+    private final UserHealthInfoRepository userHealthInfoRepository;
 
     /**
      * 랜덤 추천 기능

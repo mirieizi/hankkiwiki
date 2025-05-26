@@ -38,10 +38,10 @@ public enum ExceptionStatus {
 	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),
 	INVALID_VECTOR_DIMENSION(HttpStatus.BAD_REQUEST, 400, "벡터 차원이 올바르지 않습니다."),
 
-	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 500, "내부 서버 오류 발생");
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 500, "내부 서버 오류 발생"),
 
 	// REDIS
-	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),
+	// NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),
 	
 	// RAG GPT 오류
 	RECOMMEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, 500, "음식 추천(RAG) 중 오류가 발생했습니다.");

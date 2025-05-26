@@ -10,7 +10,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@Getter
 @AllArgsConstructor
 @Schema(description = "음식 추천 응답 DTO", implementation = FoodResponseDto.class)
 public class FoodResponseDto {

@@ -1,28 +1,77 @@
-# Base image
+# Stage 1: Builder 이미지
 FROM openjdk:17-jdk-slim AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /workspace
 
+# 로컬 Maven 캐시 볼륨 마운트
 VOLUME /root/.m2
 
-# 빌드에 필요한 파일 복사
+# mvnw 스크립트 및 .mvn 전체 복사
 COPY mvnw .
-COPY .mvn/wrapper .mvn/wrapper
-COPY pom.xml .
-COPY src src
+COPY .mvn .mvn
 
-# 빌드
+# pom.xml 및 소스 복사
+COPY pom.xml .
+COPY src/ src/
+
+# mvnw 실행 권한 부여
+RUN chmod +x mvnw
+
+# 패키징 (테스트 스킵)
 RUN ./mvnw clean package -DskipTests
 
-# 런타임 이미지
+# Stage 2: Runtime 이미지
 FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-COPY --from=builder /workspace/target/hankkiwiki-0.0.1-SNAPSHOT.jar app.jar
+# 빌드된 JAR 파일 복사
+COPY --from=builder /workspace/target/*.jar app.jar
 
 # 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+COPY mvnw .
+RUN ls -al && cat mvnw
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Base image
+# FROM openjdk:17-jdk-slim AS builder
+
+# # 작업 디렉토리 설정
+# WORKDIR /workspace
+
+# VOLUME /root/.m2
+
+# # 빌드에 필요한 파일 복사
+# COPY mvnw .
+# COPY .mvn/wrapper .mvn/wrapper
+# COPY pom.xml .
+# COPY src src
+
+# # 빌드
+# RUN ./mvnw clean package -DskipTests
+
+# # 런타임 이미지
+# FROM openjdk:17-jdk-slim
+# WORKDIR /app
+
+# COPY --from=builder /workspace/target/hankkiwiki-0.0.1-SNAPSHOT.jar app.jar
+
+# # 애플리케이션 실행
+# ENTRYPOINT ["java", "-jar", "app.jar"]
 
 
 #

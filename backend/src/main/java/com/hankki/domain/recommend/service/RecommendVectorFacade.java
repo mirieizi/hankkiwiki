@@ -4,6 +4,8 @@ import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.diet.repository.DietGroupRepository;
+import com.hankki.domain.food.entity.Food;
+import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
 import com.hankki.domain.user.constant.Gender;
@@ -133,7 +135,7 @@ public class RecommendVectorFacade {
     public List<Food> getRecentFoods(Long userId){
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
-    	List<Long> recentFoodIds = userFoodLogRepository.findAllFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+    	List<Long> recentFoodIds = userFoodLogRepository.findRecommendedFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
         if (recentFoodIds.isEmpty()) {
             throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
         }
