@@ -15,6 +15,7 @@ import AiRecommend from "@/views/AiRecommend.vue";
 import RegisterFood from "@/views/RegisterFood.vue";
 import Calendar from "@/views/Calendar.vue";
 import KakaoMap from "@/views/KakaoMap.vue";
+import CustomRecommend from "../views/CustomRecommend.vue";
 
 // Route definitions
 const routes = [
@@ -25,19 +26,24 @@ const routes = [
   { path: "/signup", name: "Signup", component: LoginPage, props: { signIn: false } },
 
   // Profile pages (require auth)
+  // { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: true } },
+  // { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: true } },
+  // { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
+
   { path: "/profile/info", name: "ProfileInfo", component: ProfileInfoPage, meta: { requiresAuth: true } },
   { path: "/profile/health", name: "ProfileHealth", component: HealthInfoPage, meta: { requiresAuth: true } },
   { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
 
   // Recommendation pages
-  { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend },
-  { path: "/recommend/history", name: "HistoryRecommend", component: HistoryRecommend },
-  { path: "/recommend/ai", name: "AiRecommend", component: AiRecommend },
+  { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend, meta: { requiresAuth: true } },
+  { path: "/recommend/history", name: "HistoryRecommend", component: HistoryRecommend, meta: { requiresAuth: true } },
+  { path: "/recommend/ai", name: "AiRecommend", component: AiRecommend, meta: { requiresAuth: true } },
+  { path: "/recommend/custom", name: "CustomRecommend", component: CustomRecommend, meta: { requiresAuth: true } },
 
   // Food & Calendar (require auth)
-  { path: "/food/register", name: "RegisterFood", component: RegisterFood },
-  { path: "/calendar", name: "Calendar", component: Calendar },
-  { path: "/kakao-map", name: "kakaomap", component: KakaoMap },
+  { path: "/food/register", name: "RegisterFood", component: RegisterFood, meta: { requiresAuth: true } },
+  { path: "/calendar", name: "Calendar", component: Calendar, meta: { requiresAuth: true } },
+  { path: "/kakao-map", name: "kakaomap", component: KakaoMap, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

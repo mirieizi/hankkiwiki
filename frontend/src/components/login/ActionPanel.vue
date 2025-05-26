@@ -10,8 +10,8 @@
 
 <script setup>
 import { computed, defineProps } from "vue";
-import scholarBear from "@/assets/login_logo.png";
-import welcomeBear from "@/assets/eat_bear_logo.png";
+import scholarBear from "@/assets/logo2.png";
+import welcomeBear from "@/assets/welcome_logo.png";
 
 const props = defineProps({ signIn: Boolean });
 
@@ -25,19 +25,57 @@ const btn = computed(() => (props.signIn ? "회원가입하기" : "로그인하�
 </script>
 
 <style scoped>
+.action-panel {
+  background: #6faf9b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28px;
+  padding: 40px 32px 32px 32px;
+}
+
 .mascot {
   display: block;
-  width: 200px;
-  margin: 0 auto 1rem;
+  width: 150px;
+  margin: 0 auto 18px;
+  border-radius: 25px;
+}
+
+.diary-font {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fcfcfc;
+  text-align: center;
+  margin-bottom: 0.35em;
+  letter-spacing: 0.5px;
+}
+p {
+  color: #ffffff;
+  font-size: 1.05rem;
+  text-align: center;
+  margin: 0 0 18px 0;
+  line-height: 1.6;
 }
 
 button {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 5px;
-  background: #ff5722;
-  color: white;
-  cursor: pointer;
+  display: inline-block;
+  min-width: 100px;
+  padding: 0.7rem 2.1rem;
+  background: #fff;
+  color: #21d59b; /* 더 맑은 민트톤 추천 */
+  font-size: 1.04rem;
+  font-weight: 600;
+  border: none; /* <-- 테두리 삭제! */
+  border-radius: 18px;
+  box-shadow: none;
+  transition: background 0.15s, color 0.15s;
+  margin: 0 auto;
+  outline: none;
+}
+button:hover {
+  background: #ffffff10;
+  color: #21d59b;
+  border-color: #15b382;
 }
 </style>

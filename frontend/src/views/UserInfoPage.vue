@@ -1,4 +1,45 @@
-<!-- src/views/UserInfoPage.vue -->
+<template>
+  <div class="info-wrapper">
+    <div class="info-card">
+      <h2>개인 정보 수정</h2>
+      <p class="greeting">{{ form.nickname || authStore.userInfo?.nickname }}님, 정보 수정 페이지입니다.</p>
+
+      <form @submit.prevent="onSubmit" class="info-form">
+        <div class="form-group">
+          <label class="form-label">이메일</label>
+          <input type="email" :value="form.email" disabled class="form-input" />
+        </div>
+
+        <div class="form-group flex-row">
+          <div class="flex-grow">
+            <label class="form-label">닉네임</label>
+            <br />
+            <br />
+            <input v-model="form.nickname" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required class="form-input" />
+          </div>
+          <button type="button" @click="checkNicknameDup" :disabled="isChecking || !form.nickname" class="btn-outline">중복 확인</button>
+        </div>
+        <p v-if="authStore.dupError" class="feedback error">{{ authStore.dupError }}</p>
+        <p v-else-if="nicknameChecked" class="feedback success">사용 가능한 닉네임입니다.</p>
+
+        <div class="form-group">
+          <label class="form-label">새 비밀번호</label>
+          <input v-model="form.password" type="password" placeholder="8~20자, 영문+특수문자" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">비밀번호 확인</label>
+          <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" class="form-input" />
+        </div>
+
+        <p v-if="authStore.error" class="feedback error">{{ authStore.error }}</p>
+
+        <button type="submit" :disabled="isChecking" class="btn-primary">저장하기</button>
+      </form>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
@@ -7,26 +48,18 @@ import { useAuthStore } from "@/stores/auth";
 const router = useRouter();
 const authStore = useAuthStore();
 
-const form = ref({
-  email: "",
-  nickname: "",
-  password: "",
-  passwordConfirm: "",
-});
+const form = ref({ email: "", nickname: "", password: "", passwordConfirm: "" });
 const isChecking = ref(false);
 const nicknameChecked = ref(true);
 
-// 최초 정보 로드 (authStore에 내 정보 fetchProfile로 저장해놓는다고 가정)
 onMounted(async () => {
-  await authStore.fetchProfile?.(); // 이 함수가 없으면 빼도 됨 (authStore.userInfo가 이미 세팅된 상태면 필요 없음)
-  // userInfo에 있는 값으로 form 세팅
+  await authStore.fetchProfile?.();
   form.value.email = authStore.userInfo?.email || "";
   form.value.nickname = authStore.userInfo?.nickname || "";
   nicknameChecked.value = true;
   authStore.dupError = "";
 });
 
-// 닉네임 입력 변경 시 중복체크 flag 초기화
 watch(
   () => form.value.nickname,
   (newNick) => {
@@ -35,7 +68,6 @@ watch(
   }
 );
 
-// 닉네임 중복 확인 버튼 이벤트
 async function checkNicknameDup() {
   authStore.dupError = "";
   nicknameChecked.value = false;
@@ -51,7 +83,6 @@ async function checkNicknameDup() {
   isChecking.value = false;
 }
 
-// 유효성 검사
 function validate() {
   if (!nicknameChecked.value) {
     authStore.error = "닉네임 중복 확인을 해주세요.";
@@ -69,13 +100,10 @@ function validate() {
   return true;
 }
 
-// 제출
 async function onSubmit() {
   if (!validate()) return;
   const payload = { nickname: form.value.nickname };
   if (form.value.password) payload.password = form.value.password;
-
-  // authStore에 updateProfile 구현되어 있다고 가정
   const ok = await authStore.updateProfile(payload);
   if (ok) {
     alert("개인 정보가 저장되었습니다.");
@@ -84,108 +112,135 @@ async function onSubmit() {
 }
 </script>
 
-<template>
-  <div class="info-page">
-    <h2>개인 정보 수정</h2>
-    <p class="greeting">{{ authStore.userInfo?.nickname }}님, 정보 수정 페이지입니다.</p>
-
-    <form @submit.prevent="onSubmit" class="info-form">
-      <label>
-        이메일
-        <input type="email" :value="form.email" disabled />
-      </label>
-
-      <label>
-        닉네임
-        <div style="display: flex; gap: 0.5rem">
-          <input v-model="form.nickname" type="text" placeholder="닉네임 (최대 10자, 공백·특수문자 금지)" maxlength="10" required />
-          <button type="button" @click="checkNicknameDup" :disabled="isChecking || !form.nickname">중복 확인</button>
-        </div>
-      </label>
-      <p v-if="authStore.dupError" class="error">{{ authStore.dupError }}</p>
-      <p v-else-if="nicknameChecked" class="success">사용 가능한 닉네임입니다.</p>
-
-      <label>
-        새 비밀번호
-        <input v-model="form.password" type="password" placeholder="8~20자, 영문+특수문자" />
-      </label>
-      <label>
-        비밀번호 확인
-        <input v-model="form.passwordConfirm" type="password" placeholder="비밀번호 확인" />
-      </label>
-
-      <p v-if="authStore.error" class="error">{{ authStore.error }}</p>
-
-      <button type="submit" :disabled="isChecking">저장하기</button>
-    </form>
-  </div>
-</template>
-
 <style scoped>
-.info-page {
+.info-wrapper {
+  width: 100%;
+  /* 부모 컨테이너 기준 높이에 따라 자동으로 늘어나도록 수정 */
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f7fafc;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  /* 카드 시작 위치를 상단에서 동일하게 맞추기 위해 flex-start */
+  align-items: flex-start;
+  /* 상단 여백 조정 (헤더 높이 + 추가 마진) */
+  padding-top: 6rem;
+  background: #f7fafc;
+  box-sizing: border-box;
+}
+
+.info-card {
+  background: #ffffff;
+  width: 100%;
   max-width: 500px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
+  padding: 2.5rem;
   border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 h2 {
-  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  color: #333333;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .greeting {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  color: #666666;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .info-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-label {
+.form-group {
   display: flex;
   flex-direction: column;
-  font-weight: 500;
 }
 
-input {
-  margin-top: 0.5rem;
+.flex-row {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.flex-grow {
+  flex: 1;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333333;
+}
+
+.form-input {
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
-input[disabled] {
+.form-input[disabled] {
   background: #f5f5f5;
   cursor: not-allowed;
 }
 
-button {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--orange-dark);
-  color: #fff;
+.btn-outline {
+  margin-left: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid #21d59b;
+  border-radius: 24px;
+  background: none;
+  color: #21d59b;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.btn-outline:hover {
+  background-color: #21d59b;
+  color: #ffffff;
 }
 
-.error {
-  color: #d32f2f;
+.feedback {
   font-size: 0.9rem;
+  margin-top: -0.75rem;
+  margin-left: 0.25rem;
   text-align: left;
-  margin: -0.5rem 0 0.5rem;
 }
-.success {
+.feedback.error {
+  color: #d32f2f;
+}
+.feedback.success {
   color: #4caf50;
-  font-size: 0.9rem;
-  text-align: left;
-  margin: -0.5rem 0 0.5rem;
+}
+
+.btn-primary {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #21d59b;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 20px #21d59b15;
+  transition: background-color 0.2s;
+}
+.btn-primary:disabled {
+  background-color: #c6f1e5;
+  cursor: not-allowed;
+}
+.btn-primary:hover:enabled {
+  background-color: #1aa28a;
 }
 </style>

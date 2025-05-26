@@ -35,4 +35,11 @@ public class UserLog {
     public boolean isExceeded(int maxCount) {
         return this.recommendationCount >= maxCount;
     }
+
+    @PrePersist
+    public void prePersist() {
+        if (this.date == null) {
+            this.date = LocalDate.now();
+        }
+    }
 }

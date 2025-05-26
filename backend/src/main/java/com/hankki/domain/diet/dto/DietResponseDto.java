@@ -3,6 +3,7 @@ package com.hankki.domain.diet.dto;
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @Schema(description = "식사 응답 DTO")
 public class DietResponseDto {
 
+    @NotBlank
     @Schema(description = "식단 ID", example = "1")
     private Long id;
 
