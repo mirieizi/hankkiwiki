@@ -60,12 +60,8 @@ public class WebSecurityConfig {
           .csrf(csrf -> csrf.disable())
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // 헬스체크 및 디버그 경로 최우선 허용 (추가된 부분)
-                .requestMatchers("/api/health/**").permitAll()
-                .requestMatchers("/api/debug/**").permitAll()
                 // 에러 핸들러
                 .requestMatchers(
-                        "/error",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-resources/**",

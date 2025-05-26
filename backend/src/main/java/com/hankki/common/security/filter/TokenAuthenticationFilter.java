@@ -38,8 +38,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         "/auth/check-email",
         "/auth/check-nickname",
         "/actuator/health",
-        "/api/health",
-        "/api/debug"
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/swagger-resources/**",
+        "/webjars/**",
+        "/swagger/**"
     );
 
     @Override

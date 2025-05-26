@@ -27,10 +27,6 @@ Thumbs.db
 ##################################
 /backend/target/
 /backend/*.iml
-!/backend/.mvn/
-!/backend/.mvn/wrapper/
-!/backend/.mvn/wrapper/maven-wrapper.jar
-!/backend/.mvn/wrapper/maven-wrapper.properties
 
 # Spring 설정 관련
 /backend/.env
@@ -88,4 +84,3 @@ ehthumbs.db
 Icon?
 Desktop.ini
 mysql-data/
-/backend/target/
