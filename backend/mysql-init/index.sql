@@ -41,9 +41,9 @@ CREATE INDEX IF NOT EXISTS idx_food_serving_size
 
 -- food_embedding 메타 테이블
 CREATE TABLE IF NOT EXISTS food_embedding (
-                                              id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                              food_id BIGINT NOT NULL,
-                                              embedding_key VARCHAR(255) NOT NULL UNIQUE,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    food_id BIGINT NOT NULL,
+    embedding_key VARCHAR(255) NOT NULL UNIQUE,
     dimension_count INT NOT NULL DEFAULT 9, -- 실제 데이터는 PC1~PC9 (9차원)
     gender ENUM('male', 'female', 'unknown') DEFAULT 'unknown',
     checksum VARCHAR(64),
@@ -110,3 +110,5 @@ VALUES
 -- EXPLAIN SELECT * FROM food WHERE major_category = '음료류' AND sub_category = '커피류';
 -- EXPLAIN SELECT * FROM food WHERE kcal BETWEEN 100 AND 200 AND protein > 10;
 -- EXPLAIN SELECT f.*, fe.embedding_key FROM food f JOIN food_embedding fe ON f.id = fe.food_id WHERE f.food_name = '사과';
+
+-- ALTER TABLE food ADD FULLTEXT INDEX ft_food_name (food_name);
