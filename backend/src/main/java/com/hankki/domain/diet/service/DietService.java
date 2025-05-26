@@ -3,6 +3,7 @@ package com.hankki.domain.diet.service;
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
 import com.hankki.domain.diet.dto.DietResponseDto;
+import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.diet.entity.DietGroup;
 
 import java.time.LocalDate;
@@ -23,5 +24,9 @@ public interface DietService {
     void updateTakeAt(Long userId, Long dietId, LocalDate takeAt);
 
     List<Long> findRecentFoodIdsByUserId(Long userId, LocalDate start, LocalDate end);
+
+	boolean hasDietHistoryForRecentDays(Long userId, int days);
+
+	List<GroupedDietResponseDto> getGroupedDietsByRecentDays(Long userId, int days);
 
 }

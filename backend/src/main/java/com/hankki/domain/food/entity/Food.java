@@ -1,5 +1,7 @@
 package com.hankki.domain.food.entity;
 
+import com.hankki.domain.food.dto.FoodPreviewResponseDto;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -56,5 +58,14 @@ public class Food {
 	
 	@Column
 	private double cholesterol;
+
+    public FoodPreviewResponseDto toPreviewDto() {
+        return FoodPreviewResponseDto.builder()
+            .id(this.id)
+            .foodName(this.foodName)
+            .majorCategory(this.majorCategory)
+            .kcal(this.kcal)
+            .build();
+    }
 
 }

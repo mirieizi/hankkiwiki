@@ -1,5 +1,18 @@
 <template>
   <div class="recommend-bg">
+    <!-- ⭐️ 3일치 식단 기록 안내 모달 ⭐️ -->
+    <div v-if="showPromptModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <h3>식단 기록이 필요해요!</h3>
+        <p>
+          최근 3일간 식단 기록이 없어요.
+          <br />
+          먼저 식단(다이어리)을 작성해 주세요.
+        </p>
+        <button class="go-diary-btn" @click="goDiaryPage">작성하러 가기</button>
+      </div>
+    </div>
+
     <div class="main-layout">
       <!-- 좌측: 추천 모드 2x2 버튼 -->
       <div class="mode-sidebar">
@@ -28,7 +41,6 @@
                     <img :src="placeholderImage" alt="추천 준비 중" />
                   </div>
                   <div v-else-if="!isResultReady" class="animation-wrapper">
-                    <!-- ⭐ AI모드는 ai-finish 이벤트도 받음 -->
                     <component :is="animationComponent" :key="mode + '-' + runCount" @done="onAnimationDone" @ai-finish="onAiChatDone" />
                   </div>
                 </section>
@@ -109,20 +121,35 @@ import placeholderImage from "@/assets/loading_logo.png";
 import recommendSuccessLogo from "@/assets/recommend_sucess_logo.png";
 import NutritionCompareChart from "@/components/NutritionCompareChart.vue";
 
-// 스토어
+// ⭐️ 3일치 식단 기록 안내 모달 제어
+const showPromptModal = ref(false);
 const store = useRecommendStore();
+const router = useRouter();
 
-// props & route
+function goDiaryPage() {
+  showPromptModal.value = false;
+  router.replace({ name: "Calendar" }); // 실제 캘린더/다이어리 페이지 name!
+}
+
+onMounted(async () => {
+  await store.fetchRemainingSpoons();
+  await store.fetchHistoryRecords();
+  if (store.showNoHistoryPrompt) showPromptModal.value = true;
+});
+watch(
+  () => store.showNoHistoryPrompt,
+  (v) => {
+    if (v) showPromptModal.value = true;
+  }
+);
+
+// ===== 기존 코드 =====
 const props = defineProps({ initialMode: { type: String, default: null } });
 const route = useRoute();
-const router = useRouter();
 const mode = ref(props.initialMode ?? route.params.mode ?? "random");
-
-// local state
 const isChatting = ref(false);
 const isResultReady = ref(false);
 
-// computed
 const currentMode = computed(() => modes.find((m) => m.id === mode.value));
 const spoonCost = computed(() => currentMode.value.cost);
 const spoonCount = computed(() => store.remainingSpoons);
@@ -148,7 +175,6 @@ const modes = [
   { id: "custom", label: "취향 맞춤", icon: "✨", desc: "최근 음식과 비슷한 추천", cost: 1, animation: CustomAnimation },
 ];
 
-// 실행 버튼 핸들러
 function onRun() {
   store.remainingSpoons -= spoonCost.value;
   store.hasRun = true;
@@ -164,14 +190,12 @@ function onRun() {
   }
 }
 
-// 랜덤/히스토리/커스텀 애니메이션 완료
 function onAnimationDone() {
   isResultReady.value = true;
   store.loading = false;
   isChatting.value = false;
 }
 
-// AI 애니메이션 완료
 function onAiChatDone(payload) {
   store
     .fetchAiRecommendation(payload)
@@ -187,7 +211,6 @@ function onAiChatDone(payload) {
     });
 }
 
-// 모드 전환
 function goMode(id) {
   if (loading.value) return;
   if (id === mode.value) return;
@@ -200,7 +223,6 @@ function goMode(id) {
   isChatting.value = false;
 }
 
-// 초기 마운트
 onMounted(async () => {
   await store.fetchRemainingSpoons();
   await store.fetchHistoryRecords();
@@ -209,7 +231,6 @@ onMounted(async () => {
   isChatting.value = false;
 });
 
-// 라우트 변경 감지
 watch(
   () => route.params.mode,
   (m) => {
@@ -226,7 +247,55 @@ watch(
 </script>
 
 <style scoped>
-/* 배경 및 전체 레이아웃 */
+/* ===== ⭐️ 안내 모달 스타일 ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 60, 60, 0.38);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal-dialog {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 40px #24c7c840;
+  padding: 36px 38px 28px 38px;
+  text-align: center;
+  max-width: 96vw;
+}
+.modal-dialog h3 {
+  color: #17cfa6;
+  font-size: 1.28rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.modal-dialog p {
+  color: #555;
+  font-size: 1.06rem;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.go-diary-btn {
+  background: linear-gradient(90deg, #21d59b 0%, #ffc83d 120%);
+  color: #fff;
+  font-size: 1.12rem;
+  font-weight: 700;
+  padding: 12px 36px;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 3px 16px #21d59b33;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.14s;
+}
+.go-diary-btn:hover {
+  background: linear-gradient(90deg, #19b37b 0%, #e4af2d 120%);
+  color: #fffbe0;
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* ===== 배경 및 전체 레이아웃 ===== */
 .recommend-bg {
   width: 100vw;
   min-height: 100vh;
@@ -385,7 +454,6 @@ watch(
 }
 .main-view.chat-bg {
   background: #152044;
-  /* 원하는 색상으로! (밤하늘 느낌) */
 }
 .placeholder img {
   width: 55%;
@@ -424,7 +492,6 @@ watch(
     transform: scale(1) translateY(0);
   }
 }
-
 /* 추천 카드 정보 디자인 */
 .food-card {
   display: flex;
@@ -465,7 +532,6 @@ watch(
 .food-nutrition span b {
   color: #17cfa6;
 }
-
 /* 쿠팡 파트너스 버튼 스타일 */
 .coupang-link-btn {
   display: inline-block;
@@ -492,7 +558,7 @@ watch(
   box-shadow: 0 6px 28px #ffbf2f44;
 }
 
-/* 반응형 */
+/* ===== 반응형 ===== */
 @media (max-width: 1100px) {
   .main-layout {
     flex-direction: column;
@@ -550,7 +616,7 @@ watch(
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 34px; /* 카드-차트 간격 조정 */
+    gap: 34px;
   }
   .nutrition-chart-horizontal {
     margin: 38px 0 0 0;
@@ -558,19 +624,16 @@ watch(
     width: 900px;
     min-width: 900px;
     max-width: 100%;
-    height: 700px; /* 추가: 높이 명확히 */
+    height: 700px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
   }
-
-  /* 반응형: 좁은 화면에서는 세로 쌓기 */
-  @media (max-width: 700px) {
-    .result-outer.result-row-flex {
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
+  /* 세로 쌓기 */
+  .result-outer.result-row-flex {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
   }
 }
 </style>

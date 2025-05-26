@@ -3,7 +3,6 @@ package com.hankki.domain.diet.service;
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.dto.*;
-import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import com.hankki.domain.diet.entity.DietGroup;
 import com.hankki.domain.diet.repository.DietFoodRepository;
@@ -117,4 +116,12 @@ public class DietFacade {
     public void deleteDietByIdByAdmin(Long userId, Long dietId) {
         dietService.deleteDietByUserIdAndDietId(userId, dietId);
     }
+
+	public boolean hasDietHistoryForRecentDays(Long userId, int days) {
+		return dietService.hasDietHistoryForRecentDays(userId, days);
+	}
+
+	public List<GroupedDietResponseDto> getGroupedDietsByRecentDays(Long userId, int days) {
+	    return dietService.getGroupedDietsByRecentDays(userId, days);
+	}
 }
