@@ -1,7 +1,6 @@
 package com.hankki.domain.diet.dto;
 
 import com.hankki.domain.diet.constant.MealType;
-import com.hankki.domain.diet.entity.Diet;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -17,22 +16,19 @@ import java.util.List;
 @Schema(description = "식단 생성 요청 DTO")
 public class DietCreateRequestDto {
 
-    @Schema(description = "식사 종류", defaultValue = "TODAY", example = "LUNCH")
-    private MealType mealType;
-
     @NotBlank
     @Schema(description = "식사 일자", example = "2025-05-28")
     private LocalDate takeAt;
 
     @NotBlank
-    @Schema(description = "식사 음식들", example = "[1, 2, 3]")
-    private List<Long> foodIds;
+    @Schema(description = "식사 정보와 음식들", implementation = MealWithFoods.class)
+    private List<MealWithFoods> foods;
 
-    public Diet toEntity(Long userId) {
-        return Diet.builder()
-                .userId(userId)
-                .takeAt(this.takeAt)
-                .mealType(this.mealType)
-                .build();
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MealWithFoods {
+        private MealType mealType;
+        private List<Long> foodIds;
     }
 }

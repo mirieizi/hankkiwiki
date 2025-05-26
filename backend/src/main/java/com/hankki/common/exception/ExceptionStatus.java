@@ -10,6 +10,7 @@ public enum ExceptionStatus {
 	// DIET
 	INVALID_MEAL_TYPE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 종류입니다."),
 	INVALID_MAJOR_CATEGORY(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 대분류입니다."),
+	INVALID_DIET_INPUT(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 입력입니다."),
 	NOT_FOUND_DIET(HttpStatus.NOT_FOUND, 404, "식사 정보가 존재하지 않습니다."),
 	NOT_FOUND_DIET_MEAL_ITEM(HttpStatus.NOT_FOUND, 404, "식사에 대응하는 음식 정보를 찾지 못했습니다."),
 	NOT_FOUND_MEAL_ITEM(HttpStatus.NOT_FOUND, 404, "음식 정보가 존재하지 않습니다."),
@@ -29,9 +30,15 @@ public enum ExceptionStatus {
 
 	// FOOD
 	NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, 404, "음식을 찾지 못했습니다."),
+	INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 값을 입력했습니다"),
 
 	// RECOMMEND
 	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다."),
+	EMPTY_DIET_REQUEST(HttpStatus.BAD_REQUEST, 400, "최근 3일 간 식단 기록이 비었습니다."),
+	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),
+	INVALID_VECTOR_DIMENSION(HttpStatus.BAD_REQUEST, 400, "벡터 차원이 올바르지 않습니다."),
+
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 500, "내부 서버 오류 발생");
 
 	// REDIS
 	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),

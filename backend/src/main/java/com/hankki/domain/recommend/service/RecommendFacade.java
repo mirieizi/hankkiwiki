@@ -1,7 +1,5 @@
 package com.hankki.domain.recommend.service;
 
-import com.hankki.domain.recommend.entity.UserFoodLog;
-import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +20,8 @@ public class RecommendFacade {
 
     private final RecommendVectorFacade recommendVectorFacade;
     private final RecommendService recommendService;
-    private UserHealthInfoRepository userHealthInfoRepository;
-    private UserLogServiceImpl userLogService;
-    private final UserFoodLogRepository userFoodLogRepository;
+    private final UserLogServiceImpl userLogService;
+    private final UserFoodLogServiceImpl userFoodLogService;
 
     /**
      * 랜덤 추천 기능
@@ -41,11 +38,7 @@ public class RecommendFacade {
          * TO DO (1) 랜덤 추천 불가 시 대처 방식 : 다시 시도, 횟수 돌려놓기 등
          */
         userLogService.recordRecommendation(userId);
-        UserFoodLog userFoodLog = UserFoodLog.builder()
-                .userId(userId)
-                .foodId(foodResponseDto.getId())
-                .build();
-        userFoodLogRepository.save(userFoodLog);
+        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
         return foodResponseDto;
     }
 
@@ -59,21 +52,10 @@ public class RecommendFacade {
     public FoodResponseDto recommendFurthest(Long userId, Gender gender) {
         userLogService.checkQuota(userId);
         Long furthestId = recommendVectorFacade.findFurthestFoodFromRecent(userId, gender);
+        FoodResponseDto foodResponseDto = recommendService.findFoodDtoById(furthestId);
         userLogService.recordRecommendation(userId);
-        return recommendService.findFoodDtoById(furthestId);
-    }
-
-    /**
-     * 3일 간 식단에서 벡터로 거리가 가까운 것과 먼 것의 중간 값 추천
-     * @param userId
-     * @param gender
-     * @return
-     */
-    public FoodResponseDto recommendNeutral(Long userId, Gender gender) {
-        userLogService.checkQuota(userId);
-        Long neutralId = recommendVectorFacade.findNeutralFoodFromRecent(userId, gender);
-        userLogService.recordRecommendation(userId);
-        return recommendService.findFoodDtoById(neutralId);
+        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
+        return foodResponseDto;
     }
 
     /**
@@ -85,8 +67,10 @@ public class RecommendFacade {
     public FoodResponseDto recommendMostSimilar(Long userId, Gender gender) {
         userLogService.checkQuota(userId);
         Long mostSimilarId = recommendVectorFacade.findMostSimilarFoodFromRecent(userId, gender);
+        FoodResponseDto foodResponseDto = recommendService.findFoodDtoById(mostSimilarId);
         userLogService.recordRecommendation(userId);
-        return recommendService.findFoodDtoById(mostSimilarId);
+        userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
+        return foodResponseDto;
     }
 
     public FoodResponseDto recommendByRag(Long userId, RagRecommendRequest request) {
