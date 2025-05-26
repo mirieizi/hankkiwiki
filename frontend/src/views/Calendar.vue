@@ -1,25 +1,37 @@
 <template>
-  <div class="calendar-page">
-    <div class="calendar-wrapper">
-      <div class="calendar-panel">
-        <CalendarView 
-          :selected="selectedDate" 
-          :recorded-dates="recordedDates" 
-          @select-date="handleDateSelect"
-          @month-change="handleMonthChange"
-        />
-      </div>
-      <div class="record-panel">
-        <DailyRecord 
-          v-if="hasRecord" 
-          :data="recordData" 
-          :date="selectedDate" 
-        />
-        <EmptyNotice 
-          v-else 
-          :date="selectedDate" 
-        />
-      </div>
+  <div class="calendar-wrapper">
+    <!-- 🔍 디버깅 정보 -->
+    <div class="debug-panel" v-if="showDebug">
+      <h3>🔍 디버깅 정보</h3>
+      <p><strong>선택된 날짜:</strong> {{ selectedDate }}</p>
+      <p><strong>기록된 날짜들:</strong> {{ recordedDates }}</p>
+      <p><strong>현재 데이터:</strong></p>
+      <pre>{{ JSON.stringify(recordData, null, 2) }}</pre>
+      <p><strong>hasRecord:</strong> {{ hasRecord }}</p>
+      <p><strong>로딩 중:</strong> {{ loading }}</p>
+      <button @click="testFetchRecord">선택된 날짜 다시 조회</button>
+      <button @click="showDebug = false">닫기</button>
+    </div>
+    <button v-if="!showDebug" @click="showDebug = true" class="debug-btn">🔍 디버깅</button>
+    
+    <div class="calendar-panel">
+      <CalendarView 
+        :selected="selectedDate" 
+        :recorded-dates="recordedDates" 
+        @select-date="handleDateSelect"
+        @month-change="handleMonthChange"
+      />
+    </div>
+    <div class="record-panel">
+      <DailyRecord 
+        v-if="hasRecord" 
+        :data="recordData" 
+        :date="selectedDate" 
+      />
+      <EmptyNotice 
+        v-else 
+        :date="selectedDate" 
+      />
     </div>
   </div>
 </template>
@@ -32,6 +44,9 @@ import { calendarService } from "@/services/calendarService";
 import CalendarView from "@/components/calendar/CalendarView.vue";
 import DailyRecord from "@/components/calendar/DailyRecord.vue";
 import EmptyNotice from "@/components/calendar/EmptyNotice.vue";
+
+// 디버깅
+const showDebug = ref(false);
 
 // 날짜를 YYYY-MM-DD 포맷으로 변환
 function formatDate(date) {
@@ -53,24 +68,46 @@ const currentMonth = ref(new Date().getMonth());
 
 // 기록이 있는지 여부
 const hasRecord = computed(() => {
-  return recordData.value && (
+  console.log('=== hasRecord 계산 ===');
+  console.log('recordData.value:', recordData.value);
+  
+  if (!recordData.value) {
+    console.log('recordData가 null');
+    return false;
+  }
+  
+  const hasRecordFlag = recordData.value && (
     (recordData.value.diets && recordData.value.diets.length > 0) ||
     recordData.value.diary
   );
+  
+  console.log('hasRecord 결과:', hasRecordFlag);
+  return hasRecordFlag;
 });
 
 // 특정 날짜의 기록을 서버에서 가져오는 함수
 async function fetchRecord(dateStr) {
-  if (!dateStr) return;
+  if (!dateStr) {
+    console.log('날짜가 없음:', dateStr);
+    return;
+  }
+  
+  console.log('=== fetchRecord 시작 ===');
+  console.log('요청 날짜:', dateStr);
   
   loading.value = true;
   try {
+    // 🔍 서비스 호출 전 로그
+    console.log('calendarService.getDayRecord 호출 중...');
     const dayRecord = await calendarService.getDayRecord(dateStr);
+    console.log('서비스 응답:', dayRecord);
+    
     recordData.value = dayRecord;
     
     // 기록된 날짜 배열에 추가 (중복 방지)
     if (dayRecord.hasRecord && !recordedDates.value.includes(dateStr)) {
       recordedDates.value.push(dateStr);
+      console.log('기록된 날짜에 추가:', dateStr);
     }
   } catch (error) {
     console.error('기록 조회 실패:', error);
@@ -82,13 +119,24 @@ async function fetchRecord(dateStr) {
     };
   } finally {
     loading.value = false;
+    console.log('=== fetchRecord 완료 ===');
   }
+}
+
+// 테스트용 함수
+async function testFetchRecord() {
+  console.log('=== 수동 테스트 ===');
+  await fetchRecord(selectedDate.value);
 }
 
 // 월별 기록된 날짜들 가져오기
 async function fetchRecordedDatesInMonth(year, month) {
+  console.log('=== fetchRecordedDatesInMonth ===');
+  console.log('요청 년월:', year, month);
+  
   try {
     const dates = await calendarService.getRecordedDatesInMonth(year, month);
+    console.log('월별 기록된 날짜들:', dates);
     recordedDates.value = dates;
   } catch (error) {
     console.error('월별 기록 날짜 조회 실패:', error);
@@ -96,24 +144,30 @@ async function fetchRecordedDatesInMonth(year, month) {
   }
 }
 
-// 캘린더 뷰에서 월 변경 감지를 위한 이벤트
+// 날짜 선택 핸들러
+function handleDateSelect(dateStr) {
+  console.log('=== 날짜 선택됨 ===');
+  console.log('선택된 날짜:', dateStr);
+  selectedDate.value = dateStr;
+}
+
+// 월 변경 핸들러
 function handleMonthChange(year, month) {
+  console.log('=== 월 변경 ===');
+  console.log('새로운 년월:', year, month);
   currentYear.value = year;
   currentMonth.value = month;
   fetchRecordedDatesInMonth(year, month);
 }
 
-// 날짜 선택 핸들러
-function handleDateSelect(dateStr) {
-  selectedDate.value = dateStr;
-}
-
 // 초기화
 onMounted(async () => {
+  console.log('=== Calendar 마운트 ===');
   const dateFromRoute = route.query.date;
   const today = formatDate(new Date());
   
   selectedDate.value = typeof dateFromRoute === "string" ? dateFromRoute : today;
+  console.log('초기 선택 날짜:', selectedDate.value);
   
   // 현재 월의 기록된 날짜들 먼저 조회
   await fetchRecordedDatesInMonth(currentYear.value, currentMonth.value);
@@ -124,6 +178,8 @@ onMounted(async () => {
 
 // selectedDate가 바뀔 때마다 다시 fetch
 watch(selectedDate, (newDate) => {
+  console.log('=== selectedDate 변경 감지 ===');
+  console.log('새로운 날짜:', newDate);
   if (newDate) {
     fetchRecord(newDate);
   }
@@ -133,6 +189,8 @@ watch(selectedDate, (newDate) => {
 watch(
   () => route.query.date,
   (newDate) => {
+    console.log('=== 라우트 쿼리 변경 ===');
+    console.log('새로운 쿼리 날짜:', newDate);
     if (newDate && typeof newDate === 'string') {
       selectedDate.value = newDate;
     }
@@ -141,48 +199,65 @@ watch(
 </script>
 
 <style scoped>
-.calendar-page {
-  /* 전체 페이지 컨테이너 */
-  min-height: calc(100vh - 64px - 60px);
-  width: 100%;
-  background: linear-gradient(135deg, #d9f6ee 0%, #c8f5ea 50%, #b8f4e6 100%);
-  
-  /* 중앙 정렬 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  
-  padding: 2rem;
-  box-sizing: border-box;
+/* 기존 스타일 + 디버깅 스타일 */
+.debug-panel {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+  background: white;
+  border: 2px solid red;
+  padding: 1rem;
+  z-index: 9999;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.debug-panel pre {
+  background: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.debug-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9998;
+  background: red;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .calendar-wrapper {
-  /* 내부 컨테이너 */
+  min-height: calc(100vh - 64px - 60px);
+  width: 100%;
+  background: linear-gradient(135deg, #d9f6ee 0%, #c8f5ea 50%, #b8f4e6 100%);
   display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
   flex-direction: row;
   gap: 3rem;
-  
-  /* 최대 너비 제한 */
-  max-width: 1200px;
-  width: 100%;
-  
-  /* 내용물 정렬 */
-  justify-content: center;
-  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .calendar-panel,
 .record-panel {
-  /* 기본 flex 설정 */
-  flex: 1 1 450px; /* 최소 450px에서 동일하게 확장 */
+  flex: 1 1 450px;
   min-width: 350px;
   max-width: 600px;
-  
-  /* 높이 설정 */
   min-height: 500px;
   height: auto;
-  
-  /* 기타 */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
