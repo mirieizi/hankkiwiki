@@ -1,6 +1,8 @@
 package com.hankki.domain.food.dto;
 
 import com.hankki.domain.diet.constant.MealType;
+import com.hankki.domain.food.entity.Food;
+
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -29,4 +31,6 @@ public class FoodGroupDto {
     @NotBlank
     @Schema(description = "음식의 간단한 응답 리스트", implementation = FoodPreviewResponseDto.class)
     private List<FoodPreviewResponseDto> foods;
+
+
 }

@@ -47,7 +47,7 @@ services:
       HANKKI_PASSWORD: ${HANKKI_PASSWORD}
       HANKKI_DATABASE: ${HANKKI_DATABASE}
       SPRING_AI_OPENAI_API_KEY: ${SPRING_AI_OPENAI_API_KEY}
-      SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL: ${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL}
+      SPRING_AI_OPENAI_MODEL: ${SPRING_AI_OPENAI_MODEL}
       HANKKI_JWT_ISSURE: ${HANKKI_JWT_ISSURE}
       HANKKI_JWT_SECRET_KEY: ${HANKKI_JWT_SECRET_KEY}
       HANKKI_JWT_ACCESS_TOKEN_VALIDITY: ${HANKKI_JWT_ACCESS_TOKEN_VALIDITY}
@@ -80,7 +80,7 @@ services:
       --timeout 0
       --tcp-keepalive 300
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

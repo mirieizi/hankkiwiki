@@ -5,8 +5,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.RedisCodec;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,14 +31,14 @@ public class RedisConfig {
     }
 
     @Bean(destroyMethod = "close")
-    public StatefulRedisConnection<String, byte[]> redisBinaryConnection(RedisClient redisClient) {
-        // String key, byte[] value 조합용 코덱
-        RedisCodec<String, byte[]> codec = RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE);
-        return redisClient.connect(codec);
+    public StatefulRedisConnection<byte[], byte[]> redisBinaryConnection(RedisClient redisClient) {
+        return redisClient.connect(ByteArrayCodec.INSTANCE);
     }
 
     @Bean
-    public RedisCommands<String, byte[]> redisCommands(StatefulRedisConnection<String, byte[]> connection) {
+    public RedisCommands<byte[], byte[]> redisBinaryCommands(
+            StatefulRedisConnection<byte[], byte[]> connection
+    ) {
         return connection.sync();
     }
 }

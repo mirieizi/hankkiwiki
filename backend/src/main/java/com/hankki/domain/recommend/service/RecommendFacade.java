@@ -74,6 +74,12 @@ public class RecommendFacade {
         return foodResponseDto;
     }
 
+    /**
+     * RAG 연결
+     * @param userId
+     * @param request
+     * @return
+     */
     public FoodResponseDto recommendByRag(Long userId, RagRecommendRequest request) {
         userLogService.checkQuota(userId);
         try {

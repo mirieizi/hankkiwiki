@@ -1,22 +1,31 @@
 package com.hankki.domain.diet.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+
+import org.springframework.stereotype.Service;
+
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
 import com.hankki.domain.diet.constant.MealType;
-import com.hankki.domain.diet.dto.*;
-import com.hankki.domain.diet.entity.DietGroup;
+import com.hankki.domain.diet.dto.DietCreateRequestDto;
+import com.hankki.domain.diet.dto.GroupedDietResponseDto;
 import com.hankki.domain.diet.entity.DietFood;
+import com.hankki.domain.diet.entity.DietGroup;
 import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.diet.repository.DietGroupRepository;
+import com.hankki.domain.food.dto.FoodGroupDto;
 import com.hankki.domain.food.dto.FoodPreviewResponseDto;
+import com.hankki.domain.food.entity.Food;
+import com.hankki.domain.food.repository.FoodRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,6 +34,7 @@ public class DietServiceImpl implements DietService {
 
     private final DietGroupRepository dietGroupRepository;
     private final DietFoodRepository dietFoodRepository;
+    private final FoodRepository foodRepository;
 
     @Override
     @Transactional
@@ -210,4 +220,56 @@ public class DietServiceImpl implements DietService {
 
         return dietFoodRepository.findFoodIdsByDietGroupIdIn(groupIds);
     }
+
+	@Override
+	public boolean hasDietHistoryForRecentDays(Long userId, int days) {
+		LocalDate today = LocalDate.now();
+		for (int i = 0; i<days; i++) {
+			LocalDate date = today.minusDays(i);
+			if (!dietGroupRepository.existsByUserIdAndTakeAt(userId, date)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public List<GroupedDietResponseDto> getGroupedDietsByRecentDays(Long userId, int days) {
+	    LocalDate from = LocalDate.now().minusDays(days - 1); // 오늘 포함 N일 전
+	    LocalDate to = LocalDate.now();
+
+	    List<DietGroup> groups = dietGroupRepository.findDietsByUserIdAndTakeAtBetween(userId, from, to);
+
+	    List<GroupedDietResponseDto> result = new ArrayList<>();
+
+	    for (DietGroup group : groups) {
+	        List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupId(group.getId());
+	        List<Food> foods = foodRepository.findAllById(foodIds);
+
+	        // 1. Food -> FoodPreviewResponseDto 리스트 생성
+	        List<FoodPreviewResponseDto> foodPreviews = foods.stream()
+	            .map(food -> food.toPreviewDto())  // Food 엔티티에 toPreviewDto() 메서드 필요
+	            .collect(Collectors.toList());
+
+	        // 2. FoodGroupDto 객체 생성
+	        FoodGroupDto foodGroupDto = FoodGroupDto.builder()
+	            .dietId(group.getId())
+	            .mealType(group.getMealType())
+	            .foods(foodPreviews)
+	            .build();
+
+	        // 3. FoodGroupDto 리스트로 만들어서 넣기
+	        List<FoodGroupDto> foodGroupDtos = List.of(foodGroupDto);
+
+	        GroupedDietResponseDto dto = GroupedDietResponseDto.builder()
+	            .takeAt(group.getTakeAt())
+	            .foods(foodGroupDtos)  // 여기에 List<FoodGroupDto> 넣어야 함
+	            .build();
+
+	        result.add(dto);
+	    }
+	    return result;
+	}
+
+
 }

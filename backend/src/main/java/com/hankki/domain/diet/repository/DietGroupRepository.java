@@ -23,4 +23,8 @@ public interface DietGroupRepository extends JpaRepository<DietGroup, Long> {
             @Param("start") LocalDate start,
             @Param("end") LocalDate end
     );
+    
+    boolean existsByUserIdAndTakeAt(Long userId, LocalDate takeAt);
+    List<DietGroup> findDietsByUserIdAndTakeAtBetween(Long userId, LocalDate from, LocalDate to);
+
 }
