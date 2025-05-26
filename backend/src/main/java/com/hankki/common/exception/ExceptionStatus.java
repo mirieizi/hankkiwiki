@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 public enum ExceptionStatus {
-	
+
 	// DIET
 	INVALID_MEAL_TYPE(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 식사 종류입니다."),
 	INVALID_MAJOR_CATEGORY(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 대분류입니다."),
@@ -21,16 +21,32 @@ public enum ExceptionStatus {
 
 	// USER
 	NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "사용자를 찾지 못했습니다."),
-	ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다.");
+	ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다."),
+	NOT_FOUND_USER_HEALTH(HttpStatus.FORBIDDEN, 403, "허가된 사용자가 아닙니다."),
+
+	EMAIL_DUPLICATION(HttpStatus.CONFLICT, 409, "이미 사용 중인 이메일입니다."),
+	NICKNAME_DUPLICATION(HttpStatus.CONFLICT, 409, "이미 사용 중인 닉네임입니다."),
+
+	// FOOD
+	NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, 404, "음식을 찾지 못했습니다."),
+
+	// RECOMMEND
+	RECOMMEND_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, 429, "오늘 추천 횟수를 모두 사용했습니다."),
+
+	// REDIS
+	NOT_FOUND_VECTOR(HttpStatus.NOT_FOUND, 404, "벡터가 존재하지 않습니다."),
+	
+	// RAG GPT 오류
+	RECOMMEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, 500, "음식 추천(RAG) 중 오류가 발생했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final int errorCode;
 	private final String message;
-	
-	ExceptionStatus (HttpStatus httpStatus, int errorCode, String message) {
+
+	ExceptionStatus(HttpStatus httpStatus, int errorCode, String message) {
 		this.httpStatus = httpStatus;
 		this.errorCode = errorCode;
 		this.message = message;
 	}
-	
+
 }

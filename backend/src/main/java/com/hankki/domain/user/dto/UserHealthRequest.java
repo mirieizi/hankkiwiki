@@ -12,8 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class UserHealthRequest {
-    @NotNull
-    private Long userId;
+
 
     @NotNull
     private Gender gender;
@@ -30,6 +29,4 @@ public class UserHealthRequest {
     @NotNull
     private ActivityFactor activityFactor;
 
-    @NotNull @Min(1) @Max(5)
-    private Integer dailyUsage;
 }

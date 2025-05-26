@@ -1,24 +1,18 @@
 package com.hankki.domain.user.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.hankki.common.jwt.TokenProvider;
-import com.hankki.domain.auth.dto.JwtTokenResponse;
-import com.hankki.domain.auth.dto.LoginRequest;
-import com.hankki.domain.auth.dto.SignUpRequest;
+import com.hankki.domain.user.dto.UserProfileResponse;
 import com.hankki.domain.user.dto.UpdateUserRequest;
 import com.hankki.domain.user.entity.User;
+import com.hankki.domain.user.repository.UserHealthInfoRepository;
 import com.hankki.domain.user.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -26,70 +20,29 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
-    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    private final UserHealthInfoRepository userHealthInfoRepository;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final TokenProvider tokenProvider;
-    
-    /**
-     * 회원가입
-     * @Param SignUpRequest (이메일, 비밀번호, 닉네임)
-     * @return id (userId)
-     */
-    @Override
-    @Transactional
-    public Long signUp(SignUpRequest request) {
-        log.info("Request to sign up user: {}", request.getEmail());
-        User user = User.builder()
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .nickname(request.getNickname())
-            .build();
-        Long id = userRepository.save(user).getId();
-        log.debug("User signed up with ID: {}", id);
-        return id;
-    }
-    /**
-     * JwtToken을 사용한 로그인
-     * @Param LoginRequest 
-     * @return JwtToken
-     * 검증 성공하면 Autehntication 객체, 실패하면 BadCredentialsException을 던짐
-     * 그리고 SecurityContextHolder.getContext()에 인증된 Authentication 객체를 저장
-     * 
-     * 설명
-     * UsernamePasswordAuthenticationToken에 요청된 이메일과 비밀번호를 받아서
-     * authenticationManage.authenticate에 넣으면 내부에 등록된 UserDetailsService의 passwordEncoder를 통해
-     * 이메일 유효? 비밀번호 일치한지 확인
-     * 
-     */
-    @Override
-    @Transactional
-    public JwtTokenResponse login(LoginRequest request) {
-        log.info("Request to login user: {}", request.getEmail());
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        User user = (User) authentication.getPrincipal();
-        String accessToken = tokenProvider.generateAccessToken(user);
-        String refreshToken = tokenProvider.generateRefreshToken(user);
-
-        log.debug("User {} logged in, tokens generated", user.getEmail());
-        return new JwtTokenResponse(accessToken, refreshToken);
+    /**
+     * 모든 사용자 조회 (관리자 전용)
+     * @return List<User>
+     */
+    @Transactional
+    public List<User> findAllUsers() {
+        log.info("Request to find all users");
+        return userRepository.findAll();
     }
-    
+
     /**
      * userId로 user를 반환
      * @param userId
      * @return User
      */
-
     @Override
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     @Transactional
     public User findById(Long userId) {
         log.info("Request to find user by ID: {}", userId);
@@ -100,12 +53,17 @@ public class UserServiceImpl implements UserService {
             });
     }
 
+    /**
+     * 사용자 정보 수정
+     * @param userId
+     * @param request
+     * @return User
+     */
     @Override
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     @Transactional
     public User updateUser(Long userId, UpdateUserRequest request) {
-        log.info("Request to update user ID {}: newEmail={}, newNickname={}",
-                 userId, request.getEmail(), request.getNickname());
+        log.info("Request to update user ID {}: newEmail={}, newNickname={}, newPassword={}",
+                 userId, request.getEmail(), request.getNickname(), request.getPassword());
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> {
@@ -114,17 +72,27 @@ public class UserServiceImpl implements UserService {
             });
 
         // 이메일 변경
-        if (request.getEmail() != null) {
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                log.error("Email already in use: {}", request.getEmail());
+                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            }
             user.changeEmail(request.getEmail());
             log.debug("Email updated for user ID: {}", userId);
         }
-        // 비밀번호 변경
-        if (request.getPassword() != null) {
-            user.changePassword(request.getPassword(), passwordEncoder);
+
+        // 비밀번호 변경 (암호화)
+        if (request.getPassword() != null && !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            user.changePassword(passwordEncoder.encode(request.getPassword()), passwordEncoder);
             log.debug("Password updated for user ID: {}", userId);
         }
+
         // 닉네임 변경
-        if (request.getNickname() != null) {
+        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
+            if (userRepository.existsByNickname(request.getNickname())) {
+                log.error("Nickname already in use: {}", request.getNickname());
+                throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            }
             user.changeNickname(request.getNickname());
             log.debug("Nickname updated for user ID: {}", userId);
         }
@@ -132,8 +100,11 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    /**
+     * 사용자 삭제
+     * @param userId
+     */
     @Override
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     @Transactional
     public void deleteUser(Long userId) {
         log.info("Request to delete user ID: {}", userId);
@@ -141,15 +112,17 @@ public class UserServiceImpl implements UserService {
             log.error("Cannot delete, user not found ID: {}", userId);
             throw new IllegalArgumentException("User not found: " + userId);
         }
+        userHealthInfoRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
         log.debug("Deleted user with ID: {}", userId);
     }
+
     @Override
     @Transactional
-    public void logout(String token) {
-    	log.info("Request to logout token: {}", token);
-        tokenProvider.invalidateToken(token);
-    	
+    public UserProfileResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        return new UserProfileResponse(user.getNickname());
     }
 
 }

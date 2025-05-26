@@ -1,18 +1,22 @@
 <template>
   <header class="app-header">
     <div class="header-content">
-      <!-- 로고: 메인 페이지로 이동 -->
       <RouterLink to="/" class="logo">
-        <img src="@/assets/logo.png" alt="한끼위키 로고" />
+        <img src="@/assets/logo3.png" alt="한끼위키 로고" />
       </RouterLink>
 
       <nav class="nav-links">
-        <!-- 로그인 상태에 따라 메뉴 변경 -->
-        <RouterLink v-if="!isAuthenticated" to="/login" class="nav-link">로그인</RouterLink>
-        <RouterLink v-if="!isAuthenticated" to="/signup" class="nav-link">회원가입</RouterLink>
+        <!-- 로그인 안 한 상태 -->
+        <template v-if="!isAuthenticated">
+          <RouterLink to="/login" class="nav-link">로그인</RouterLink>
+          <RouterLink to="/signup" class="nav-link">회원가입</RouterLink>
+        </template>
 
-        <RouterLink v-else to="/mypage" class="nav-link">마이페이지</RouterLink>
-        <a v-else href="#" class="nav-link" @click.prevent="logout()">로그아웃</a>
+        <!-- 로그인 한 상태 -->
+        <template v-else>
+          <RouterLink to="/profile/info" class="nav-link">마이페이지</RouterLink>
+          <a href="#" @click.prevent="logout" class="nav-link">로그아웃</a>
+        </template>
       </nav>
     </div>
   </header>
@@ -34,40 +38,76 @@ const logout = () => {
 
 <style scoped>
 .app-header {
-  background: #ffdba4;
-  padding: 0.8rem 2rem;
+  background: linear-gradient(90deg, #f6f8f5 70%, #fffbe8 100%);
+  box-shadow: 0 2px 16px #ffc83d13;
+  padding: 0.8rem 0;
+  width: 100%;
+  /* border-bottom: 1.5px solid #ffe5b6; */
 }
 
 .header-content {
+  margin: 0 auto;
   display: flex;
   align-items: center;
-  /* 로고와 네비를 좌우로 붙이기 위해 justify-content 제거 */
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2rem;
+  max-width: 2400px;
 }
 
 .logo {
-  /* 로고는 왼쪽에 고정 */
   margin-right: auto;
+  display: flex;
+  align-items: center;
 }
-
 .logo img {
-  height: 50px;
+  height: 88px;
+  margin-left: 1px;
 }
 
 .nav-links {
-  /* 네비 링크들은 오른쪽에 고정 */
   display: flex;
   align-items: center;
   margin-left: auto;
+  gap: 1rem;
+  margin-left: 0;
 }
 
+/* 기본 네비 버튼 */
 .nav-link {
-  margin-left: 2rem;
-  color: #333;
+  margin-left: 1rem;
+  color: #21d59b;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.42rem 1.25rem;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 4px #21d59b12;
+  transition: background 0.18s, color 0.17s, box-shadow 0.13s;
+  border: none;
+  outline: none;
+  display: inline-block;
+  letter-spacing: -0.5px;
 }
 
 .nav-link:hover {
-  text-decoration: underline;
+  background: #21d59b18;
+  color: #18ad7c;
+  box-shadow: 0 2px 8px #21d59b19;
+  text-decoration: none;
+}
+
+/* 로그인/회원가입만 강조색 다르게 */
+.nav-link[to="/login"],
+.nav-link[to="/signup"] {
+  color: #fff;
+  background: #21d59b;
+  box-shadow: 0 2px 12px #21d59b22;
+}
+.nav-link[to="/login"]:hover,
+.nav-link[to="/signup"]:hover {
+  background: #18ad7c;
+  color: #fff;
 }
 </style>

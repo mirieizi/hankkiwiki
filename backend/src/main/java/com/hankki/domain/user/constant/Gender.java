@@ -5,9 +5,9 @@ public enum Gender {
 	FEMALE("F"); // 여성
 	
 	private final String code;
+
 	Gender(String code) {this.code = code;}
-	
-	
+
 	public String getCode() {
 		return code;
 	}
@@ -20,5 +20,8 @@ public enum Gender {
 
 	}
 
-
+	// Redis, 인덱스 명 등에 사용할 소문자 문자열 변환용
+	public String key() {
+		return name().toLowerCase();
+	}
 }

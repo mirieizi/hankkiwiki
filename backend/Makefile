@@ -7,6 +7,7 @@
 NETWORK_NAME=app-network
 IMAGE_NAME=app-1
 JAVA_HOME_WIN=C:\Program Files\BellSoft\LibericaJDK-17
+JAVA_HOME_WIN_NOTEBOOK=C:\Program Files\Java\jdk-17
 DOCKERFILE_PATH=Dockerfile
 DOCKER_CONTEXT=.
 DOCKER_COMPOSE_FILE=docker-compose-server.yml
@@ -30,6 +31,7 @@ detect-os:
 
 
 # Maven 빌드 (테스트 생략)
+# 로컬 개발 시 사용: Docker 이미지와 무관
 build:
 	./mvnw clean package -DskipTests
 
@@ -69,7 +71,7 @@ re:
 	@make build
 	$(DOCKER_COMPOSE_CMD) up -d --build
 
-# 로컬 Spring Boot 실행 (Docker 사용 안 함)
+# 로컬 Spring Boot 실행 (기본 포트: 8080, Docker 사용 안 함)
 run:
 	./mvnw spring-boot:run
 
@@ -118,6 +120,45 @@ wre:
 	@make wbuild
 	$(DOCKER_COMPOSE_CMD) up -d --build
 
+# ─────────────────────────────────────────
+# Git Bash 전용: 노트북용 JDK로만 빌드
+wbuild-notebook:
+	@bash -lc '\
+	  export JAVA_HOME="$(JAVA_HOME_WIN_NOTEBOOK)" && \
+	  export PATH="$$JAVA_HOME/bin:$$PATH" && \
+	  ./mvnw clean package -DskipTests\
+	'
+
+# 노트북용 전체 재배포 (컨테이너 내림 → wbuild-notebook → 다시 올림)
+wre-notebook: wdown wbuild-notebook
+	@echo "[노트북용 재배포 시작]" && \
+	$(DOCKER_COMPOSE_CMD) up -d --build
+
 # ==========================
 # Windows 전용 명령어 끝
 # ==========================
+
+
+# mysql
+
+DB_CONTAINER = mysql-1
+CSV_FILE = ./src/main/resources/food_data.csv
+CSV_CONTAINER_PATH = /var/lib/mysql-files/food_data.csv
+
+wimport-food:
+	@set -o allexport && . .env && set +o allexport; \
+	# 1) CSV를 컨테이너로 복사
+	docker cp $(CSV_FILE) $(DB_CONTAINER):$(CSV_CONTAINER_PATH); \
+	# 2) CSV 로드 & FULLTEXT 인덱스 재생성(존재하면 DROP → CREATE)
+	docker exec -i $(DB_CONTAINER) mysql \
+		-u$$HANKKI_USERNAME -p$$HANKKI_PASSWORD $$HANKKI_DATABASE \
+		-e "\
+LOAD DATA INFILE '$(CSV_CONTAINER_PATH)' \
+INTO TABLE food \
+FIELDS TERMINATED BY ',' ENCLOSED BY '\"' \
+LINES TERMINATED BY '\n' \
+IGNORE 1 LINES \
+(food_name, major_category, sub_category, serving_size, kcal, moisture, carbohydrate, protein, fat, sugar, sodium, cholesterol); \
+DROP INDEX IF EXISTS idx_food_name ON food; \
+ALTER TABLE food ADD FULLTEXT idx_food_name (food_name);"
+

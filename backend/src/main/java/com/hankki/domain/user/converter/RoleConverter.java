@@ -1,6 +1,6 @@
 package com.hankki.domain.user.converter;
 
-import com.hankki.domain.user.constant.Role;
+import com.hankki.domain.auth.constant.Role;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
