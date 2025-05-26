@@ -30,6 +30,7 @@ public class RecommendVectorFacade {
     private final DietFoodRepository dietFoodRepository;
     private final DietGroupRepository dietGroupRepository;
     private final RedisVectorSearcher redisVectorSearcher;
+    private final FoodRepository foodRepository;
 
     /**
      * 최근 먹은 음식과 가장 거리가 먼 음식 찾기
@@ -127,6 +128,17 @@ public class RecommendVectorFacade {
             log.error("[RecommendVectorFacade] 최근 음식 ID 로딩 실패: userId={}, error={}", userId, e.getMessage(), e);
             return Collections.emptyList();
         }
+    }
+    
+    public List<Food> getRecentFoods(Long userId){
+        LocalDate today = LocalDate.now();
+        LocalDate threeDaysAgo = today.minusDays(2);
+    	List<Long> recentFoodIds = userFoodLogRepository.findAllFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+        if (recentFoodIds.isEmpty()) {
+            throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
+        }
+        // Food 엔티티 리스트로 변환 반환
+        return foodRepository.findAllById(recentFoodIds);
     }
 
     private List<Long> loadRecentRecommendedFoodIds(Long userId) {

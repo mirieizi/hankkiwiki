@@ -29,6 +29,7 @@ spring:
     redis:
       host: redis
       port: 6379
+
       timeout: 10000ms        # 타임아웃 설정 추가
       connect-timeout: 5000ms # 연결 타임아웃 추가
       lettuce:

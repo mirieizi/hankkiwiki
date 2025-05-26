@@ -29,6 +29,7 @@ public class FoodQueryServiceImpl {
 
         return foodRepository.findPreviewsByIds(foodIds);
     }
+    
 
     public List<Long> findFoodsByUserIdAndTakeAtBetween(Long userId) {
         LocalDate today = LocalDate.now();
