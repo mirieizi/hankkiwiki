@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "GumiRomance";
+  src: url("@/assets/fonts/Gumi Romance.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "EFDiary";
+  src: url("@/assets/fonts/EF_Diary.otf") format("opentype");
+  font-display: swap;
+}
+body {
+  font-family: "EFDiary", "Pretendard", "Noto Sans KR", sans-serif;
+}
