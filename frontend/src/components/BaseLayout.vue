@@ -23,27 +23,25 @@
 </template>
 
 <script setup>
-import AppHeader from '@/components/AppHeader.vue';
-import AppSidebar from '@/components/AppSidebar.vue';
-import AppFooter from '@/components/AppFooter.vue';
+import AppHeader from "@/components/AppHeader.vue";
+import AppSidebar from "@/components/AppSidebar.vue";
+import AppFooter from "@/components/AppFooter.vue";
 </script>
 
 <style scoped>
 .app-layout {
-
   --header-height: 64px;
 
   display: grid;
   height: 100vh;
   overflow: hidden;
 
-
   grid-template-rows: var(--header-height) 1fr auto;
   grid-template-columns: 240px 1fr;
   grid-template-areas:
-    'header  header'
-    'sidebar main'
-    'footer  footer';
+    "header  header"
+    "sidebar main"
+    "footer  footer";
 }
 
 .layout-header {
@@ -52,12 +50,11 @@ import AppFooter from '@/components/AppFooter.vue';
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #fff; 
+  background: #fff;
 }
 
 .layout-sidebar {
   grid-area: sidebar;
-
 }
 
 .layout-main {
@@ -65,6 +62,10 @@ import AppFooter from '@/components/AppFooter.vue';
   overflow-y: auto;
   margin-left: 2rem;
   padding: 1.5rem;
+  /* 추가! (가운데 정렬) */
+
+  align-items: center; /* 수직 중앙 */
+  justify-content: center; /* 수평 중앙 */
 }
 
 .layout-footer {

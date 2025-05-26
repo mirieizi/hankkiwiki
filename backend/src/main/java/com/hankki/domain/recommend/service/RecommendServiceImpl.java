@@ -1,9 +1,14 @@
 package com.hankki.domain.recommend.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hankki.common.exception.ExceptionStatus;
 import com.hankki.common.exception.HankkiWikiException;
@@ -17,109 +22,121 @@ import com.hankki.domain.user.constant.Gender;
 import com.hankki.domain.user.entity.UserHealthInfo;
 import com.hankki.domain.user.repository.UserHealthInfoRepository;
 
-import java.util.regex.Matcher;
-import jakarta.transaction.Transactional;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RecommendServiceImpl implements RecommendService {
+
+    private static final int MAX_RETRIES = 3;
 
     private final FoodRepository foodRepository;
     private final UserHealthInfoRepository userHealthInfoRepository;
-    private final RecommendVectorFacade recommendVectorFacade;
     private final GptPromptBuilder gptPromptBuilder;
     private final OpenAiApiService openAiApiService;
 
-    /**
-     * 무작위 음식 1개 추천
-     */
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public FoodResponseDto recommendRandomFood(Gender gender) {
         Food food = foodRepository.findRandomFood()
-                .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_FOOD));
+            .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_FOOD));
         return FoodResponseDto.fromEntity(food);
     }
 
-    /**
-     * 음식 ID로 조회 후 DTO 변환
-     */
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public FoodResponseDto findFoodDtoById(Long foodId) {
         Food food = foodRepository.findById(foodId)
-                .orElseThrow(() -> new IllegalStateException("해당 음식이 존재하지 않습니다."));
+            .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_FOOD));
         return FoodResponseDto.fromEntity(food);
     }
-    /**
-     * User 건강정보 조회, User 최근에 먹은 음식 조회, RAG 반환
-     */
+
     @Override
+    @Transactional
     public FoodResponseDto recommendByRag(Long userId, RagRecommendRequest request) {
-        UserHealthInfo healthInfo = userHealthInfoRepository.findById(userId)
-                .orElseThrow(() -> new IllegalStateException("해당하는 유저의 건강정보가 존재하지 않습니다."));
+        List<String> blackList = new ArrayList<>();
 
-        // 지금 최근 먹은 음식이 private하게 선언되어 있어서 그거 회의해보기... 우선 null
-//        List<Food> recentFoods = recommendVectorFacade.loadRecentFoodIds(userId);
-        String prompt = GptPromptBuilder.build(healthInfo, null, request != null ? request.getUserInput() : null);
+        // 사용자 건강정보 불러오기
+        UserHealthInfo info = userHealthInfoRepository.findById(userId)
+            .orElseThrow(() -> new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER_HEALTH));
 
-        String gptResponse = openAiApiService.requestChatCompletion(prompt);
+        // TODO: 최근 먹은 음식, 이전 추천 음식 목록 실제 데이터로 대체
+        List<Food> recentFoods = null;
+        List<String> triedFoods = null;
 
-        // 후처리 메서드 호출 (파싱, DB 검증, 재요청)
-        return handleGptResponseWithRetry(userId, request, gptResponse, new ArrayList<>(), 3);
-    }
-    /**
-     * DB에서 정보를 찾지 못했을 때, 최대 3회 다시 요청하기
-     * @param userId
-     * @param request
-     * @param gptResponse
-     * @param triedFoods
-     * @param retriesLeft
-     * @return
-     */
+        String prompt = gptPromptBuilder.build(
+            info,
+            recentFoods,
+            triedFoods,
+            request != null ? request.getUserInput() : null
+        );
 
-    private FoodResponseDto handleGptResponseWithRetry(Long userId, RagRecommendRequest request, String gptResponse, List<String> triedFoods, int retriesLeft) {
-        if (retriesLeft <= 0) {
-            throw new IllegalStateException("추천 가능한 음식이 없습니다. 재시도 횟수 초과");
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            log.info("RAG 시도 {}/{} – prompt: {}", attempt, MAX_RETRIES, prompt);
+
+            String gptResp = openAiApiService.requestChatCompletion(prompt);
+            String name;
+
+            try {
+                name = extractFoodNameFromGptResponse(gptResp);
+            } catch (IllegalArgumentException ex) {
+                log.warn("파싱 실패 (시도 {}): {}", attempt, ex.getMessage());
+                prompt = prompt + "\n 응답 형식이 잘못됐습니다. '추천 음식 : [메뉴명]' 형식으로만 답변해주세요.";
+                continue;
+            }
+
+            if (blackList.contains(name)) {
+                log.info("중복 추천: {} (시도 {})", name, attempt);
+                prompt = addExclusionToPrompt(prompt, blackList);
+                continue;
+            }
+            blackList.add(name);
+
+            // 1) 정확 일치
+            Optional<Food> exact = foodRepository.findByFoodNameIgnoreCase(name);
+            if (exact.isPresent()) {
+                return FoodResponseDto.fromEntity(exact.get());
+            }
+
+            // 2) Full-Text 검색
+            Optional<Food> fulltext = foodRepository.findBestMatchByFullText(name);
+            if (fulltext.isPresent()) {
+                return FoodResponseDto.fromEntity(fulltext.get());
+            }
+
+            // 3) 토큰 유사도 검색
+            List<String> tokens = Arrays.asList(name.split("\\s+"));
+            Optional<Food> fuzzy = foodRepository.findBestMatchByTokens(tokens);
+            if (fuzzy.isPresent()) {
+                return FoodResponseDto.fromEntity(fuzzy.get());
+            }
+
+            log.info("모든 매칭 실패: {} (시도 {})", name, attempt);
+            prompt = addExclusionToPrompt(prompt, blackList);
         }
 
-        String recommendedFoodName = extractFoodNameFromGptResponse(gptResponse);
-
-        if (triedFoods.contains(recommendedFoodName)) {
-            throw new IllegalStateException("추천 음식이 중복됩니다.");
-        }
-        triedFoods.add(recommendedFoodName);
-
-        return foodRepository.findByFoodName(recommendedFoodName)
-            .map(food -> FoodResponseDto.fromEntity(food))
-            .orElseGet(() -> {
-                // 재요청용 프롬프트 생성 (기존 healthInfo, 최근 음식 null 유지)
-                UserHealthInfo healthInfo = userHealthInfoRepository.findById(userId).get();
-                String newPrompt = GptPromptBuilder.build(healthInfo, null, request != null ? request.getUserInput() : null)
-                    + "\n 이전에 추천된 음식 " + String.join(", ", triedFoods) + " 는 제외하고 다른 음식 추천해줘.";
-                String newGptResponse = openAiApiService.requestChatCompletion(newPrompt);
-                return handleGptResponseWithRetry(userId, request, newGptResponse, triedFoods, retriesLeft - 1);
-            });
-    }
-    
-    private String extractFoodNameFromGptResponse(String gptResponse) {
-        Pattern pattern = Pattern.compile("추천 음식\\s*[:：]\\s*(.+)");
-        Matcher matcher = pattern.matcher(gptResponse);
-        if (matcher.find()) {
-            // 줄 끝까지 잡을 수도 있지만, 필요하면 공백, 개행 등으로 끝내기
-            String foodName = matcher.group(1).trim();
-            // 필요시 음식명 뒤에 붙은 마침표나 문장부호 제거
-            foodName = foodName.replaceAll("[.。！!]*$", "");
-            return foodName;
-        }
-        throw new IllegalArgumentException("음식명 추출 실패: " + gptResponse);
+        // 3회 실패 시 예외 발생 (Facade에서 fallback 처리)
+        throw new HankkiWikiException(ExceptionStatus.RECOMMEND_FAIL);
     }
 
+    private String addExclusionToPrompt(String original, List<String> tried) {
+        if (tried.isEmpty()) return original;
+        return original + "\n이전 추천된 음식(" +
+               String.join(", ", tried) +
+               ")은 제외하고 다른 음식 추천해줘.";
+    }
 
-    
-    
-    
-
+    private String extractFoodNameFromGptResponse(String resp) {
+        Pattern p = Pattern.compile("추천 음식\\s*[:：]\\s*(.+)", Pattern.DOTALL);
+        Matcher m = p.matcher(resp);
+        if (m.find()) {
+            return m.group(1)
+                    .trim()
+                    .replaceAll("[\\r\\n]", "")
+                    .replaceAll("[.。！!]*$", "");
+        }
+        throw new IllegalArgumentException("음식명 추출 실패: " + resp);
+    }
 }

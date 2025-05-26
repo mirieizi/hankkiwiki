@@ -3,14 +3,16 @@ package com.hankki.domain.recommend.repository;
 import com.hankki.domain.recommend.entity.UserFoodLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface UserFoodLogRepository extends JpaRepository <UserFoodLog, Long> {
-    Optional<UserFoodLog> findTopByUserIdOrderByTakeAtDesc(Long userId);
 
-    @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.takeAt BETWEEN :start AND :end")
-    List<Long> findAllFoodIdsByUserIdAndTakeAtBetween(Long userId, LocalDate takeAtStart, LocalDate takeAtEnd);
+    @Query("SELECT u.foodId FROM UserFoodLog u WHERE u.userId = :userId AND u.date BETWEEN :start AND :end")
+    List<Long> findRecommendedFoodIdsByUserIdAndTakeAtBetween(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
 }

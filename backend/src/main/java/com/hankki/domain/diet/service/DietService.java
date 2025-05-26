@@ -2,24 +2,26 @@ package com.hankki.domain.diet.service;
 
 import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.diet.dto.DietCreateRequestDto;
-import com.hankki.domain.diet.entity.Diet;
+import com.hankki.domain.diet.dto.DietResponseDto;
+import com.hankki.domain.diet.entity.DietGroup;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface DietService {
 
-    void createDiet(String email, DietCreateRequestDto requestDto);
+    void createDiet(Long userId, DietCreateRequestDto requestDto);
 
-    List<Diet> getDietsByTakeAt(String email, LocalDate takeAt);
+    List<DietGroup> getDietsByTakeAt(Long userId, LocalDate takeAt);
 
-    List<Diet> getDietsByEmail(String email);
+    List<DietGroup> getDietsByUserId(Long userId);
 
-    void deleteDietByEmailAndId(String email, Long dietId);
+    void deleteDietByUserIdAndDietId(Long userId, Long dietId);
 
-    void deleteDietByDietId(Long dietId);
+    void updateMealType(Long userId, Long dietId, MealType mealType);
 
-    void updateMealType(String email, Long dietId, MealType mealType);
+    void updateTakeAt(Long userId, Long dietId, LocalDate takeAt);
 
-    void updateTakeAt(String email, Long dietId, LocalDate takeAt);
+    List<Long> findRecentFoodIdsByUserId(Long userId, LocalDate start, LocalDate end);
+
 }

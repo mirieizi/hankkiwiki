@@ -1,82 +1,91 @@
 // src/stores/recommend.js
-
 import { defineStore } from "pinia";
 import axios from "@/plugins/axios";
 
 export const useRecommendStore = defineStore("recommend", {
   state: () => ({
-    remainingSpoons: 0,
-    loading: false,
     recommendation: null,
+    loading: false,
     hasRun: false,
+
+    // recommendation currency
+    remainingSpoons: 0,
     runCount: 0,
+
+    // for history-based prompt
     historyRecords: [],
     showNoHistoryPrompt: false,
     showLoginPrompt: false,
+
+    // UI expansion flag (추천 카드 확장 등)
+    expanded: false,
   }),
-  getters: {
-    spoonCount: (state) => state.remainingSpoons,
-    result: (state) => state.recommendation,
-    expanded: (state) => state.loading || !!state.recommendation,
-  },
+
   actions: {
-    requireLogin() {
-      if (!localStorage.getItem("accessToken")) {
-        this.showLoginPrompt = true;
-        return false;
+    // 랜덤 / 히스토리 / 커스텀 추천
+    async fetchRecommendation(mode) {
+      this.loading = true;
+      let url = "";
+      switch (mode) {
+        case "random":
+          url = "/recommend/random";
+          break;
+        case "history":
+          url = "/recommend/furthest";
+          break;
+        case "custom":
+          url = "/recommend/similar";
+          break;
+        default:
+          url = "/recommend/random";
       }
-      return true;
+      const { data } = await axios.get(url);
+      this.recommendation = data;
+      this.hasRun = true;
+      this.loading = false;
     },
+
+    // AI 추천 (RAG 기반)
+    async fetchAiRecommendation(payload) {
+      this.loading = true;
+      const { data } = await axios.post("/recommend/rag", payload);
+      this.recommendation = data;
+      this.hasRun = true;
+      this.loading = false;
+    },
+
+    // 남은 스푼 개수 조회
     async fetchRemainingSpoons() {
       try {
-        const { data } = await axios.get("/recommend/remaining");
-        this.remainingSpoons = data.count;
+        const { data } = await axios.get("/recommend/spoons");
+        this.remainingSpoons = data.remainingSpoons;
       } catch (e) {
-        if (e.response?.status === 401) this.showLoginPrompt = true;
-        else console.error("Remaining fetch 실패:", e);
+        console.error("fetchRemainingSpoons error:", e);
+        this.remainingSpoons = 0;
       }
     },
-    async fetchRecommendation(mode) {
-      try {
-        this.loading = true;
-        const { data } = await axios.post("/recommend", null, { params: { mode } });
-        this.recommendation = data;
-        await this.fetchRemainingSpoons();
-        this.hasRun = true;
-        this.runCount++;
-      } catch (e) {
-        if (e.response?.status === 401) this.showLoginPrompt = true;
-        else console.error("Recommendation fetch 실패:", e);
-      } finally {
-        this.loading = false;
-      }
-    },
+
+    // 최근 3일간의 식단 기록 불러오기
     async fetchHistoryRecords() {
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const startDate = new Date(Date.now() - 2 * 864e5).toISOString().split("T")[0];
-        const { data } = await axios.get("/diet", { params: { startDate, endDate: today } });
+        const { data } = await axios.get("/recommend/history-records");
         this.historyRecords = data;
-      } catch {
+        this.showNoHistoryPrompt = Array.isArray(data) && data.length === 0;
+      } catch (e) {
+        console.error("fetchHistoryRecords error:", e);
         this.historyRecords = [];
+        this.showNoHistoryPrompt = true;
       }
     },
+
+    // 상태 초기화
     resetRecommend() {
       this.recommendation = null;
       this.hasRun = false;
       this.runCount = 0;
-    },
-    showNoHistory() {
-      this.showNoHistoryPrompt = true;
-    },
-    hideNoHistory() {
       this.showNoHistoryPrompt = false;
-    },
-    showLogin() {
-      this.showLoginPrompt = true;
-    },
-    hideLogin() {
       this.showLoginPrompt = false;
+      this.expanded = false;
     },
   },
 });

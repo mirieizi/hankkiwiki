@@ -1,6 +1,6 @@
 package com.hankki.common.init;
 
-import com.hankki.common.redis.service.FoodVectorService;
+import com.hankki.domain.vector.service.FoodVectorService;
 import com.hankki.domain.food.service.FoodInitializer;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

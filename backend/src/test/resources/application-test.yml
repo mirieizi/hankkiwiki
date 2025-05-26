@@ -1,0 +1,5 @@
+jwt:
+  issuer: ajufresh@gmail.com
+  secret_key: 7HCyfxKBs3gYpoUQ5wVVcMFde7juyVfYbLGYVW4ZgU0=
+  access-token-validity: 3600000
+  refresh-token-validity: 604800000
