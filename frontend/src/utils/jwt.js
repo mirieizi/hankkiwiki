@@ -23,22 +23,34 @@ export function decodeJWT(token) {
     }
   }
   
-  // 사용자 정보 추출
-  export function getUserFromToken(token = null) {
-    const targetToken = token || localStorage.getItem('accessToken');
-    if (!targetToken) return null;
-    
-    const payload = decodeJWT(targetToken);
-    if (!payload) return null;
-    
-    return {
-      userId: payload.userId || payload.id || payload.sub,
-      username: payload.username || payload.name || payload.userName,
-      email: payload.email,
-      roles: payload.roles || [],
-      // 기타 필요한 필드들
-    };
+// 사용자 정보 추출 (sub 필드 기준으로 수정)
+export function getUserFromToken(token = null) {
+  const targetToken = token || localStorage.getItem('accessToken');
+  if (!targetToken) {
+    console.log('저장된 토큰이 없습니다');
+    return null;
   }
+  
+  const payload = decodeJWT(targetToken);
+  if (!payload) return null;
+  
+  // ✅ 실제 JWT 구조에 맞춰 수정
+  const userInfo = {
+    userId: payload.id || payload.sub, // id: 3
+    username: payload.username || 
+             payload.name || 
+             (payload.sub ? payload.sub.split('@')[0] : '사용자'), // ajufresh
+    email: payload.sub, // ✅ sub 필드에서 이메일 추출
+    roles: payload.roles || [],
+    _payload: payload // 디버깅용
+  };
+  
+  console.log('=== 수정된 사용자 정보 추출 ===');
+  console.log('추출된 정보:', userInfo);
+  
+  return userInfo;
+}
+
   
   // 토큰 유효성 검사
   export function isTokenValid(token = null) {

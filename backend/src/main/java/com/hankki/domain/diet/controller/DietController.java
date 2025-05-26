@@ -23,7 +23,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -55,11 +57,9 @@ public class DietController {
     @GetMapping("/get-by-date")
     public ResponseEntity<List<DietResponseDto>> getDietsByDate(
             @CurrentUser UserPrincipal authUser,
-            @RequestBody DietGetByTakeAtRequestDto requestDto
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate takeAt
     ) {
-        List<DietResponseDto> responseDto = dietFacade.getDietsByDate(
-        		authUser.getUserId(),
-                requestDto.getTakeAt());
+        List<DietResponseDto> responseDto = dietFacade.getDietsByDate(authUser.getUserId(),takeAt);
         return ResponseEntity.ok(responseDto);
     }
 
