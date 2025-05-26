@@ -11,6 +11,7 @@
           </button>
         </div>
       </div>
+
       <!-- 가운데: 스마트폰 목업(추천) -->
       <div class="mockup-wrap">
         <div class="mockup-phone">
@@ -20,12 +21,13 @@
               <div class="run-button">
                 <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" :disabled="loading" @run="onRun" />
               </div>
-              <div v-show="!showNoHistoryPrompt && !showLoginPrompt" class="content-area">
+
+              <div v-if="!isResultReady && !showNoHistoryPrompt && !showLoginPrompt" class="content-area">
                 <section class="main-view" :class="{ expanded, 'chat-bg': isChatting }">
                   <div v-if="!hasRun" class="placeholder">
                     <img :src="placeholderImage" alt="추천 준비 중" />
                   </div>
-                  <div v-if="hasRun && !isResultReady" class="animation-wrapper">
+                  <div v-else-if="!isResultReady" class="animation-wrapper">
                     <!-- ⭐ AI모드는 ai-finish 이벤트도 받음 -->
                     <component :is="animationComponent" :key="mode + '-' + runCount" @done="onAnimationDone" @ai-finish="onAiChatDone" />
                   </div>
@@ -35,6 +37,7 @@
           </div>
         </div>
       </div>
+
       <!-- 오른쪽: 추천 결과 카드 + 차트(나란히) -->
       <transition name="fade">
         <div v-if="isResultReady" class="result-outer result-row-flex">
@@ -44,7 +47,10 @@
               <img :src="foodImage" alt="추천 음식" />
               <div class="food-main-info">
                 <p class="food-name">{{ safeRecommendation.foodName }}</p>
-                <p class="food-desc">{{ safeRecommendation.majorCategory }} / {{ safeRecommendation.subCategory }}</p>
+                <p class="food-desc">
+                  {{ safeRecommendation.majorCategory }} /
+                  {{ safeRecommendation.subCategory }}
+                </p>
               </div>
               <div class="food-nutrition">
                 <span>
@@ -73,26 +79,11 @@
                 </span>
               </div>
               <div class="food-etc">
-                <span>
-                  <span class="nutri-label">수분</span>
-                  💧 {{ safeRecommendation.moisture }}g
-                </span>
-                <span>
-                  <span class="nutri-label">당류</span>
-                  🍬 {{ safeRecommendation.sugar }}g
-                </span>
-                <span>
-                  <span class="nutri-label">나트륨</span>
-                  🧂 {{ safeRecommendation.sodium }}mg
-                </span>
-                <span>
-                  <span class="nutri-label">콜레스테롤</span>
-                  🥚 {{ safeRecommendation.cholesterol }}mg
-                </span>
-                <span>
-                  <span class="nutri-label">1회 제공량</span>
-                  🥄 {{ safeRecommendation.servingSize }}g
-                </span>
+                <span>💧 {{ safeRecommendation.moisture }}g</span>
+                <span>🍬 {{ safeRecommendation.sugar }}g</span>
+                <span>🧂 {{ safeRecommendation.sodium }}mg</span>
+                <span>🥚 {{ safeRecommendation.cholesterol }}mg</span>
+                <span>🥄 {{ safeRecommendation.servingSize }}g</span>
               </div>
               <a class="coupang-link-btn" :href="coupangUrl" target="_blank" rel="noopener">🛒 쿠팡에서 "{{ searchKeyword }}" 검색하기</a>
             </div>
@@ -101,7 +92,6 @@
           <NutritionCompareChart :food="safeRecommendation" />
         </div>
       </transition>
-      <!-- 기존 NutritionCompareChart는 이곳에서 삭제 -->
     </div>
   </div>
 </template>
@@ -116,29 +106,26 @@ import AnalysisAnimation from "@/components/animation/AnalysisAnimation.vue";
 import CustomAnimation from "@/components/animation/CustomAnimation.vue";
 import AIAnimation from "@/components/animation/AIAnimation.vue";
 import placeholderImage from "@/assets/loading_logo.png";
-import recommend_sucess_logo from "@/assets/recommend_sucess_logo.png";
-import NutritionCompareChart from "@/components/NutritionCompareChart.vue"; // ⭐ import 추가
+import recommendSuccessLogo from "@/assets/recommend_sucess_logo.png";
+import NutritionCompareChart from "@/components/NutritionCompareChart.vue";
 
-// 추천 모드 정보
-const modes = [
-  { id: "random", label: "랜덤 추천", icon: "🎲", desc: "랜덤으로 추천", cost: 1, animation: RandomAnimation },
-  { id: "history", label: "새로운 맛", icon: "🕓", desc: "3일 내 식단과 가장 거리가 먼 음식 추천", cost: 1, animation: AnalysisAnimation },
-  { id: "ai", label: "AI 추천", icon: "🤖", desc: "내 식단 기록 내역과 건강정보를 활용한 RAG 기반 AI추천", cost: 2, animation: AIAnimation },
-  { id: "custom", label: "취향 맞춤", icon: "✨", desc: "내가 최근 먹은 음식들과 비슷한 음식 추천", cost: 1, animation: CustomAnimation },
-];
-
+// 스토어
 const store = useRecommendStore();
+
+// props & route
 const props = defineProps({ initialMode: { type: String, default: null } });
 const route = useRoute();
 const router = useRouter();
 const mode = ref(props.initialMode ?? route.params.mode ?? "random");
 
+// local state
 const isChatting = ref(false);
 const isResultReady = ref(false);
 
+// computed
 const currentMode = computed(() => modes.find((m) => m.id === mode.value));
 const spoonCost = computed(() => currentMode.value.cost);
-const spoonCount = computed(() => store.spoonCount);
+const spoonCount = computed(() => store.remainingSpoons);
 const loading = computed(() => store.loading);
 const recommendation = computed(() => store.recommendation);
 const hasRun = computed(() => store.hasRun);
@@ -146,38 +133,22 @@ const runCount = computed(() => store.runCount);
 const showNoHistoryPrompt = computed(() => store.showNoHistoryPrompt);
 const showLoginPrompt = computed(() => store.showLoginPrompt);
 const buttonLabel = computed(() => currentMode.value.label);
-const modeLabel = computed(() => currentMode.value.label);
-const resultTitle = computed(() => `${modeLabel.value} 메뉴`);
+const resultTitle = computed(() => `${currentMode.value.label} 메뉴`);
 const animationComponent = computed(() => currentMode.value.animation);
 const expanded = computed(() => store.expanded);
-const foodImage = computed(() => recommend_sucess_logo);
-
-const { fetchRecommendation, fetchAiRecommendation, fetchRemainingSpoons, fetchHistoryRecords, resetRecommend } = store;
-
-// ----- 임시 recommendation 더미 -----
-const dummyRecommendation = {
-  foodName: "요거트 샐러드",
-  majorCategory: "샐러드",
-  subCategory: "요거트",
-  kcal: 250,
-  carbohydrate: 30,
-  protein: 12,
-  fat: 8,
-  moisture: 80,
-  sugar: 16,
-  sodium: 120,
-  cholesterol: 25,
-  servingSize: 180,
-};
-// 없으면 더미로 대체
-const safeRecommendation = computed(() => (recommendation.value && recommendation.value.foodName ? recommendation.value : dummyRecommendation));
-
-// 쿠팡 파트너스 링크 관련 변수
-const partnerTag = "AF2910783";
-const searchKeyword = computed(() => (recommendation.value && recommendation.value.foodName ? recommendation.value.foodName : "요거트 샐러드"));
+const foodImage = computed(() => recommendSuccessLogo);
+const searchKeyword = computed(() => recommendation.value?.foodName ?? "요거트 샐러드");
 const coupangUrl = computed(() => `https://www.coupang.com/np/search?q=${encodeURIComponent(searchKeyword.value)}`);
 
-// 실행 버튼
+// 추천 모드 정보
+const modes = [
+  { id: "random", label: "랜덤 추천", icon: "🎲", desc: "랜덤으로 추천", cost: 1, animation: RandomAnimation },
+  { id: "history", label: "새로운 맛", icon: "🕓", desc: "3일 내 식단과 가장 거리가 먼 음식 추천", cost: 1, animation: AnalysisAnimation },
+  { id: "ai", label: "AI 추천", icon: "🤖", desc: "내 식단과 건강정보를 활용한 RAG AI추천", cost: 2, animation: AIAnimation },
+  { id: "custom", label: "취향 맞춤", icon: "✨", desc: "최근 음식과 비슷한 추천", cost: 1, animation: CustomAnimation },
+];
+
+// 실행 버튼 핸들러
 function onRun() {
   store.remainingSpoons -= spoonCost.value;
   store.hasRun = true;
@@ -186,59 +157,67 @@ function onRun() {
   isResultReady.value = false;
   isChatting.value = true;
 
-  // AI모드는 채팅 종료 후 API 호출
   if (mode.value !== "ai") {
-    store.fetchRecommendation(mode.value).then(() => {
-      // 애니메이션 컴포넌트에서 done 이벤트로 결과 띄움
+    store.fetchRecommendation(mode.value).finally(() => {
+      // 애니메이션 종료 후 onAnimationDone에서 처리
     });
   }
 }
 
-// 채팅 애니메이션이 끝나면(랜덤/히스토리/커스텀)
+// 랜덤/히스토리/커스텀 애니메이션 완료
 function onAnimationDone() {
   isResultReady.value = true;
   store.loading = false;
   isChatting.value = false;
 }
 
-// AI 채팅 입력 다 끝나면
+// AI 애니메이션 완료
 function onAiChatDone(payload) {
-  // payload: { prefer: "...", avoid: "..." } 형태라고 가정
-  store.fetchAiRecommendation(payload).then(() => {
-    isResultReady.value = true;
-    store.loading = false;
-    isChatting.value = false;
-  });
+  store
+    .fetchAiRecommendation(payload)
+    .then(() => {
+      isResultReady.value = true;
+      store.loading = false;
+      isChatting.value = false;
+    })
+    .catch((err) => {
+      console.error("AI 추천 오류:", err);
+      store.loading = false;
+      isChatting.value = false;
+    });
 }
 
-// 모드 바꿀 때
+// 모드 전환
 function goMode(id) {
-  if (loading.value) return; // 로딩 중이면 무시
-  if (id !== mode.value) {
-    router.push(`/recommend/${id}`);
-    mode.value = id;
-    resetRecommend();
-    fetchRemainingSpoons();
-    isResultReady.value = false;
-    isChatting.value = false;
-  }
+  if (loading.value) return;
+  if (id === mode.value) return;
+  router.push(`/recommend/${id}`);
+  mode.value = id;
+  store.resetRecommend();
+  store.fetchRemainingSpoons();
+  store.fetchHistoryRecords();
+  isResultReady.value = false;
+  isChatting.value = false;
 }
 
-// mount
+// 초기 마운트
 onMounted(async () => {
-  await fetchRemainingSpoons();
-  await fetchHistoryRecords();
+  await store.fetchRemainingSpoons();
+  await store.fetchHistoryRecords();
   store.hasRun = false;
   isResultReady.value = false;
   isChatting.value = false;
 });
+
+// 라우트 변경 감지
 watch(
   () => route.params.mode,
   (m) => {
     if (!props.initialMode && m) {
       mode.value = m;
-      resetRecommend();
-      fetchRemainingSpoons();
+      store.resetRecommend();
+      store.fetchRemainingSpoons();
+      store.fetchHistoryRecords();
       isResultReady.value = false;
       isChatting.value = false;
     }
