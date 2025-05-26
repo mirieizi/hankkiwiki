@@ -57,7 +57,7 @@ import { diaryService } from '@/services/diaryService';
 
 const props = defineProps({
   date: { type: String, required: true },
-  userName: { type: String, required: true },
+  userName: { type: String, required: true }, // JWT에서 받아온 실제 사용자 이름
 });
 
 const emit = defineEmits(['diary-saved']);
@@ -207,33 +207,37 @@ async function submitDiary() {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #fff0c1;
+  border-bottom: 2px solid rgba(255, 200, 61, 0.3);
 }
 
 .date {
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1.3rem;
-  color: #333;
+  color: #2d5a52;
 }
 
 .user {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #2d5a52;
+  font-weight: 600;
 }
 
 .profile-image {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #ffd983;
+  border: 2px solid #ffc83d;
+  background: white;
+  padding: 2px;
 }
 
 .label {
   margin-bottom: 0.5rem;
   font-size: 1rem;
-  color: #555;
-  font-weight: 500;
+  color: #2d5a52;
+  font-weight: 600;
 }
 
 .diary-input-section {
@@ -244,23 +248,26 @@ async function submitDiary() {
   width: 100%;
   min-height: 300px;
   padding: 1.5rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 200, 61, 0.3);
   border-radius: 12px;
   resize: vertical;
   font-size: 1rem;
   font-family: inherit;
   line-height: 1.6;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
   box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .diary-textarea:focus {
   outline: none;
-  border-color: #ffd983;
+  border-color: #ffc83d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 200, 61, 0.1);
 }
 
 .diary-textarea:disabled {
-  background-color: #f5f5f5;
+  background-color: rgba(245, 245, 245, 0.8);
   cursor: not-allowed;
 }
 
@@ -268,7 +275,7 @@ async function submitDiary() {
   text-align: right;
   margin-top: 0.5rem;
   font-size: 0.9rem;
-  color: #666;
+  color: #6b7280;
 }
 
 .button-group {
@@ -278,40 +285,45 @@ async function submitDiary() {
 }
 
 .load-button {
-  background-color: #2196f3;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
   min-width: 150px;
   font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .load-button:hover:not(:disabled) {
-  background-color: #1976d2;
+  background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .submit-button {
-  background-color: #ff9800;
+  background: linear-gradient(90deg, #ffc83d 0%, #ffb84d 100%);
   color: white;
   border: none;
   padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 2;
   min-width: 200px;
   font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(255, 200, 61, 0.3);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #f57c00;
-  transform: translateY(-1px);
+  background: linear-gradient(90deg, #ffb84d 0%, #ff9f5d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 200, 61, 0.4);
 }
 
 .load-button:disabled,
@@ -322,13 +334,13 @@ async function submitDiary() {
 }
 
 .success-message {
-  background-color: #e8f5e8;
-  color: #2e7d32;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
-  font-weight: 500;
-  border: 1px solid #c8e6c9;
+  font-weight: 600;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 @media screen and (max-width: 640px) {

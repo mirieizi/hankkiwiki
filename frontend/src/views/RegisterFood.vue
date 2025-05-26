@@ -18,7 +18,7 @@
       <div class="right-section">
         <DiaryEditor
           :date="selectedDate"
-          :userName="currentUser.name || '사용자'"
+          :userName="userName"
           @diary-saved="onDiarySaved"
         />
       </div>
@@ -27,28 +27,44 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, onMounted } from 'vue';
+import { ref, watchEffect, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 import SearchFood from '@/components/registerFood/SearchFood.vue';
 import SelectedFoodList from '@/components/registerFood/SelectedFoodList.vue';
 import DiaryEditor from '@/components/registerFood/DiaryEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
+
 const selectedDate = ref('');
 const selectedFoods = ref([]);
-const currentUser = ref({
-  name: '양미이' // 실제로는 JWT에서 사용자 정보를 가져와야 함
+
+// 사용자 이름 computed (JWT에서 가져옴)
+const userName = computed(() => {
+  return userStore.userName || '사용자';
 });
 
-// 인증 확인
-onMounted(() => {
+// 인증 확인 및 사용자 정보 로드
+onMounted(async () => {
   const token = localStorage.getItem('accessToken');
+  
   if (!token) {
     alert('로그인이 필요합니다.');
     router.push('/login');
     return;
   }
+
+  // JWT에서 사용자 정보 로드
+  const isLoaded = userStore.loadUserFromToken();
+  if (!isLoaded) {
+    alert('인증 정보가 유효하지 않습니다. 다시 로그인해주세요.');
+    router.push('/login');
+    return;
+  }
+
+  console.log('로그인된 사용자:', userName.value);
 });
 
 // 날짜 감지: 쿼리에서 가져오되 없으면 오늘 날짜
@@ -108,74 +124,129 @@ function onDiarySaved() {
 
 <style scoped>
 .register-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+  /* 전체 페이지 컨테이너 */
+  min-height: calc(100vh - 64px - 60px); /* header/footer 고려 */
   width: 100%;
+  background: linear-gradient(135deg, #d9f6ee 0%, #c8f5ea 50%, #b8f4e6 100%);
+  
+  /* 중앙 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  
+  padding: 2rem;
+  box-sizing: border-box;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: #2d5a52;
   text-align: center;
-  color: #333;
+  background: linear-gradient(90deg, #21d59b 0%, #ffc83d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 /* ====== 메인 레이아웃 컨테이너 ====== */
 .layout {
   display: flex;
   flex-direction: row;
-  gap: 2rem;
-  justify-content: space-between;
+  gap: 3rem;
+  justify-content: center;
   align-items: flex-start;
   width: 100%;
+  max-width: 1400px;
 }
 
 /* ====== 공통 섹션 스타일 ====== */
 .left-section,
 .right-section {
   flex: 1 1 50%;
-  min-width: 350px;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  min-width: 400px;
+  max-width: 650px;
+  
+  /* 글래스모피즘 스타일 */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(33, 213, 155, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
   box-sizing: border-box;
   min-height: 600px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ====== 음식 검색 영역 (좌측) ====== */
 .left-section {
-  background-color: #f8f8f8;
+  /* 추가 스타일링 없음 - 공통 스타일 사용 */
 }
 
 /* ====== 일기 작성 영역 (우측) ====== */
 .right-section {
-  background-color: #fff8e1;
+  /* 약간 다른 배경으로 구분 */
+  background: rgba(255, 248, 225, 0.9);
 }
 
 /* ====== 대형 화면 (1200px 이상) ====== */
 @media screen and (min-width: 1200px) {
   .layout {
-    gap: 3rem;
+    gap: 4rem;
   }
   
   .left-section,
   .right-section {
-    min-width: 400px;
+    min-width: 450px;
+    max-width: 700px;
+  }
+  
+  .register-container {
+    padding: 3rem;
   }
 }
 
 /* ====== 중간 화면 (900px ~ 1199px) ====== */
 @media screen and (max-width: 1199px) {
   .register-container {
-    max-width: 100%;
+    padding: 2rem;
+  }
+  
+  .layout {
+    gap: 2rem;
+  }
+  
+  .left-section,
+  .right-section {
+    min-width: 350px;
+    max-width: 550px;
+    padding: 2rem;
+  }
+  
+  .title {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+  }
+}
+
+/* ====== 태블릿 화면 (700px ~ 899px) ====== */
+@media screen and (max-width: 899px) {
+  .register-container {
     padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
   }
   
   .layout {
@@ -184,30 +255,9 @@ function onDiarySaved() {
   
   .left-section,
   .right-section {
-    min-width: 320px;
+    min-width: 300px;
+    max-width: 450px;
     padding: 1.5rem;
-  }
-}
-
-/* ====== 태블릿 화면 (700px ~ 899px) ====== */
-@media screen and (max-width: 899px) {
-  .register-container {
-    padding: 1rem;
-  }
-  
-  .title {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .layout {
-    gap: 1rem;
-  }
-  
-  .left-section,
-  .right-section {
-    min-width: 280px;
-    padding: 1rem;
     min-height: 500px;
   }
 }
@@ -216,42 +266,64 @@ function onDiarySaved() {
 @media screen and (max-width: 700px) {
   .layout {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    align-items: center;
+    gap: 1.5rem;
   }
   
   .left-section,
   .right-section {
     flex: 1 1 auto;
     min-width: unset;
+    max-width: 100%;
     width: 100%;
     min-height: 400px;
   }
   
   .title {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     margin-bottom: 1rem;
   }
   
   .register-container {
-    padding: 0.75rem;
+    padding: 1rem;
   }
 }
 
 /* ====== 작은 모바일 (480px 이하) ====== */
 @media screen and (max-width: 480px) {
   .register-container {
-    padding: 0.5rem;
+    padding: 0.75rem;
   }
   
   .left-section,
   .right-section {
-    padding: 0.75rem;
+    padding: 1rem;
     min-height: 350px;
   }
   
   .title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
+  }
+  
+  .layout {
+    gap: 1rem;
+  }
+}
+
+/* ====== 세로 화면 (모바일 회전) ====== */
+@media screen and (max-height: 600px) and (orientation: landscape) {
+  .register-container {
+    min-height: calc(100vh - 50px - 40px);
+    padding: 1rem;
+  }
+  
+  .left-section,
+  .right-section {
+    min-height: 300px;
+  }
+  
+  .title {
+    margin-bottom: 1rem;
   }
 }
 </style>

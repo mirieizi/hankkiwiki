@@ -137,25 +137,30 @@ function select(food) {
 
 <style scoped>
 .search-section h2 {
-  margin-bottom: 1rem;
-  color: #333;
+  margin-bottom: 1.5rem;
+  color: #2d5a52;
   font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 1rem;
   margin-bottom: 1.5rem;
   font-size: 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  transition: border-color 0.2s ease;
+  border: 2px solid rgba(33, 213, 155, 0.2);
+  border-radius: 12px;
+  transition: all 0.2s ease;
   box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #ffd983;
+  border-color: #21d59b;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(33, 213, 155, 0.1);
 }
 
 .loading {
@@ -163,15 +168,15 @@ function select(food) {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 2rem;
-  color: #666;
+  padding: 3rem;
+  color: #2d5a52;
 }
 
 .loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #ffd983;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(33, 213, 155, 0.3);
+  border-top: 3px solid #21d59b;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -183,9 +188,12 @@ function select(food) {
 
 .no-results {
   text-align: center;
-  padding: 2rem;
-  color: #666;
+  padding: 3rem;
+  color: #6b7280;
   font-style: italic;
+  background: rgba(248, 255, 252, 0.5);
+  border-radius: 12px;
+  border: 2px dashed rgba(33, 213, 155, 0.3);
 }
 
 .search-result {
@@ -196,10 +204,10 @@ function select(food) {
 }
 
 .result-item {
-  background-color: #fff;
+  background: rgba(248, 255, 252, 0.8);
   padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid rgba(33, 213, 155, 0.2);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -208,9 +216,10 @@ function select(food) {
 }
 
 .result-item:hover {
-  background-color: #ffe9b5;
-  border-color: #ffd983;
-  transform: translateY(-1px);
+  background: rgba(230, 255, 250, 0.9);
+  border-color: #21d59b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.2);
 }
 
 .food-info {
@@ -220,29 +229,32 @@ function select(food) {
 }
 
 .food-name {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #2d5a52;
 }
 
 .food-calories {
-  color: #666;
+  color: #6b7280;
   font-size: 0.9rem;
 }
 
 .add-button {
-  background-color: #4caf50;
+  background: linear-gradient(90deg, #21d59b 0%, #1bc489 100%);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
   font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(33, 213, 155, 0.3);
 }
 
 .add-button:hover {
-  background-color: #45a049;
-  transform: scale(1.05);
+  background: linear-gradient(90deg, #1bc489 0%, #17a673 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.4);
 }
 
 .pagination {
