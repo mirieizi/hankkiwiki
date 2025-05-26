@@ -8,12 +8,14 @@ import com.hankki.domain.diet.entity.DietGroup;
 import com.hankki.domain.diet.entity.DietFood;
 import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.diet.repository.DietGroupRepository;
+import com.hankki.domain.food.dto.FoodPreviewResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -25,59 +27,128 @@ public class DietServiceImpl implements DietService {
     private final DietFoodRepository dietFoodRepository;
 
     @Override
+    @Transactional
     public void createDiet(Long userId, DietCreateRequestDto requestDto) {
+        log.info("[DietService] 식단 생성 시작: userId={}, takeAt={}, meals={}",
+                userId, requestDto.getTakeAt(), requestDto.getFoods().size());
+
+        int successCount = 0;
+        int failCount = 0;
+
         for (DietCreateRequestDto.MealWithFoods meal : requestDto.getFoods()) {
             try {
                 dietOneMeal(userId, requestDto.getTakeAt(), meal);
+                successCount++;
+                log.info("[DietService] {} 식사 생성 성공", meal.getMealType());
             } catch (Exception e) {
-                log.error("[DietService] {} 식사 생성 중 오류 발생: {}", meal.getMealType(), e.getMessage());
+                failCount++;
+                log.error("[DietService] {} 식사 생성 중 오류 발생: {}", meal.getMealType(), e.getMessage(), e);
+                throw new HankkiWikiException(ExceptionStatus.INTERNAL_SERVER_ERROR);
             }
         }
+
+        log.info("[DietService] 식단 생성 완료: 성공={}, 실패={}", successCount, failCount);
     }
 
     @Transactional
     public void dietOneMeal(Long userId, LocalDate takeAt, DietCreateRequestDto.MealWithFoods meal) {
+        log.debug("[DietService] {} 식사 처리 시작: userId={}, takeAt={}, foodIds={}",
+                meal.getMealType(), userId, takeAt, meal.getFoodIds().size());
+
         DietGroup existingDietGroup = dietGroupRepository.findByUserIdAndTakeAtAndMealType(userId, takeAt, meal.getMealType());
 
         if (existingDietGroup != null) {
-            for (Long foodId : meal.getFoodIds()) {
-                if (!dietFoodRepository.existsByDietGroupIdAndFoodId(existingDietGroup.getId(), foodId)) {
-                    DietFood dietFood = DietFood.builder()
-                            .dietGroupId(existingDietGroup.getId())
-                            .foodId(foodId)
-                            .build();
-                    dietFoodRepository.save(dietFood);
-                }
-            }
-            log.info("[DietService] {} 식사에 기존 식단에 음식 추가 완료", meal.getMealType());
+            log.info("[DietService] 기존 식단 그룹 발견: id={}", existingDietGroup.getId());
+            addFoodsToExistingGroup(existingDietGroup, meal.getFoodIds());
             return;
         }
 
-        DietGroup createdDietGroup = dietGroupRepository.save(
-                DietGroup.builder()
-                        .userId(userId)
-                        .takeAt(takeAt)
-                        .mealType(meal.getMealType())
-                        .build()
-        );
-
-        for (Long foodId : meal.getFoodIds()) {
-            DietFood dietFood = DietFood.builder()
-                    .dietGroupId(createdDietGroup.getId())
-                    .foodId(foodId)
-                    .build();
-            dietFoodRepository.save(dietFood);
-        }
-
-        log.info("[DietService] {} 식사 저장 완료", meal.getMealType());
+        DietGroup newDietGroup = createNewDietGroup(userId, takeAt, meal);
+        addFoodsToNewGroup(newDietGroup, meal.getFoodIds());
     }
 
+    private void addFoodsToExistingGroup(DietGroup dietGroup, List<Long> foodIds) {
+        int addedCount = 0;
+
+        for (Long foodId : foodIds) {
+            if (!dietFoodRepository.existsByDietGroupIdAndFoodId(dietGroup.getId(), foodId)) {
+                DietFood dietFood = DietFood.builder()
+                        .dietGroupId(dietGroup.getId())
+                        .foodId(foodId)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+                DietFood savedDietFood = dietFoodRepository.save(dietFood);
+                log.debug("[DietService] 기존 그룹에 음식 추가: dietFoodId={}, dietGroupId={}, foodId={}",
+                        savedDietFood.getId(), dietGroup.getId(), foodId);
+                addedCount++;
+            } else {
+                log.debug("[DietService] 이미 존재하는 음식 스킵: dietGroupId={}, foodId={}",
+                        dietGroup.getId(), foodId);
+            }
+        }
+
+        log.info("[DietService] 기존 식단 그룹에 음식 추가 완료: 추가된 음식 수={}", addedCount);
+    }
+
+    private DietGroup createNewDietGroup(Long userId, LocalDate takeAt, DietCreateRequestDto.MealWithFoods meal) {
+        DietGroup dietGroup = DietGroup.builder()
+                .userId(userId)
+                .takeAt(takeAt)
+                .mealType(meal.getMealType())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        DietGroup savedDietGroup = dietGroupRepository.save(dietGroup);
+
+        if (savedDietGroup.getId() == null) {
+            log.error("[DietService] 식단 그룹 저장 실패: ID가 생성되지 않음");
+            throw new HankkiWikiException(ExceptionStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        log.info("[DietService] 새 식단 그룹 생성 완료: id={}, userId={}, takeAt={}, mealType={}",
+                savedDietGroup.getId(), userId, takeAt, meal.getMealType());
+
+        return savedDietGroup;
+    }
+
+    private void addFoodsToNewGroup(DietGroup dietGroup, List<Long> foodIds) {
+        log.debug("[DietService] 새 식단 그룹에 음식 추가 시작: dietGroupId={}, foodIds={}",
+                dietGroup.getId(), foodIds.size());
+
+        for (Long foodId : foodIds) {
+            DietFood dietFood = DietFood.builder()
+                    .dietGroupId(dietGroup.getId())
+                    .foodId(foodId)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            log.debug("[DietService] 음식 저장 전: dietGroupId={}, foodId={}",
+                    dietGroup.getId(), foodId);
+
+            DietFood savedDietFood = dietFoodRepository.save(dietFood);
+
+            if (savedDietFood.getId() == null) {
+                log.error("[DietService] 음식 저장 실패: dietGroupId={}, foodId={}",
+                        dietGroup.getId(), foodId);
+                throw new HankkiWikiException(ExceptionStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            log.debug("[DietService] 음식 저장 완료: dietFoodId={}, dietGroupId={}, foodId={}",
+                    savedDietFood.getId(), dietGroup.getId(), foodId);
+        }
+
+        log.info("[DietService] 새 식단 그룹에 음식 추가 완료: dietGroupId={}, 추가된 음식 수={}",
+                dietGroup.getId(), foodIds.size());
+    }
 
     @Override
     @Transactional
     public List<DietGroup> getDietsByTakeAt(Long userId, LocalDate takeAt) {
         return dietGroupRepository.findDietsByUserIdAndTakeAt(userId, takeAt);
     }
+
+
 
     @Override
     @Transactional
@@ -111,8 +182,9 @@ public class DietServiceImpl implements DietService {
         }
 
         dietGroup.setMealType(mealType);
-        dietGroupRepository.save(dietGroup);
-        log.info("[DietService] DietGroup MealType {}(으)로 수정 성공", mealType.name());
+        DietGroup savedDietGroup = dietGroupRepository.save(dietGroup);  // 반환값 사용
+        log.info("[DietService] DietGroup MealType {}(으)로 수정 성공: id={}",
+                mealType.name(), savedDietGroup.getId());
     }
 
     @Override
@@ -126,8 +198,9 @@ public class DietServiceImpl implements DietService {
         }
 
         dietGroup.setTakeAt(takeAt);
-        dietGroupRepository.save(dietGroup);
-        log.info("[DietService] DietGroup takeAt {}(으)로 수정 성공", takeAt);
+        DietGroup savedDietGroup = dietGroupRepository.save(dietGroup);  // 반환값 사용
+        log.info("[DietService] DietGroup takeAt {}(으)로 수정 성공: id={}",
+                takeAt, savedDietGroup.getId());
     }
 
     @Override
@@ -137,5 +210,4 @@ public class DietServiceImpl implements DietService {
 
         return dietFoodRepository.findFoodIdsByDietGroupIdIn(groupIds);
     }
-
 }

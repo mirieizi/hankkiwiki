@@ -49,10 +49,29 @@ services:
       - ~/.m2:/root/.m2
 
   redis:
-    image: redis/redis-stack-server:7.2.0-v15
+    image: redis/redis-stack-server:7.2.0-v6
     container_name: redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-stack-server
+      --save 900 1
+      --save 300 10 
+      --save 60 10000
+      --appendonly yes
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_ARGS=--save 900 1 --save 300 10
     networks:
       - app-network
 
@@ -70,3 +89,7 @@ services:
 
 networks:
   app-network:
+
+volumes:
+  redis-data:
+    driver: local

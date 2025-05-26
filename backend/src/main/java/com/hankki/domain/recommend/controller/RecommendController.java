@@ -32,7 +32,7 @@ public class RecommendController {
                     @ApiResponse(responseCode = "429", description = "추천 가능 횟수 초과"),
                     @ApiResponse(responseCode = "404", description = "추천할 음식 없음")
             })
-    @GetMapping("/random")
+    @PostMapping("/random")
     public ResponseEntity<FoodResponseDto> recommendRandom(@CurrentUser UserPrincipal user) {
         return ResponseEntity.ok(recommendFacade.recommendRandom(user.getUserId(), user.getGender()));
     }
@@ -43,7 +43,7 @@ public class RecommendController {
             @ApiResponse(responseCode = "429", description = "추천 가능 횟수 초과"),
             @ApiResponse(responseCode = "404", description = "추천할 음식 없음 또는 최근 섭취 내역 없음")
     })
-    @GetMapping("/furthest")
+    @PostMapping("/furthest")
     public ResponseEntity<FoodResponseDto> recommendFurthest(@CurrentUser UserPrincipal user) {
         return ResponseEntity.ok(recommendFacade.recommendFurthest(user.getUserId(), user.getGender()));
     }
@@ -54,7 +54,7 @@ public class RecommendController {
             @ApiResponse(responseCode = "429", description = "추천 가능 횟수 초과"),
             @ApiResponse(responseCode = "404", description = "추천할 음식 없음 또는 최근 섭취 내역 없음")
     })
-    @GetMapping("/similar")
+    @PostMapping("/similar")
     public ResponseEntity<FoodResponseDto> recommendSimilar(@CurrentUser UserPrincipal user) {
         return ResponseEntity.ok(recommendFacade.recommendMostSimilar(user.getUserId(), user.getGender()));
     }

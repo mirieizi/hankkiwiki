@@ -41,24 +41,22 @@ public class DietFacade {
      * @param takeAt
      * @return GroupedDietResponseDto
      */
-    public GroupedDietResponseDto getDietsByDate(Long userId, LocalDate takeAt) {
-        List<DietGroup> dietGroupList = dietService.getDietsByTakeAt(userId, takeAt);
+    public List<DietResponseDto> getDietsByDate(Long userId, LocalDate takeAt) {
+        List<DietGroup> dietGroups = dietService.getDietsByTakeAt(userId, takeAt);
 
-        List<FoodGroupDto> foods = dietGroupList.stream()
-                .map(dietGroup -> {
-                    List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupId(dietGroup.getId());
+        return dietGroups.stream()
+                .map(group -> {
+                    List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupId(group.getId());
                     List<FoodPreviewResponseDto> foodPreviews = foodQueryService.getFoodPreviews(foodIds);
-                    return FoodGroupDto.builder()
-                            .mealType(dietGroup.getMealType())
+
+                    return DietResponseDto.builder()
+                            .id(group.getId())
+                            .takeAt(group.getTakeAt())
+                            .mealType(group.getMealType())
                             .foods(foodPreviews)
                             .build();
                 })
                 .toList();
-
-        return GroupedDietResponseDto.builder()
-                .takeAt(takeAt)
-                .foods(foods)
-                .build();
     }
 
     /**
@@ -81,18 +79,26 @@ public class DietFacade {
     public List<DietResponseDto> getDietsByUserId(Long userId) {
         try {
             List<DietGroup> dietGroupList = dietService.getDietsByUserId(userId);
+
             return dietGroupList.stream()
-                    .map(dietGroup -> DietResponseDto.builder()
-                            .id(dietGroup.getId())
-                            .takeAt(dietGroup.getTakeAt())
-                            .mealType(dietGroup.getMealType())
-                            .build())
+                    .map(dietGroup -> {
+                        List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupId(dietGroup.getId());
+                        List<FoodPreviewResponseDto> foodPreviews = foodQueryService.getFoodPreviews(foodIds);
+
+                        return DietResponseDto.builder()
+                                .id(dietGroup.getId())
+                                .takeAt(dietGroup.getTakeAt())
+                                .mealType(dietGroup.getMealType())
+                                .foods(foodPreviews)
+                                .build();
+                    })
                     .toList();
         } catch (Exception e) {
             log.error("[DietFacade] 사용자 조회 실패 - userId: {}", userId);
             throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_USER);
         }
     }
+
 
     public void updateDietInfo(Long userId, Long dietId, DietUpdateRequestDto requestDto) {
         if (!dietId.equals(requestDto.getDietId())) {

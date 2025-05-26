@@ -1,34 +1,42 @@
 package com.hankki.domain.vector.redis.config;
 
+import io.lettuce.core.ReadFrom;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-/**
- * Spring Boot 애플리케이션에서 Redis와의 연결을 설정하는 구성 클래스입니다.
- *
- * - Redis 서버와의 연결을 위한 `LettuceConnectionFactory`를 정의합니다.
- *   기본 설정은 redis:6379이며, application.yml에서 오버라이드할 수 있습니다.
- *
- * - Redis와 데이터를 주고받기 위한 `RedisTemplate<String, Object>` Bean을 제공합니다.
- *   이 템플릿은 해시(Hash) 구조에서 vector 데이터를 저장하거나 조회할 때 사용됩니다.
- *   벡터는 byte[] 형식으로 저장되기 때문에 ValueSerializer, HashValueSerializer는 byte-array 기반으로 설정되어 있습니다.
- *
- * - 문자열 전용의 간단한 Redis 연산을 위한 `StringRedisTemplate`도 함께 등록됩니다.
- *
- * 이 구성은 Redis Stack 및 벡터 검색(벡터 저장 및 인덱싱)을 사용하는 환경에 적합하며,
- * Redis에 벡터 데이터를 효율적으로 저장하고 관리할 수 있도록 지원합니다.
- */
+import java.time.Duration;
+
 @Configuration
 public class RedisConfig {
 
+    @Value("${spring.data.redis.host:redis}")  // 기본값 설정
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
     @Bean
-    public LettuceConnectionFactory redistConnectionFactory() {
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration("redis", 6379));
+    public LettuceConnectionFactory redisConnectionFactory() {
+        // Redis 연결 설정
+        RedisStandaloneConfiguration redisConfiguration = new RedisStandaloneConfiguration();
+        redisConfiguration.setHostName(redisHost);
+        redisConfiguration.setPort(redisPort);
+
+        // Lettuce 클라이언트 설정 - 연결 안정성 향상
+        LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
+                .commandTimeout(Duration.ofSeconds(10))  // 타임아웃 증가
+                .shutdownTimeout(Duration.ofSeconds(5))
+                .readFrom(ReadFrom.REPLICA_PREFERRED)
+                .build();
+
+        return new LettuceConnectionFactory(redisConfiguration, clientConfiguration);
     }
 
     @Bean
@@ -40,6 +48,7 @@ public class RedisConfig {
         redisTemplate.setHashKeySerializer(RedisSerializer.string());
         redisTemplate.setValueSerializer(RedisSerializer.string());
         redisTemplate.setHashValueSerializer(RedisSerializer.byteArray());
+        redisTemplate.setDefaultSerializer(RedisSerializer.string());
 
         return redisTemplate;
     }
@@ -48,5 +57,4 @@ public class RedisConfig {
     public StringRedisTemplate stringRedisTemplate(LettuceConnectionFactory redisConnectionFactory) {
         return new StringRedisTemplate(redisConnectionFactory);
     }
-
 }

@@ -30,10 +30,10 @@ public class DietGroup {
 	@Column(
 			name = "meal_type",
 			nullable = false,
-			columnDefinition = "TINYINT NOT NULL DEFAULT 9"
+			columnDefinition = "TINYINT DEFAULT 9"
 	)
 	@Convert(converter = MealType.MealTypeConverter.class)
-	private MealType mealType = MealType.fromCode(9);
+	private MealType mealType;
 
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;

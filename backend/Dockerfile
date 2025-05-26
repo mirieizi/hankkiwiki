@@ -1,25 +1,27 @@
- # Base image
- FROM openjdk:17-jdk-slim AS builder
+# Base image
+FROM openjdk:17-jdk-slim AS builder
 
- # 작업 디렉토리 설정
- WORKDIR /workspace
+# 작업 디렉토리 설정
+WORKDIR /workspace
 
- # 빌드에 필요한 파일 복사
- COPY mvnw .
- COPY .mvn/wrapper .mvn/wrapper
- COPY pom.xml .
- COPY src src
+VOLUME /root/.m2
 
- # 빌드
- RUN ./mvnw clean package -DskipTests
+# 빌드에 필요한 파일 복사
+COPY mvnw .
+COPY .mvn/wrapper .mvn/wrapper
+COPY pom.xml .
+COPY src src
 
- # 런타임 이미지
- FROM openjdk:17-jdk-slim
- WORKDIR /app
+# 빌드
+RUN ./mvnw clean package -DskipTests
 
- COPY --from=builder /workspace/target/hankkiwiki-0.0.1-SNAPSHOT.jar app.jar
+# 런타임 이미지
+FROM openjdk:17-jdk-slim
+WORKDIR /app
 
- # 애플리케이션 실행
+COPY --from=builder /workspace/target/hankkiwiki-0.0.1-SNAPSHOT.jar app.jar
+
+# 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 
