@@ -9,7 +9,7 @@
         SELECT food_id FROM diet_meal_item WHERE diet_id = #{dietId}
     </select>
 
-    <insert id="insertDietMealItem" parameterType="com.hankki.domain.recommend.entity.UserDietFoodMap">
+    <insert id="insertDietMealItem" parameterType="com.hankki.domain.diet.entity.DietFood">
         INSERT INTO diet_meal_item (diet_id, meal_item_id)
         VALUES (#{dietId}, #{mealItemId})
     </insert>

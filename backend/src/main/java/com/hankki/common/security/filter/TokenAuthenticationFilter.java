@@ -37,7 +37,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         "/auth/signup",
         "/auth/check-email",
         "/auth/check-nickname",
-        "/actuator/health"
+        "/actuator/health",
+        "/api/health",
+        "/api/debug"
     );
 
     @Override

@@ -12,6 +12,7 @@ services:
       MYSQL_PASSWORD: ${HANKKI_PASSWORD}
     volumes:
       - ./mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - app-network
     healthcheck:
@@ -20,6 +21,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --max_connections=500
+      --innodb_buffer_pool_size=512M
+      --innodb_log_file_size=256M
+      --bulk_insert_buffer_size=64M
 
   app:
     build:
@@ -34,6 +41,8 @@ services:
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       HANKKI_USERNAME: ${HANKKI_USERNAME}
       HANKKI_PASSWORD: ${HANKKI_PASSWORD}
       HANKKI_DATABASE: ${HANKKI_DATABASE}
@@ -43,14 +52,40 @@ services:
       HANKKI_JWT_SECRET_KEY: ${HANKKI_JWT_SECRET_KEY}
       HANKKI_JWT_ACCESS_TOKEN_VALIDITY: ${HANKKI_JWT_ACCESS_TOKEN_VALIDITY}
       HANKKI_JWT_REFRESH_TOKEN_VALIDITY: ${HANKKI_JWT_REFRESH_TOKEN_VALIDITY}
+      DATA_SYNC_ENABLED: true
+      DATA_SYNC_USE_FULL_DATA: true
+      DATA_SYNC_BATCH_SIZE: 1000
     networks:
       - app-network
+    volumes:
+      - ~/.m2:/root/.m2
 
   redis:
-    image: redis:7.2
+    image: redis/redis-stack-server:7.2.0-v6
     container_name: redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-stack-server
+      --save 900 1
+      --save 300 10 
+      --save 60 10000
+      --appendonly yes
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --timeout 0
+      --tcp-keepalive 300
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_ARGS=--save 900 1 --save 300 10
     networks:
       - app-network
 
@@ -68,3 +103,8 @@ services:
 
 networks:
   app-network:
+
+volumes:
+  redis-data:
+    driver: local
+    name: hankki_redis_data

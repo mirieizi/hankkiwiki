@@ -19,6 +19,10 @@ import java.util.List;
 public class FoodGroupDto {
 
     @NotBlank
+    @Schema(description = "식단 아이디")
+    private Long dietId;
+
+    @NotBlank
     @Schema(description = "식사 종류", example = "LUNCH")
     private MealType mealType;
 

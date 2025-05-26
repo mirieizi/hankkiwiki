@@ -53,11 +53,11 @@ public class DietController {
             @ApiResponse(responseCode = "404", description = "해당하는 사용자를 찾지 못했습니다.")
     })
     @GetMapping("/get-by-date")
-    public ResponseEntity<GroupedDietResponseDto> getDietsByDate(
+    public ResponseEntity<List<DietResponseDto>> getDietsByDate(
             @CurrentUser UserPrincipal authUser,
             @RequestBody DietGetByTakeAtRequestDto requestDto
     ) {
-        GroupedDietResponseDto responseDto = dietFacade.getDietsByDate(
+        List<DietResponseDto> responseDto = dietFacade.getDietsByDate(
         		authUser.getUserId(),
                 requestDto.getTakeAt());
         return ResponseEntity.ok(responseDto);
