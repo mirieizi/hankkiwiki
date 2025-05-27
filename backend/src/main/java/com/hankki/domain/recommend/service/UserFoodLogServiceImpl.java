@@ -1,11 +1,13 @@
 package com.hankki.domain.recommend.service;
 
+import com.hankki.domain.diet.constant.MealType;
 import com.hankki.domain.recommend.entity.UserFoodLog;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -27,5 +29,6 @@ public class UserFoodLogServiceImpl {
                         .build()
         );
     }
+
 
 }

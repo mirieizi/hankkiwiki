@@ -2,15 +2,17 @@ package com.hankki.domain.recommend.dto;
 
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
+@Getter 
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor 
 @AllArgsConstructor
+@Builder
 public class RagRecommendRequest {
-	private String userInput;
-
+    private String prefer;
+    private String avoid;
 }

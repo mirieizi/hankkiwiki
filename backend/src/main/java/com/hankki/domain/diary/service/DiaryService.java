@@ -5,6 +5,7 @@ import java.util.List;
 import com.hankki.domain.diary.dto.DiaryCreateRequest;
 import com.hankki.domain.diary.dto.DiaryResponse;
 import com.hankki.domain.diary.dto.DiaryUpdateRequest;
+import com.hankki.domain.food.entity.Food;
 
 /**
  * 다이어리 엔트리의 비즈니스 로직을 처리하는 서비스 인터페이스
@@ -46,4 +47,5 @@ public interface DiaryService {
 	 * 주어진 사용자 ID로 전체 다이어리 목록을 조회합니다.
 	 */
 	List<DiaryResponse> getDiariesByUserId(Long userId);
+
 }
