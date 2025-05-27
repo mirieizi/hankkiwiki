@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS hankki;
 USE hankki;
 
 -- 기존 diet 관련 인덱스들 (원래 있던 것들)

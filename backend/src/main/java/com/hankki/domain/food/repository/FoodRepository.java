@@ -40,7 +40,7 @@ public interface FoodRepository extends JpaRepository<Food, Long>, FoodRepositor
              LIMIT 1
             """, nativeQuery = true)
     Optional<Food> findBestMatchByFullText(@Param("query") String query);
-    
-    
 
+
+    List<Food> findByFoodNameContainingIgnoreCase(String query);
 }

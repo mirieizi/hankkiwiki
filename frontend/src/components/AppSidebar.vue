@@ -12,10 +12,18 @@
         <li>
           오늘 뭐 먹지?
           <ul>
-            <li><RouterLink to="/recommend/random" class="sidebar-link">랜덤 추천</RouterLink></li>
-            <li><RouterLink to="/recommend/history" class="sidebar-link">새로운 맛</RouterLink></li>
-            <li><RouterLink to="/recommend/ai" class="sidebar-link">AI 추천</RouterLink></li>
-            <li><RouterLink to="/recommend/custom" class="sidebar-link">취향 맞춤</RouterLink></li>
+            <li>
+              <RouterLink to="/recommend/random" class="sidebar-link" :class="{ disabled: isGlobalBlocked }" @click="handleRecommendLinkClick($event, 'random')">랜덤 추천</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/recommend/history" class="sidebar-link" :class="{ disabled: isGlobalBlocked }" @click="handleRecommendLinkClick($event, 'history')">새로운 맛</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/recommend/ai" class="sidebar-link" :class="{ disabled: isGlobalBlocked }" @click="handleRecommendLinkClick($event, 'ai')">AI 추천</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/recommend/custom" class="sidebar-link" :class="{ disabled: isGlobalBlocked }" @click="handleRecommendLinkClick($event, 'custom')">취향 맞춤</RouterLink>
+            </li>
           </ul>
         </li>
         <li>
@@ -28,8 +36,8 @@
           <RouterLink :to="{ name: 'ProfileInfo' }" class="sidebar-link">마이페이지</RouterLink>
         </li>
       </ul>
-      <!-- 사이드바 전체를 커버하는 오버레이: loading이 true면 표시 -->
-      <div v-if="loading" class="sidebar-lock"></div>
+      <!-- 오버레이 -->
+      <div v-if="isGlobalBlocked" class="sidebar-lock"></div>
     </nav>
   </aside>
 </template>
@@ -38,18 +46,29 @@
 import { useAuthStore } from "@/stores/auth";
 import { RouterLink, useRouter } from "vue-router";
 import { ref, computed, toRefs } from "vue";
+import { useRecommendStore } from "@/stores/recommend";
+import { storeToRefs } from "pinia";
 
-// (아래 부분 필요하면 props로 주입, 아니면 store에서 받아도 됨)
 const authStore = useAuthStore();
 const router = useRouter();
-// 아래 부분이 사이드바 비활성화 상태를 props 등으로 받을 경우 예시
-// defineProps({ loading: Boolean }); // ← props로 주입받을 때
-// const { loading } = toRefs(props);
-
-// 실제 프로젝트에서는 전역 loading 또는 recommendStore.loading 등 활용
-import { useRecommendStore } from "@/stores/recommend";
 const recommendStore = useRecommendStore();
-const loading = computed(() => recommendStore.loading);
+
+const { isGlobalBlocked, currentMode } = storeToRefs(recommendStore);
+
+const handleRecommendLinkClick = (event, mode) => {
+  // 1. 추천 진행 중이면 클릭 차단
+  if (isGlobalBlocked.value) {
+    event.preventDefault();
+    console.log("추천 진행 중에는 모드를 변경할 수 없습니다.");
+    return;
+  }
+
+  // 2. Store에 모드 변경 알림 (Recommend.vue와 연동)
+  recommendStore.setCurrentMode(mode);
+  recommendStore.resetRecommend();
+  recommendStore.fetchRemainingSpoons();
+  recommendStore.fetchHistoryRecords();
+};
 
 const logout = () => {
   authStore.logout();
@@ -157,13 +176,22 @@ const logout = () => {
   transition: background 0.13s, color 0.14s;
   cursor: pointer;
 }
+
+/* ✅ 비활성화 스타일 */
+.sidebar-link.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sidebar-link.router-link-active {
   background: #f8faee;
   color: #ffc83d;
   font-weight: 700;
   border-left: 4px solid #ffc83d;
 }
-.sidebar-link:hover {
+
+.sidebar-link:hover:not(.disabled) {
   background: #eafbf3;
   color: #19b58b;
   text-decoration: underline;
