@@ -81,22 +81,76 @@ watchEffect(() => {
 });
 
 async function loadExistingData() {
+  console.log("=== 기존 데이터 로드 시작 ===");
+  console.log("선택된 날짜:", selectedDate.value);
+  console.log("수정 모드:", isEditMode.value);
   try {
+    // 식단 데이터 로드
+    console.log("식단 데이터 조회 중...");
     const diets = await foodService.getDietsByDate(selectedDate.value);
+    console.log("조회된 식단:", diets);
+
     if (diets && diets.length > 0) {
       // 모든 식단의 음식들을 하나의 배열로 합치기
       const allFoods = [];
       for (const diet of diets) {
-        if (diet.foods) {
+        if (diet.foods && diet.foods.length > 0) {
+          console.log(`${diet.mealType} 식단:`, diet.foods);
           allFoods.push(...diet.foods);
         }
       }
+
       selectedFoods.value = allFoods;
+      console.log("로드된 음식들:", selectedFoods.value);
+
+      if (allFoods.length > 0) {
+        toast.success(`기존 식단 ${allFoods.length}개를 불러왔습니다! 📋`);
+      }
+    } else {
+      console.log("해당 날짜에 식단 없음");
+      selectedFoods.value = [];
+      toast.info("해당 날짜에 저장된 식단이 없습니다. 새로 추가해보세요! 🍽️");
     }
   } catch (error) {
     console.error("기존 데이터 로드 실패:", error);
+    selectedFoods.value = [];
+
+    if (error.response?.status === 404) {
+      toast.info("해당 날짜에 저장된 식단이 없습니다. 새로 추가해보세요! 🍽️");
+    } else {
+      toast.error("기존 데이터를 불러오는 중 오류가 발생했습니다. 😢");
+    }
   }
 }
+
+// 수정 모드 확인 부분 개선
+onMounted(async () => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    toast.error("로그인이 필요합니다. 🔐");
+    setTimeout(() => router.push("/login"), 2000);
+    return;
+  }
+
+  const isLoaded = userStore.loadUserFromToken();
+  if (!isLoaded) {
+    toast.error("인증 정보가 유효하지 않습니다. 다시 로그인해주세요. 🔑");
+    setTimeout(() => router.push("/login"), 2000);
+    return;
+  }
+
+  // ✅ edit 모드 확인
+  isEditMode.value = route.query.edit === "true";
+  console.log("수정 모드:", isEditMode.value);
+
+  if (isEditMode.value) {
+    console.log("수정 모드로 진입 - 기존 데이터 로드 시작");
+    await loadExistingData();
+  } else {
+    console.log("일반 모드로 진입");
+  }
+});
 
 // ✅ 수정 취소
 function cancelEdit() {
