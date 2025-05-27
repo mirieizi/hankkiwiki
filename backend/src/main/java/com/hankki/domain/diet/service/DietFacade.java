@@ -116,6 +116,7 @@ public class DietFacade {
     public void deleteDietByIdByAdmin(Long userId, Long dietId) {
         dietService.deleteDietByUserIdAndDietId(userId, dietId);
     }
+    //** 조회
 
 	public boolean hasDietHistoryForRecentDays(Long userId, int days) {
 		return dietService.hasDietHistoryForRecentDays(userId, days);

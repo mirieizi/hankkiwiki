@@ -28,8 +28,9 @@ public class FoodResponseDto {
     private double sugar;
     private double sodium;
     private double cholesterol;
+    private String reason;
 
-    public static FoodResponseDto fromEntity(Food food) {
+    public static FoodResponseDto fromEntity(Food food, String reason) {
         return FoodResponseDto.builder()
                 .id(food.getId())
                 .foodName(food.getFoodName())
@@ -44,6 +45,7 @@ public class FoodResponseDto {
                 .sugar(food.getSugar())
                 .sodium(food.getSodium())
                 .cholesterol(food.getCholesterol())
+                .reason(reason)
                 .build();
     }
 }

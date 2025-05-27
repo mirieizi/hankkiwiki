@@ -223,15 +223,11 @@ public class DietServiceImpl implements DietService {
 
 	@Override
 	public boolean hasDietHistoryForRecentDays(Long userId, int days) {
-		LocalDate today = LocalDate.now();
-		for (int i = 0; i<days; i++) {
-			LocalDate date = today.minusDays(i);
-			if (!dietGroupRepository.existsByUserIdAndTakeAt(userId, date)) {
-				return false;
-			}
-		}
-		return true;
+	    LocalDate from = LocalDate.now().minusDays(days - 1); // 오늘 포함 N일 전
+	    LocalDate to = LocalDate.now();
+	    return dietGroupRepository.existsByUserIdAndTakeAtBetween(userId, from, to);
 	}
+
 
 	@Override
 	public List<GroupedDietResponseDto> getGroupedDietsByRecentDays(Long userId, int days) {
@@ -270,6 +266,25 @@ public class DietServiceImpl implements DietService {
 	    }
 	    return result;
 	}
+
+	@Override
+	public List<Food> findRecentFoods(Long userId, int days) {
+	    LocalDate from = LocalDate.now().minusDays(days - 1);
+	    LocalDate to = LocalDate.now();
+	    List<Long> groupIds = dietGroupRepository.findIdsByUserIdAndTakeAtBetween(userId, from, to);
+	    if (groupIds.isEmpty()) return List.of();
+
+	    List<Long> foodIds = dietFoodRepository.findFoodIdsByDietGroupIdIn(groupIds);
+	    if (foodIds.isEmpty()) return List.of();
+
+	    return foodRepository.findAllById(foodIds);
+	}
+
+
+
+
+
+
 
 
 }

@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.hankki.domain.diet.constant.MealType;
 
 /**
  * 사용자가 추천받은 음식 로그(중복 추천 방지용)

@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.hankki.common.security.principal.CurrentUser;
 import com.hankki.domain.auth.dto.UserPrincipal;
 import com.hankki.domain.recommend.dto.FoodResponseDto;
+import com.hankki.domain.recommend.dto.RagRecommendRequest;
 import com.hankki.domain.recommend.service.RecommendFacade;
 import com.hankki.domain.recommend.service.UserLogServiceImpl;
 
@@ -20,10 +22,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/recommend")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "음식 추천 API", description = "벡터 기반 추천/랜덤 추천 기능 제공")
 public class RecommendController {
 
@@ -78,9 +82,11 @@ public class RecommendController {
     })
     @PostMapping("/rag")
     public ResponseEntity<FoodResponseDto> recommendByRag(
-            @CurrentUser UserPrincipal user
+            @CurrentUser UserPrincipal user,
+            @RequestBody RagRecommendRequest request
     ) {
-        FoodResponseDto response = recommendFacade.recommendByRag(user.getUserId(), null);
+    	log.info("CONTROLLER - prefer='{}', avoid='{}'", request.getPrefer(), request.getAvoid());
+        FoodResponseDto response = recommendFacade.recommendByRag(user.getUserId(), request);
         return ResponseEntity.ok(response);
     }
 
