@@ -1,47 +1,28 @@
 <template>
   <div class="search-section">
     <h2>음식 검색</h2>
-    <input 
-      v-model="query" 
-      placeholder="음식명을 입력하세요" 
-      class="search-input"
-      @input="debouncedSearch"
-    />
+    <input v-model="query" placeholder="음식명을 입력하세요" class="search-input" @input="debouncedSearch" @keydown.enter="searchFoods" />
 
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
       <span>검색 중...</span>
     </div>
 
-    <div v-else-if="query && foods.length === 0 && !loading" class="no-results">
-      검색 결과가 없습니다.
-    </div>
+    <div v-else-if="query && foods.length === 0 && !loading" class="no-results">검색 결과가 없습니다.</div>
 
     <ul v-else-if="foods.length > 0" class="search-result">
-      <li 
-        v-for="food in paginatedFoods" 
-        :key="food.id" 
-        class="result-item" 
-        @click="select(food)"
-      >
+      <li v-for="food in paginatedFoods" :key="food.id" class="result-item" @click="select(food)">
         <div class="food-info">
-          <span class="food-name">{{ food.name }}</span>
-          <small class="food-calories">{{ food.calories }} kcal</small>
+          <span class="food-name">{{ food.foodName || food.name || "음식명 없음" }}</span>
+          <small class="food-calories">{{ food.kcal || food.calories || 0 }} kcal</small>
+          <small class="food-category">{{ food.majorCategory || food.category || "" }}</small>
         </div>
-        <button class="add-button" @click.stop="select(food)">
-          추가
-        </button>
+        <button class="add-button" @click.stop="select(food)">추가</button>
       </li>
     </ul>
 
     <div class="pagination" v-if="totalPages > 1">
-      <button 
-        v-for="page in totalPages" 
-        :key="page" 
-        class="page-button" 
-        :class="{ active: currentPage === page }" 
-        @click="setPage(page)"
-      >
+      <button v-for="page in totalPages" :key="page" class="page-button" :class="{ active: currentPage === page }" @click="setPage(page)">
         {{ page }}
       </button>
     </div>
@@ -54,15 +35,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { foodService } from '@/services/foodService';
+import { ref, computed } from "vue";
+import { toast } from "vue3-toastify";
+import { foodService } from "@/services/foodService";
 
-const emit = defineEmits(['select-food']);
+const emit = defineEmits(["select-food"]);
 
 // 상태 관리
-const query = ref('');
+const query = ref("");
 const foods = ref([]);
-const error = ref('');
+const error = ref("");
 const loading = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = 5;
@@ -73,7 +55,7 @@ let searchTimer = null;
 // 디바운스된 검색 함수
 function debouncedSearch() {
   if (searchTimer) clearTimeout(searchTimer);
-  
+
   searchTimer = setTimeout(async () => {
     if (!query.value.trim()) {
       foods.value = [];
@@ -87,33 +69,53 @@ function debouncedSearch() {
 // 음식 검색 실행
 async function searchFoods() {
   loading.value = true;
-  error.value = '';
+  error.value = "";
   currentPage.value = 1;
 
   try {
+    console.log("검색어:", query.value.trim());
     const result = await foodService.searchFoods(query.value.trim());
-    foods.value = Array.isArray(result) ? result : [];
-  } catch (err) {
-    console.error('검색 에러:', err);
-    
-    if (err.response?.status === 401) {
-      error.value = '로그인이 필요합니다.';
-    } else if (err.response?.status >= 500) {
-      error.value = '서버 오류가 발생했습니다.';
+
+    console.log("검색 결과 원본:", result);
+
+    // 배열인지 확인하고 처리
+    if (Array.isArray(result)) {
+      foods.value = result;
+    } else if (result && typeof result === "object") {
+      // 단일 객체인 경우 배열로 변환
+      foods.value = [result];
     } else {
-      error.value = '검색 중 오류가 발생했습니다.';
+      foods.value = [];
     }
-    
+
+    console.log("처리된 검색 결과:", foods.value);
+  } catch (err) {
+    console.error("검색 에러:", err);
+    console.error("에러 응답:", err.response?.data);
+
+    if (err.response?.status === 401) {
+      toast.error("로그인이 필요합니다. 🔐");
+    } else if (err.response?.status === 400) {
+      toast.error("잘못된 검색 요청입니다. ⚠️");
+    } else if (err.response?.status >= 500) {
+      toast.error("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요. 🛠️");
+    } else {
+      toast.error("검색 중 오류가 발생했습니다. 😢");
+    }
+
     foods.value = [];
   } finally {
     loading.value = false;
   }
 }
 
-// 검색 재시도
+// ✅ 검색 재시도 함수 유지
 function retrySearch() {
   if (query.value.trim()) {
+    console.log("검색 재시도:", query.value);
     searchFoods();
+  } else {
+    console.log("검색어가 없어서 재시도 불가");
   }
 }
 
@@ -131,7 +133,7 @@ function setPage(page) {
 
 // 음식 선택
 function select(food) {
-  emit('select-food', food);
+  emit("select-food", food);
 }
 </script>
 
@@ -182,8 +184,12 @@ function select(food) {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .no-results {
@@ -304,6 +310,7 @@ function select(food) {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
+  margin-top: 0.5rem;
   transition: background-color 0.2s ease;
 }
 
