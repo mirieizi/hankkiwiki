@@ -181,21 +181,19 @@ export const useRecommendStore = defineStore("recommend", {
       console.log(`스푼 ${count}개 사용됨 (백엔드에서 자동 처리)`);
     },
 
-    // ✅ 수정: 동적 import 사용
     async fetchHistoryRecords() {
       try {
         const { recommendService } = await import("@/services/recommendService");
-        const data = await recommendService.getHistoryRecords();
-        this.historyRecords = data || [];
+        // data는 boolean이므로 의미에 맞게 변수명도 변경
+        const hasHistory = await recommendService.getHistoryRecords();
 
-        console.log("Store에 저장된 식단 기록:", this.historyRecords);
+        // 디버깅 로그
+        console.log("최근 3일 식단 기록 유무:", hasHistory);
 
-        if (Array.isArray(data) && data.length === 0) {
-          this.showNoHistoryPrompt = true;
-        }
+        // 프롬프트 상태 갱신!
+        this.showNoHistoryPrompt = !hasHistory;
       } catch (e) {
         console.error("fetchHistoryRecords error:", e);
-        this.historyRecords = [];
 
         if (e.response?.status === 401) {
           this.showLoginPrompt = true;

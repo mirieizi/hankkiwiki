@@ -95,48 +95,16 @@ export const recommendService = {
     }
   },
 
-  // 최근 식단 기록 조회 (Diet API 활용) - 수정된 버전
+  // 최근 식단 기록 **존재 여부**만 boolean으로 반환 (t/f)
   async getHistoryRecords() {
     try {
-      // 최근 3일간 식단 조회
-      const today = new Date();
-      const dates = [];
-      for (let i = 0; i < 3; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        dates.push(date.toISOString().split("T")[0]); // YYYY-MM-DD 형식
-      }
-
-      const historyPromises = dates.map(async (date) => {
-        try {
-          // GET 요청에서 params 사용
-          const response = await axios.get("/diet/get-by-date", {
-            params: { takeAt: date },
-          });
-
-          // 응답 데이터 구조 확인 및 처리
-          const data = response.data;
-          if (Array.isArray(data)) {
-            return data.map((item) => ({
-              ...item,
-              date: date, // 날짜 정보 추가
-            }));
-          }
-          return [];
-        } catch (error) {
-          console.error(`${date} 식단 조회 실패:`, error);
-          return [];
-        }
-      });
-
-      const results = await Promise.all(historyPromises);
-      const flatResults = results.flat();
-
-      console.log("식단 기록 조회 결과:", flatResults); // 디버깅용
-      return flatResults;
+      // 백엔드에서 true/false 반환한다고 가정!
+      const response = await axios.get("/diet/history-records");
+      return !!response.data; // t/f 보장 (혹시라도 undefined/null일 때 false)
     } catch (error) {
-      console.error("히스토리 조회 실패:", error);
-      return [];
+      console.error("히스토리 존재여부 조회 실패:", error);
+      // 에러 시엔 일단 false(식단 없음)로 간주
+      return false;
     }
   },
 };
