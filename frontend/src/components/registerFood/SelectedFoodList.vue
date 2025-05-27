@@ -34,9 +34,14 @@
       </select>
     </div>
 
-    <button v-if="foods.length > 0" class="save-button" @click="saveDiet" :disabled="saving">
-      {{ saving ? "저장 중..." : `식단 저장하기 (${foods.length}개)` }}
-    </button>
+    <div v-if="foods.length > 0" class="button-group">
+      <button class="save-button" @click="saveDiet" :disabled="saving">
+        {{ saving ? "저장 중..." : isEditMode ? "수정 완료" : `식단 저장하기 (${foods.length}개)` }}
+      </button>
+
+      <!-- ✅ 수정 모드일 때 취소 버튼 -->
+      <button v-if="isEditMode" class="cancel-button" @click="$emit('cancel-edit')" :disabled="saving">취소</button>
+    </div>
   </div>
 </template>
 
@@ -48,6 +53,7 @@ import { foodService } from "@/services/foodService";
 const props = defineProps({
   foods: { type: Array, required: true },
   selectedDate: { type: String, required: true },
+  isEditMode: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["remove-food", "foods-saved"]);
@@ -292,5 +298,32 @@ async function saveDiet() {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cancel-button {
+  background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: linear-gradient(90deg, #4b5563 0%, #374151 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
 }
 </style>

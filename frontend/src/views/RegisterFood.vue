@@ -1,17 +1,19 @@
 <template>
   <div class="register-container">
-    <h1 class="title">오늘 뭐 먹음!</h1>
+    <h1 class="title">
+      {{ isEditMode ? "식단 수정하기" : "오늘 뭐 먹음!" }}
+    </h1>
 
     <div class="layout">
       <!-- 왼쪽: 음식 검색 + 선택 -->
       <div class="left-section">
         <SearchFood @select-food="addFood" />
-        <SelectedFoodList :foods="selectedFoods" :selectedDate="selectedDate" @remove-food="removeFood" @foods-saved="onFoodsSaved" />
+        <SelectedFoodList :foods="selectedFoods" :selectedDate="selectedDate" :isEditMode="isEditMode" @remove-food="removeFood" @foods-saved="onFoodsSaved" @cancel-edit="cancelEdit" />
       </div>
 
       <!-- 오른쪽: 일기 작성 -->
       <div class="right-section">
-        <DiaryEditor :date="selectedDate" :userName="userName" @diary-saved="onDiarySaved" />
+        <DiaryEditor :date="selectedDate" :userName="userName" :isEditMode="isEditMode" @diary-saved="onDiarySaved" />
       </div>
     </div>
   </div>
@@ -21,6 +23,8 @@
 import { ref, watchEffect, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import { foodService } from "@/services/foodService";
+import { toast } from "vue3-toastify";
 import SearchFood from "@/components/registerFood/SearchFood.vue";
 import SelectedFoodList from "@/components/registerFood/SelectedFoodList.vue";
 import DiaryEditor from "@/components/registerFood/DiaryEditor.vue";
@@ -42,20 +46,24 @@ onMounted(async () => {
   const token = localStorage.getItem("accessToken");
 
   if (!token) {
-    alert("로그인이 필요합니다.");
-    router.push("/login");
+    toast.error("로그인이 필요합니다. 🔐");
+    setTimeout(() => router.push("/login"), 2000); // 2초 후 이동
     return;
   }
 
   // JWT에서 사용자 정보 로드
   const isLoaded = userStore.loadUserFromToken();
   if (!isLoaded) {
-    alert("인증 정보가 유효하지 않습니다. 다시 로그인해주세요.");
-    router.push("/login");
+    toast.error("인증 정보가 유효하지 않습니다. 다시 로그인해주세요. 🔑");
+    setTimeout(() => router.push("/login"), 2000);
     return;
   }
 
-  console.log("로그인된 사용자:", userName.value);
+  isEditMode.value = route.query.edit === "true";
+
+  if (isEditMode.value) {
+    await loadExistingData();
+  }
 });
 
 // 날짜 감지: 쿼리에서 가져오되 없으면 오늘 날짜
@@ -72,6 +80,29 @@ watchEffect(() => {
   }
 });
 
+async function loadExistingData() {
+  try {
+    const diets = await foodService.getDietsByDate(selectedDate.value);
+    if (diets && diets.length > 0) {
+      // 모든 식단의 음식들을 하나의 배열로 합치기
+      const allFoods = [];
+      for (const diet of diets) {
+        if (diet.foods) {
+          allFoods.push(...diet.foods);
+        }
+      }
+      selectedFoods.value = allFoods;
+    }
+  } catch (error) {
+    console.error("기존 데이터 로드 실패:", error);
+  }
+}
+
+// ✅ 수정 취소
+function cancelEdit() {
+  router.push(`/calendar?date=${selectedDate.value}`);
+}
+
 // 날짜 유효성 검사
 function isValidDate(dateString) {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -86,8 +117,9 @@ function addFood(food) {
   // 중복 확인 (ID 기준)
   if (!selectedFoods.value.find((f) => f.id === food.id)) {
     selectedFoods.value.push(food);
+    toast.success(`${food.foodName || food.name}이(가) 추가되었습니다! 🍽️`);
   } else {
-    alert("이미 선택된 음식입니다.");
+    toast.warning("이미 선택된 음식입니다. 🔄");
   }
 }
 
@@ -102,6 +134,10 @@ function onFoodsSaved(result) {
 
   // 선택된 음식 목록 초기화 (선택사항)
   selectedFoods.value = [];
+
+  if (isEditMode.value) {
+    router.push(`/calendar?date=${selectedDate.value}`);
+  }
 }
 
 // 일기 저장 완료 후 처리
@@ -173,7 +209,7 @@ function onDiarySaved() {
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   box-sizing: border-box;
-  max-height: 80vh; /* ✅ 최대 높이 제한 */
+  max-height: 85vh; /* ✅ 최대 높이 제한 */
   overflow-y: auto; /* ✅ 개별 섹션 스크롤 */
   display: flex;
   flex-direction: column;
