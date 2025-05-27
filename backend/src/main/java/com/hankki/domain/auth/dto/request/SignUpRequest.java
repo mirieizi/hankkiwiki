@@ -2,6 +2,7 @@ package com.hankki.domain.auth.dto.request;
 
 import java.util.Set;
 
+import lombok.Builder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.hankki.domain.auth.constant.Role;
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Builder
 public class SignUpRequest {
 
     @Email(message = "올바른 이메일 형식이어야 합니다.")

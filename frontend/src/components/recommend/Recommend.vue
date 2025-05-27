@@ -32,7 +32,7 @@
           <div class="mockup-content">
             <div class="recommend-inner">
               <div class="run-button">
-                <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" :disabled="loading" @run="onRun" />
+                <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" :disabled="loading || spoonCount < spoonCost" @run="onRun" />
               </div>
 
               <div v-if="!isResultReady && !showNoHistoryPrompt && !showLoginPrompt" class="content-area">
@@ -44,6 +44,20 @@
                     <component :is="animationComponent" :key="mode + '-' + runCount" @done="onAnimationDone" @ai-finish="onAiChatDone" />
                   </div>
                 </section>
+              </div>
+
+              <!-- 히스토리 없음 안내 -->
+              <div v-if="showNoHistoryPrompt" class="prompt-message">
+                <h3>🍽️ 식단 기록이 부족해요</h3>
+                <p>{{ mode === 'history' ? '새로운 맛' : '취향 맞춤' }} 추천을 위해서는<br>최근 3일간의 식단 기록이 필요합니다.</p>
+                <button @click="goToRegister" class="prompt-button">식단 등록하러 가기</button>
+              </div>
+
+              <!-- 로그인 안내 -->
+              <div v-if="showLoginPrompt" class="prompt-message">
+                <h3>🔐 로그인이 필요해요</h3>
+                <p>개인화된 추천을 받으시려면<br>로그인해주세요.</p>
+                <button @click="goToLogin" class="prompt-button">로그인하러 가기</button>
               </div>
             </div>
           </div>
@@ -151,7 +165,7 @@ const isChatting = ref(false);
 const isResultReady = ref(false);
 
 const currentMode = computed(() => modes.find((m) => m.id === mode.value));
-const spoonCost = computed(() => currentMode.value.cost);
+const spoonCost = computed(() => currentMode.value?.cost || 1);
 const spoonCount = computed(() => store.remainingSpoons);
 const loading = computed(() => store.loading);
 const recommendation = computed(() => store.recommendation);
@@ -159,12 +173,33 @@ const hasRun = computed(() => store.hasRun);
 const runCount = computed(() => store.runCount);
 const showNoHistoryPrompt = computed(() => store.showNoHistoryPrompt);
 const showLoginPrompt = computed(() => store.showLoginPrompt);
-const buttonLabel = computed(() => currentMode.value.label);
-const resultTitle = computed(() => `${currentMode.value.label} 메뉴`);
-const animationComponent = computed(() => currentMode.value.animation);
+const buttonLabel = computed(() => currentMode.value?.label || '추천하기');
+const resultTitle = computed(() => `${currentMode.value?.label || '추천'} 메뉴`);
+const animationComponent = computed(() => currentMode.value?.animation || RandomAnimation);
 const expanded = computed(() => store.expanded);
 const foodImage = computed(() => recommendSuccessLogo);
-const searchKeyword = computed(() => recommendation.value?.foodName ?? "요거트 샐러드");
+
+// 안전한 추천 데이터 (누락된 부분 추가)
+const safeRecommendation = computed(() => {
+  const defaultFood = {
+    foodName: '추천 음식',
+    majorCategory: '기타',
+    subCategory: '기타',
+    kcal: 0,
+    carbohydrate: 0,
+    protein: 0,
+    fat: 0,
+    moisture: 0,
+    sugar: 0,
+    sodium: 0,
+    cholesterol: 0,
+    servingSize: 100
+  };
+  
+  return recommendation.value ? { ...defaultFood, ...recommendation.value } : defaultFood;
+});
+
+const searchKeyword = computed(() => safeRecommendation.value.foodName || "요거트 샐러드");
 const coupangUrl = computed(() => `https://www.coupang.com/np/search?q=${encodeURIComponent(searchKeyword.value)}`);
 
 // 추천 모드 정보
@@ -175,24 +210,33 @@ const modes = [
   { id: "custom", label: "취향 맞춤", icon: "✨", desc: "최근 음식과 비슷한 추천", cost: 1, animation: CustomAnimation },
 ];
 
-function onRun() {
-  store.remainingSpoons -= spoonCost.value;
+// 실행 버튼 핸들러 (수정)
+async function onRun() {
+  if (spoonCount.value < spoonCost.value) {
+    alert('스푼이 부족합니다!');
+    return;
+  }
+
+  // 스푼 사용
+  await store.useSpoons(spoonCost.value);
+  
   store.hasRun = true;
-  store.loading = true;
   store.runCount++;
   isResultReady.value = false;
   isChatting.value = true;
 
   if (mode.value !== "ai") {
-    store.fetchRecommendation(mode.value).finally(() => {
-      // 애니메이션 종료 후 onAnimationDone에서 처리
+    // 일반 추천 (random, history, custom)
+    store.fetchRecommendation(mode.value).catch(() => {
+      // 에러는 store에서 처리됨
+      isChatting.value = false;
     });
   }
+  // AI 모드는 애니메이션에서 사용자 입력 받은 후 onAiChatDone에서 처리
 }
 
 function onAnimationDone() {
   isResultReady.value = true;
-  store.loading = false;
   isChatting.value = false;
 }
 
@@ -201,12 +245,10 @@ function onAiChatDone(payload) {
     .fetchAiRecommendation(payload)
     .then(() => {
       isResultReady.value = true;
-      store.loading = false;
       isChatting.value = false;
     })
     .catch((err) => {
       console.error("AI 추천 오류:", err);
-      store.loading = false;
       isChatting.value = false;
     });
 }
@@ -296,6 +338,58 @@ watch(
 }
 
 /* ===== 배경 및 전체 레이아웃 ===== */
+/* 기존 스타일 + 추가 프롬프트 스타일 */
+
+.prompt-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  margin: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 2px solid #f0f8ff;
+}
+
+.prompt-message h3 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.prompt-message p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.prompt-button {
+  background: linear-gradient(90deg, #21d59b 0%, #ffc83d 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.prompt-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.3);
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+/* 기존 스타일들 그대로 유지 */
 .recommend-bg {
   width: 100vw;
   min-height: 100vh;
@@ -306,6 +400,7 @@ watch(
   padding: 4vw 0 3vw 0;
   box-sizing: border-box;
 }
+
 .main-layout {
   display: flex;
   width: 100%;
@@ -314,7 +409,8 @@ watch(
   justify-content: flex-start;
   gap: 56px;
 }
-/* --- 좌: 모드 버튼 --- */
+
+/* 나머지 스타일들은 기존과 동일... */
 .mode-sidebar {
   flex: 0 0 370px;
   display: flex;
@@ -323,12 +419,14 @@ watch(
   padding-top: 42px;
   margin-left: 10%;
 }
+
 .mode-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px 18px;
   width: 340px;
 }
+
 .mode-btn {
   background: #f8fffc;
   border-radius: 18px;
@@ -348,17 +446,19 @@ watch(
   min-height: 120px;
   font-size: 1.05rem;
 }
+
 .mode-btn.active {
   background: linear-gradient(90deg, #21d59b 0%, #ffc83d 120%);
   color: #fff !important;
   box-shadow: 0 5px 20px #21d59b33;
   transform: scale(1.04);
 }
+
 .mode-btn:hover:not(.active) {
   box-shadow: 0 6px 26px #21d59b22;
   transform: translateY(-3px) scale(1.03);
 }
-/* 버튼 비활성화(로딩중) */
+
 .mode-btn:disabled,
 .mode-btn.disabled {
   pointer-events: none;
@@ -366,17 +466,20 @@ watch(
   filter: grayscale(0.1);
   cursor: not-allowed;
 }
+
 .icon {
   font-size: 2.4rem;
   margin-bottom: 6px;
   filter: drop-shadow(0 2px 10px #21d59b14);
 }
+
 .title {
   font-size: 1.22rem;
   font-weight: bold;
   margin: 6px 0 2px 0;
   letter-spacing: 0.4px;
 }
+
 .desc {
   font-size: 1.04rem;
   color: #93bbb2;
@@ -385,17 +488,19 @@ watch(
   line-height: 1.32;
   font-weight: 600;
 }
+
 .mode-btn.active .desc {
   color: #fffbe0;
 }
 
-/* --- 중앙: 목업 --- */
+/* 목업 및 나머지 스타일들... (기존과 동일) */
 .mockup-wrap {
   flex: 0 0 530px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
 }
+
 .mockup-phone {
   width: 480px;
   max-width: 98vw;
@@ -411,6 +516,7 @@ watch(
   border: 2px solid #e3e9ee;
   transition: box-shadow 0.2s;
 }
+
 .mockup-notch {
   width: 80px;
   height: 16px;
@@ -423,6 +529,7 @@ watch(
   opacity: 0.55;
   z-index: 2;
 }
+
 .mockup-content {
   flex: 1 1 auto;
   display: flex;
@@ -432,6 +539,7 @@ watch(
   position: relative;
   height: 100%;
 }
+
 .recommend-inner {
   height: 100%;
   display: flex;
@@ -440,21 +548,21 @@ watch(
   box-sizing: border-box;
 }
 
-/* 실행 버튼/추천 콘텐츠~ */
 .run-button {
   margin: 8px 0 16px 0;
 }
 
-/* 채팅중일 때만 폰 배경 어둡게 전환 */
 .main-view {
   background: transparent;
   transition: background 0.45s cubic-bezier(0.33, 1, 0.68, 1);
   border-radius: 16px;
   min-height: 750px;
 }
+
 .main-view.chat-bg {
   background: #152044;
 }
+
 .placeholder img {
   width: 55%;
   max-width: 200px;
@@ -463,7 +571,7 @@ watch(
   margin: 12% auto 18px auto;
   display: block;
 }
-/* 결과 카드: 목업 오른쪽! */
+
 .result-outer {
   flex: 0 0 370px;
   display: flex;
@@ -471,6 +579,7 @@ watch(
   justify-content: flex-start;
   min-width: 300px;
 }
+
 .result-box {
   background: #fff;
   border-radius: 22px;
@@ -482,6 +591,7 @@ watch(
   text-align: center;
   animation: pop-card 0.45s cubic-bezier(0.33, 1, 0.68, 1);
 }
+
 @keyframes pop-card {
   0% {
     opacity: 0;
@@ -492,7 +602,6 @@ watch(
     transform: scale(1) translateY(0);
   }
 }
-/* 추천 카드 정보 디자인 */
 .food-card {
   display: flex;
   flex-direction: column;
@@ -501,24 +610,29 @@ watch(
   text-align: center;
   padding-top: 6px;
 }
+
 .food-card img {
   max-width: 120px;
   border-radius: 16px;
   box-shadow: 0 2px 8px #33d9b122;
   margin-bottom: 4px;
 }
+
 .food-main-info {
   margin-bottom: 8px;
 }
+
 .food-name {
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 2px;
 }
+
 .food-desc {
   font-size: 1.05rem;
   color: #75bca5;
 }
+
 .food-nutrition,
 .food-etc {
   display: flex;
@@ -529,6 +643,7 @@ watch(
   font-size: 0.97rem;
   color: #555;
 }
+
 .food-nutrition span b {
   color: #17cfa6;
 }
@@ -551,6 +666,7 @@ watch(
   letter-spacing: 0.03em;
   position: relative;
 }
+
 .coupang-link-btn:hover {
   background: linear-gradient(90deg, #ffdb4a 0%, #ff8640 100%);
   color: #fff;
@@ -578,6 +694,7 @@ watch(
     justify-content: center;
   }
 }
+
 @media (max-width: 700px) {
   .main-layout {
     flex-direction: column;
