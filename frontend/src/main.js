@@ -8,6 +8,8 @@ import "@/assets/global.css";
 import axios from "@/plugins/axios";
 import { useAuthStore } from "@/stores/auth";
 import { useKakao } from "vue3-kakao-maps/@utils";
+import Vue3Toastify, { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
 
 // 1. Axios 기본 설정
 console.log("🎯 API Base URL:", axios.defaults.baseURL);
@@ -22,6 +24,17 @@ const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
 app.use(router); // 반드시 router 먼저 use!
+
+// ✅ 토스트 플러그인 등록
+app.use(Vue3Toastify, {
+  autoClose: 3000,
+  position: "top-right",
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  theme: "auto",
+});
 
 // 3. 외부 라이브러리 등록 (필요시)
 useKakao(import.meta.env.VITE_KAKAO_API_KEY);
@@ -38,3 +51,6 @@ const token = localStorage.getItem("accessToken");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
+
+// ✅ 전역 토스트 함수 내보내기 (선택사항)
+export { toast };

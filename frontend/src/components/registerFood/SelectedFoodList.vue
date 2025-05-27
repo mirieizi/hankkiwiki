@@ -1,125 +1,151 @@
 <template>
   <div class="selected-foods">
     <h3>🍴 선택된 음식</h3>
-    
+
     <div v-if="foods.length === 0" class="empty-state">
       <div class="empty-icon">🍽️</div>
       <p>아직 선택된 음식이 없습니다.</p>
       <small>위에서 음식을 검색하고 추가해보세요!</small>
     </div>
-    
+
     <ul v-else class="selected-list">
       <li v-for="food in foods" :key="food.id" class="selected-item">
         <div class="food-info">
-          <span class="food-name">{{ food.name }}</span>
-          <small class="food-calories">{{ food.calories }} kcal</small>
+          <span class="food-name">{{ food.foodName || food.name || "음식명 없음" }}</span>
+          <small class="food-calories">{{ food.kcal || food.calories || 0 }} kcal</small>
         </div>
-        <button 
-          class="remove-button" 
-          @click="removeFood(food)" 
-          aria-label="삭제"
-        >
-          ✕
-        </button>
+        <button class="remove-button" @click="removeFood(food)" aria-label="삭제">✕</button>
       </li>
     </ul>
-    
+
     <div v-if="foods.length > 0" class="total-calories">
       <strong>총 칼로리: {{ totalCalories }} kcal</strong>
     </div>
-    
+
     <!-- 식사 타입 선택 -->
     <div v-if="foods.length > 0" class="meal-type-section">
       <label for="mealType" class="meal-type-label">식사 타입:</label>
       <select v-model="selectedMealType" id="mealType" class="meal-type-select">
+        <option value="TODAY">오늘</option>
         <option value="BREAKFAST">아침</option>
         <option value="LUNCH">점심</option>
         <option value="DINNER">저녁</option>
         <option value="SNACK">간식</option>
       </select>
     </div>
-    
-    <button 
-      v-if="foods.length > 0"
-      class="save-button" 
-      @click="saveDiet"
-      :disabled="saving"
-    >
-      {{ saving ? '저장 중...' : `식단 저장하기 (${foods.length}개)` }}
-    </button>
+
+    <div v-if="foods.length > 0" class="button-group">
+      <button class="save-button" @click="saveDiet" :disabled="saving">
+        {{ saving ? "저장 중..." : isEditMode ? "수정 완료" : `식단 저장하기 (${foods.length}개)` }}
+      </button>
+
+      <!-- ✅ 수정 모드일 때 취소 버튼 -->
+      <button v-if="isEditMode" class="cancel-button" @click="$emit('cancel-edit')" :disabled="saving">취소</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { foodService } from '@/services/foodService';
+import { ref, computed, watch } from "vue";
+import { toast } from "vue3-toastify";
+import { foodService } from "@/services/foodService";
 
 const props = defineProps({
-  foods: {
-    type: Array,
-    required: true,
-  },
-  selectedDate: {
-    type: String,
-    required: true,
-  }
+  foods: { type: Array, required: true },
+  selectedDate: { type: String, required: true },
+  isEditMode: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['remove-food', 'foods-saved']);
+const emit = defineEmits(["remove-food", "foods-saved"]);
 
 const saving = ref(false);
-const selectedMealType = ref('LUNCH');
+const selectedMealType = ref("LUNCH");
+
+// 디버깅용 로그
+watch(
+  () => props.foods,
+  (newFoods, oldFoods) => {
+    console.log("=== SelectedFoodList foods 변경 ===");
+    console.log("이전:", oldFoods);
+    console.log("현재:", newFoods);
+    console.log("길이:", newFoods?.length || 0);
+  },
+  { deep: true, immediate: true }
+);
+
+// ✅ computed로 안전하게 처리
+const safeFoods = computed(() => {
+  console.log("safeFoods computed 실행:", props.foods);
+  return Array.isArray(props.foods) ? props.foods : [];
+});
 
 // 총 칼로리 계산
 const totalCalories = computed(() => {
-  return props.foods.reduce((sum, food) => sum + (food.calories || 0), 0);
+  return props.foods.reduce((sum, food) => {
+    const calories = food.kcal || food.calories || 0;
+    return sum + calories;
+  }, 0);
 });
 
 // 음식 제거
 function removeFood(food) {
-  emit('remove-food', food);
+  emit("remove-food", food);
+  toast.info(`${food.foodName || food.name}이(가) 제거되었습니다. 🗑️`);
 }
 
-// 식단 저장 (Diet API 사용)
+// ✅ 백엔드 구조에 맞춘 식단 저장
 async function saveDiet() {
   if (props.foods.length === 0) {
-    alert('선택된 음식이 없습니다.');
+    toast.warning("선택된 음식이 없습니다. 🍽️");
     return;
   }
 
-  // 확인 다이얼로그
-  const confirmed = confirm(`${selectedMealType.value} 식단으로 ${props.foods.length}개의 음식을 저장하시겠습니까?`);
-  if (!confirmed) return;
-
   saving.value = true;
-  
+
   try {
-    // Diet API에 맞는 데이터 구조로 생성
+    // ✅ 백엔드 DietCreateRequestDto 구조에 맞춘 데이터 생성
     const dietData = {
-      takeAt: props.selectedDate,
-      mealType: selectedMealType.value,
-      foods: props.foods.map(food => ({
-        foodId: food.id,
-        name: food.name,
-        calories: food.calories
-      }))
+      takeAt: props.selectedDate, // LocalDate
+      foods: [
+        {
+          mealType: selectedMealType.value, // MealType enum
+          foodIds: props.foods.map((food) => food.id), // List<Long>
+        },
+      ],
     };
 
+    console.log("저장할 식단 데이터 (백엔드 구조):", dietData);
+    console.log(
+      "선택된 음식 ID들:",
+      props.foods.map((food) => food.id)
+    );
+
     const result = await foodService.createDiet(dietData);
-    
-    alert('식단이 성공적으로 저장되었습니다!');
-    emit('foods-saved', result);
+
+    const mealTypeKorean =
+      {
+        TODAY: "오늘",
+        BREAKFAST: "아침",
+        LUNCH: "점심",
+        DINNER: "저녁",
+        SNACK: "간식",
+      }[selectedMealType.value] || "오늘";
+
+    toast.success(`${mealTypeKorean} 식단이 저장되었습니다! 🎉`);
+    emit("foods-saved", result);
   } catch (error) {
-    console.error('식단 저장 실패:', error);
-    
+    console.error("식단 저장 실패:", error);
+    console.error("에러 응답:", error.response?.data);
+    console.error("요청 데이터:", error.config?.data);
+
     if (error.response?.status === 401) {
-      alert('로그인이 필요합니다.');
+      toast.error("로그인이 필요합니다. 🔐");
     } else if (error.response?.status === 400) {
-      alert('잘못된 요청입니다. 다시 시도해주세요.');
+      toast.error("잘못된 요청입니다. 다시 시도해주세요. ⚠️");
     } else if (error.response?.status >= 500) {
-      alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요. 🛠️");
     } else {
-      alert('식단 저장 중 오류가 발생했습니다.');
+      toast.error("식단 저장 중 오류가 발생했습니다. 😢");
     }
   } finally {
     saving.value = false;
@@ -274,5 +300,32 @@ async function saveDiet() {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cancel-button {
+  background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: linear-gradient(90deg, #4b5563 0%, #374151 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
 }
 </style>
