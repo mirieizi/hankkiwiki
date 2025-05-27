@@ -1,3 +1,8 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /api # 중요: 이 설정으로 인해 모든 경로 앞에 /api가 붙습니다
+
 spring:
   application:
     name: hankkiwiki
@@ -49,6 +54,15 @@ spring:
       api-key: ${SPRING_AI_OPENAI_API_KEY}
       model: ${SPRING_AI_OPENAI_MODEL}
 
+# swagger 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  server:
+    url: http://localhost:8081/api
+
 # 벡터 관련 설정 추가
 vector:
   redis:
@@ -66,19 +80,14 @@ logging:
     org.springframework.context.annotation: DEBUG
     com.hankki.common.security.filter.TokenAuthenticationFilter: DEBUG
     org.springframework.security: DEBUG
-    io.lettuce.core: WARN # Lettuce 로그 레벨 조정
+    io.lettuce.core: WARN     # Lettuce 로그 레벨 조정
+    org.springdoc: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.boot.autoconfigure: ERROR
+
 
 jwt:
   issuer: ${HANKKI_JWT_ISSURE}
   secret_key: ${HANKKI_JWT_SECRET_KEY}
   access-token-validity: ${HANKKI_JWT_ACCESS_TOKEN_VALIDITY}
   refresh-token-validity: ${HANKKI_JWT_REFRESH_TOKEN_VALIDITY}
-
-server:
-  port: 8081
-  servlet:
-    context-path: /api # 중요: 이 설정으로 인해 모든 경로 앞에 /api가 붙습니다
-
-openai:
-  secret-key: ${SPRING_AI_OPENAI_API_KEY}
-  model: ${SPRING_AI_OPENAI_MODEL}

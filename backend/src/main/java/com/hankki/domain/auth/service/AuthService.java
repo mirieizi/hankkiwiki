@@ -2,6 +2,7 @@ package com.hankki.domain.auth.service;
 
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,8 +30,9 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;

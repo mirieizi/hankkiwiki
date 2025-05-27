@@ -11,8 +11,10 @@ export const useAuthStore = defineStore("auth", {
     redirectPath: null,
     emailDupError: "",
     emailChecked: false,
+    isCheckingEmail:false,
     nicknameDupError: "",
     nicknameChecked: false,
+    isCheckingNickname: false
   }),
   actions: {
     // 로그인
@@ -75,10 +77,12 @@ export const useAuthStore = defineStore("auth", {
     async checkNickname(nickname) {
       this.nicknameDupError = "";
       this.nicknameChecked = false;
+      this.isCheckingNickname = true;
       if (!nickname) return;
       const nickRe = /^[가-힣A-Za-z0-9]{1,10}$/;
       if (!nickRe.test(nickname)) {
         this.nicknameDupError = "닉네임은 최대10자, 공백·특수문자 없이 입력!";
+        this.isCheckingNickname = false;
         return;
       }
       try {
@@ -87,23 +91,31 @@ export const useAuthStore = defineStore("auth", {
         else this.nicknameDupError = "이미 사용 중인 닉네임입니다.";
       } catch {
         this.nicknameDupError = "닉네임 확인에 실패!";
+      } finally {
+        this.isCheckingNickname = false;
       }
     },
     // 이메일 중복 확인
     async checkEmailDup(email) {
       this.emailDupError = "";
       this.emailChecked = false;
+      this.isCheckingEmail = true;
+
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRe.test(email)) {
         this.emailDupError = "유효한 이메일 주소가 아닙니다.";
+        this.isCheckingEmail = false;
         return;
       }
+
       try {
         const res = await axios.get("/auth/check-email", { params: { email } });
         if (res.data.available) this.emailChecked = true;
         else this.emailDupError = "이미 사용 중인 이메일입니다.";
       } catch {
         this.emailDupError = "이메일 확인에 실패!";
+      } finally {
+        this.isCheckingEmail = false;
       }
     },
     async initialize() {
