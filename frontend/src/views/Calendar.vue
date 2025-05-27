@@ -1,12 +1,37 @@
-<!-- src/views/Calendar.vue -->
 <template>
   <div class="calendar-wrapper">
+    <!-- 🔍 디버깅 정보 -->
+    <div class="debug-panel" v-if="showDebug">
+      <h3>🔍 디버깅 정보</h3>
+      <p><strong>선택된 날짜:</strong> {{ selectedDate }}</p>
+      <p><strong>기록된 날짜들:</strong> {{ recordedDates }}</p>
+      <p><strong>현재 데이터:</strong></p>
+      <pre>{{ JSON.stringify(recordData, null, 2) }}</pre>
+      <p><strong>hasRecord:</strong> {{ hasRecord }}</p>
+      <p><strong>로딩 중:</strong> {{ loading }}</p>
+      <button @click="testFetchRecord">선택된 날짜 다시 조회</button>
+      <button @click="showDebug = false">닫기</button>
+    </div>
+    <button v-if="!showDebug" @click="showDebug = true" class="debug-btn">🔍 디버깅</button>
+    
     <div class="calendar-panel">
-      <CalendarView :selected="selectedDate" :recorded-dates="recordedDates" @select-date="handleDateSelect" />
+      <CalendarView 
+        :selected="selectedDate" 
+        :recorded-dates="recordedDates" 
+        @select-date="handleDateSelect"
+        @month-change="handleMonthChange"
+      />
     </div>
     <div class="record-panel">
-      <DailyRecord v-if="hasRecord" :data="recordData" :date="selectedDate" />
-      <EmptyNotice v-else :date="selectedDate" />
+      <DailyRecord 
+        v-if="hasRecord" 
+        :data="recordData" 
+        :date="selectedDate" 
+      />
+      <EmptyNotice 
+        v-else 
+        :date="selectedDate" 
+      />
     </div>
   </div>
 </template>
@@ -14,15 +39,14 @@
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
+import { calendarService } from "@/services/calendarService";
 
 import CalendarView from "@/components/calendar/CalendarView.vue";
 import DailyRecord from "@/components/calendar/DailyRecord.vue";
 import EmptyNotice from "@/components/calendar/EmptyNotice.vue";
 
-// Axios 기본 설정 (main.js 에도 설정했으면 여기선 생략해도 됩니다)
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
-axios.defaults.withCredentials = true;
+// 디버깅
+const showDebug = ref(false);
 
 // 날짜를 YYYY-MM-DD 포맷으로 변환
 function formatDate(date) {
@@ -34,103 +58,319 @@ function formatDate(date) {
 
 const route = useRoute();
 
-// 선택된 날짜, 서버에서 가져온 해당 날짜의 데이터
+// 상태 관리
 const selectedDate = ref("");
 const recordData = ref(null);
-
-// 캘린더에 표시할 '기록된 날짜' 리스트
 const recordedDates = ref([]);
+const loading = ref(false);
+const currentYear = ref(new Date().getFullYear());
+const currentMonth = ref(new Date().getMonth());
 
 // 기록이 있는지 여부
-const hasRecord = computed(() => !!recordData.value);
+const hasRecord = computed(() => {
+  console.log('=== hasRecord 계산 ===');
+  console.log('recordData.value:', recordData.value);
+  
+  if (!recordData.value) {
+    console.log('recordData가 null');
+    return false;
+  }
+  
+  const hasRecordFlag = recordData.value && (
+    (recordData.value.diets && recordData.value.diets.length > 0) ||
+    recordData.value.diary
+  );
+  
+  console.log('hasRecord 결과:', hasRecordFlag);
+  return hasRecordFlag;
+});
 
 // 특정 날짜의 기록을 서버에서 가져오는 함수
 async function fetchRecord(dateStr) {
+  if (!dateStr) {
+    console.log('날짜가 없음:', dateStr);
+    return;
+  }
+  
+  console.log('=== fetchRecord 시작 ===');
+  console.log('요청 날짜:', dateStr);
+  
+  loading.value = true;
   try {
-    const res = await axios.get("/api/diet/get-by-date", {
-      params: { takeAt: dateStr },
-    });
-    recordData.value = res.data;
+    // 🔍 서비스 호출 전 로그
+    console.log('calendarService.getDayRecord 호출 중...');
+    const dayRecord = await calendarService.getDayRecord(dateStr);
+    console.log('서비스 응답:', dayRecord);
+    
+    recordData.value = dayRecord;
+    
     // 기록된 날짜 배열에 추가 (중복 방지)
-    if (!recordedDates.value.includes(dateStr)) {
+    if (dayRecord.hasRecord && !recordedDates.value.includes(dateStr)) {
       recordedDates.value.push(dateStr);
+      console.log('기록된 날짜에 추가:', dateStr);
     }
-  } catch (e) {
-    // 404 등 데이터 없을 때
-    recordData.value = null;
+  } catch (error) {
+    console.error('기록 조회 실패:', error);
+    recordData.value = {
+      date: dateStr,
+      diets: [],
+      diary: null,
+      hasRecord: false
+    };
+  } finally {
+    loading.value = false;
+    console.log('=== fetchRecord 완료 ===');
+  }
+}
+
+// 테스트용 함수
+async function testFetchRecord() {
+  console.log('=== 수동 테스트 ===');
+  await fetchRecord(selectedDate.value);
+}
+
+// 월별 기록된 날짜들 가져오기
+async function fetchRecordedDatesInMonth(year, month) {
+  console.log('=== fetchRecordedDatesInMonth ===');
+  console.log('요청 년월:', year, month);
+  
+  try {
+    const dates = await calendarService.getRecordedDatesInMonth(year, month);
+    console.log('월별 기록된 날짜들:', dates);
+    recordedDates.value = dates;
+  } catch (error) {
+    console.error('월별 기록 날짜 조회 실패:', error);
+    recordedDates.value = [];
   }
 }
 
 // 날짜 선택 핸들러
 function handleDateSelect(dateStr) {
+  console.log('=== 날짜 선택됨 ===');
+  console.log('선택된 날짜:', dateStr);
   selectedDate.value = dateStr;
 }
 
-// 초기화: 라우터 쿼리 또는 오늘 날짜로 설정하고 fetch
-onMounted(() => {
+// 월 변경 핸들러
+function handleMonthChange(year, month) {
+  console.log('=== 월 변경 ===');
+  console.log('새로운 년월:', year, month);
+  currentYear.value = year;
+  currentMonth.value = month;
+  fetchRecordedDatesInMonth(year, month);
+}
+
+// 초기화
+onMounted(async () => {
+  console.log('=== Calendar 마운트 ===');
   const dateFromRoute = route.query.date;
-  selectedDate.value = typeof dateFromRoute === "string" ? dateFromRoute : formatDate(new Date());
-  fetchRecord(selectedDate.value);
+  const today = formatDate(new Date());
+  
+  selectedDate.value = typeof dateFromRoute === "string" ? dateFromRoute : today;
+  console.log('초기 선택 날짜:', selectedDate.value);
+  
+  // 현재 월의 기록된 날짜들 먼저 조회
+  await fetchRecordedDatesInMonth(currentYear.value, currentMonth.value);
+  
+  // 선택된 날짜의 상세 기록 조회
+  await fetchRecord(selectedDate.value);
 });
 
 // selectedDate가 바뀔 때마다 다시 fetch
 watch(selectedDate, (newDate) => {
-  fetchRecord(newDate);
+  console.log('=== selectedDate 변경 감지 ===');
+  console.log('새로운 날짜:', newDate);
+  if (newDate) {
+    fetchRecord(newDate);
+  }
 });
+
+// 라우트 쿼리 변경 감지
+watch(
+  () => route.query.date,
+  (newDate) => {
+    console.log('=== 라우트 쿼리 변경 ===');
+    console.log('새로운 쿼리 날짜:', newDate);
+    if (newDate && typeof newDate === 'string') {
+      selectedDate.value = newDate;
+    }
+  }
+);
 </script>
 
 <style scoped>
+/* 기존 스타일 + 디버깅 스타일 */
+.debug-panel {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+  background: white;
+  border: 2px solid red;
+  padding: 1rem;
+  z-index: 9999;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.debug-panel pre {
+  background: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.debug-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9998;
+  background: red;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .calendar-wrapper {
-  display: flex;
-  flex-direction: row;
-  place-content: center;
-  gap: clamp(2rem, 4vw, 6rem);
+  min-height: calc(100vh - 64px - 60px);
   width: 100%;
-  max-width: none;
-  min-height: calc(100vh - 64px - 48px);
-  transform: translateY(-5vh);
-  flex-wrap: wrap;
+  background: linear-gradient(135deg, #d9f6ee 0%, #c8f5ea 50%, #b8f4e6 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 2rem;
-  align-items: flex-start;
   box-sizing: border-box;
+  flex-direction: row;
+  gap: 3rem;
+  flex-wrap: wrap;
 }
 
 .calendar-panel,
 .record-panel {
-  display: block;
-  flex: 1 1 500px;
-  min-width: 360px;
-  max-width: 700px;
-  width: 100%;
-}
-
-.calendar-panel {
+  flex: 1 1 450px;
+  min-width: 350px;
+  max-width: 600px;
+  min-height: 500px;
   height: auto;
-  border-radius: 12px;
-  box-sizing: border-box;
-  isolation: isolate;
-  z-index: 1;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
-.record-panel {
-  flex: 1;
-  min-width: 360px;
-  max-width: 800px;
-  padding: 2rem;
-}
-
-@media screen and (max-width: 480px) {
+/* 큰 화면 (1200px 이상) */
+@media screen and (min-width: 1200px) {
   .calendar-wrapper {
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
+    gap: 4rem;
+    padding: 3rem;
   }
+  
   .calendar-panel,
   .record-panel {
-    flex: 1 1 100%;
+    flex: 1 1 500px;
+    max-width: 650px;
+  }
+}
+
+/* 중간 화면 (768px ~ 1199px) */
+@media screen and (max-width: 1199px) {
+  .calendar-wrapper {
+    gap: 2rem;
+    padding: 1.5rem;
+  }
+  
+  .calendar-panel,
+  .record-panel {
+    flex: 1 1 400px;
+    min-width: 320px;
+    max-width: 550px;
+  }
+}
+
+/* 태블릿 (600px ~ 767px) - 아직 가로 배치 유지 */
+@media screen and (max-width: 767px) {
+  .calendar-wrapper {
+    gap: 1.5rem;
+    padding: 1rem;
+    min-height: calc(100vh - 64px - 60px);
+  }
+  
+  .calendar-panel,
+  .record-panel {
+    flex: 1 1 300px;
+    min-width: 280px;
+    max-width: 400px;
+  }
+}
+
+/* 작은 화면 (600px 이하) - 세로 정렬로 전환 */
+@media screen and (max-width: 600px) {
+  .calendar-wrapper {
+    /* 세로 정렬로 변경 */
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    
+    /* 패딩 조정 */
+    padding: 1rem;
+    gap: 1rem;
+    
+    /* 높이 자동 조정 */
+    min-height: auto;
+  }
+  
+  .calendar-panel,
+  .record-panel {
+    /* 전체 너비 사용 */
+    flex: 1 1 auto;
+    min-width: unset;
     max-width: 100%;
-    justify-content: center;
+    width: 100%;
+    
+    /* 높이 조정 */
+    min-height: 400px;
+  }
+}
+
+/* 매우 작은 화면 (480px 이하) */
+@media screen and (max-width: 480px) {
+  .calendar-wrapper {
+    padding: 0.5rem;
+    gap: 0.75rem;
+  }
+  
+  .calendar-panel,
+  .record-panel {
+    min-height: 350px;
+  }
+}
+
+/* sidebar가 있는 경우 (왼쪽 여백 고려) */
+@media screen and (min-width: 1024px) {
+  .calendar-wrapper {
+    /* sidebar 너비만큼 왼쪽 마진 추가 (예: 240px) */
+    margin-left: 0; /* sidebar가 fixed가 아니라면 0으로 유지 */
+    
+    /* 또는 sidebar가 fixed라면: */
+    /* margin-left: 240px; */
+  }
+}
+
+/* 세로 화면 (모바일 회전) */
+@media screen and (max-height: 600px) and (orientation: landscape) {
+  .calendar-wrapper {
+    min-height: calc(100vh - 50px - 40px); /* 더 작은 header/footer */
+    padding: 1rem;
+  }
+  
+  .calendar-panel,
+  .record-panel {
+    min-height: 300px;
   }
 }
 </style>

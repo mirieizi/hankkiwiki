@@ -1,16 +1,47 @@
-<!-- components/calendar/DailyRecord.vue -->
 <template>
   <div>
     <div ref="target" class="record-container">
-      <p class="record-title">{{ date }} 식사 기록</p>
+      <p class="record-title">{{ date }} 기록</p>
 
-      <p class="diary" v-if="data">{{ data.diary }}</p>
-
-      <div class="meal-list" v-if="data?.meals">
-        <div class="meal-item" v-for="(value, key) in data.meals" :key="key">
-          <span class="meal-time">{{ convertMealKey(key) }}</span>
-          <span class="meal-menu">{{ value }}</span>
+      <!-- 일기 섹션 -->
+      <div v-if="data.diary" class="diary-section">
+        <h3 class="section-title">📖 일기</h3>
+        <div class="diary-content">
+          {{ data.diary.content }}
         </div>
+      </div>
+
+      <!-- 식단 섹션 -->
+      <div v-if="data.diets && data.diets.length > 0" class="diet-section">
+        <h3 class="section-title">🍽️ 식단</h3>
+        <div class="meal-groups">
+          <div 
+            v-for="diet in data.diets" 
+            :key="diet.id" 
+            class="meal-group"
+          >
+            <div class="meal-type">
+              {{ getMealTypeLabel(diet.mealType) }}
+            </div>
+            <div class="food-list">
+              <div 
+                v-for="food in diet.foods" 
+                :key="food.id"
+                class="food-item"
+              >
+                <span class="food-name">{{ food.foodName }}</span>
+                <span class="food-info">
+                  {{ food.majorCategory }} | {{ food.kcal }}kcal
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 둘 다 없는 경우 -->
+      <div v-if="!data.diary && (!data.diets || data.diets.length === 0)" class="no-data">
+        이 날의 기록이 없습니다.
       </div>
     </div>
   </div>
@@ -39,55 +70,59 @@ const props = defineProps({
   },
 });
 
-function convertMealKey(key) {
-  const map = {
-    breakfast: '아침',
-    lunch: '점심',
-    snack: '간식',
-    dinner: '저녁',
+function getMealTypeLabel(mealType) {
+  const mealTypeMap = {
+    'BREAKFAST': '아침',
+    'LUNCH': '점심',
+    'DINNER': '저녁',
+    'SNACK': '간식',
   };
-  return map[key] || key;
+  return mealTypeMap[mealType] || mealType;
 }
 </script>
 
 <style scoped>
-.record-container {
-  width: 100%; /* ✅ 부모 영역 꽉 채움 */
-  max-width: 700px; /* ✅ 최대 폭 제한 (디자인 목적) */
-  min-height: 300px; /* ✅ 내용물이 적어도 일정 높이 확보 */
-  padding: 2rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  color: black;
-}
-.record-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-.diary {
-  font-style: italic;
-  color: #444;
-  margin-bottom: 1rem;
-}
-.meal-list {
+.empty-notice {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 3rem;
+  border-radius: 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 32px rgba(33, 213, 155, 0.15);
+  min-height: 300px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
 }
-.meal-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.6rem 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+
+.empty-notice p {
+  color: #2d5a52;
+  font-weight: 500;
+  font-size: 1.2rem;
 }
-.meal-time {
-  font-weight: bold;
-  color: #333;
+
+.empty-notice button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #21d59b 0%, #ffc83d 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.3);
 }
-.meal-menu {
-  color: #666;
+
+.empty-notice button:hover {
+  background: linear-gradient(90deg, #1bc489 0%, #ffb84d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 213, 155, 0.4);
 }
 </style>

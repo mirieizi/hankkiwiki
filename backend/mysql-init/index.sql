@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS food_embedding (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     food_id BIGINT NOT NULL,
     embedding_key VARCHAR(255) NOT NULL UNIQUE,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    food_id BIGINT NOT NULL,
+    embedding_key VARCHAR(255) NOT NULL UNIQUE,
     dimension_count INT NOT NULL DEFAULT 9, -- 실제 데이터는 PC1~PC9 (9차원)
     gender ENUM('male', 'female', 'unknown') DEFAULT 'unknown',
     checksum VARCHAR(64),

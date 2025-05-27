@@ -6,10 +6,10 @@ import axios from "axios";
 const instance = axios.create({
   // baseURL: "http://localhost:8081/api",
   baseURL: "/api",
+  withCredentials: false, // ← JWT 용도라면 false 로 고정
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
-    withCredentials: false, // ← JWT 용도라면 false 로 고정
   },
   // withCredentials 제거 (JWT는 Stateless)
 });
@@ -38,11 +38,11 @@ instance.interceptors.response.use(
     if (status === 401 && refreshToken && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const { data } = await axios.post("/auth/refresh", { refreshToken });
+        const { data } = await instance.post("/auth/refresh", { refreshToken });
         const newAccessToken = data.accessToken;
         localStorage.setItem("accessToken", newAccessToken);
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        return axios(originalRequest);
+        return instance(originalRequest);
       } catch (e) {
         console.error("토큰 갱신 실패:", e);
         localStorage.removeItem("accessToken");

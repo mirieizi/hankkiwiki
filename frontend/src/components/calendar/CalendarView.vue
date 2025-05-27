@@ -26,13 +26,16 @@
         @click="selectDate(date)"
       >
         <span class="day-number">{{ date.getDate() }}</span>
+        <div v-if="hasRecord(date)" class="record-indicator">
+          <span class="record-dot">●</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const today = new Date();
 const currentYear = ref(today.getFullYear());
@@ -66,6 +69,7 @@ function prevMonth() {
     currentMonth.value--;
   }
 }
+
 function nextMonth() {
   if (currentMonth.value === 11) {
     currentMonth.value = 0;
@@ -82,14 +86,19 @@ function formatDate(date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// emit 날짜 선택
-const emit = defineEmits(['select-date']);
+// emit 날짜 선택 및 월 변경
+const emit = defineEmits(['select-date', 'month-change']);
 
 function selectDate(date) {
   const formatted = formatDate(date);
-  console.log('[CalendarView emit] 선택한 날짜:', formatted); // 🔍 로그 확인
+  console.log('[CalendarView emit] 선택한 날짜:', formatted);
   emit('select-date', formatted);
 }
+
+// 월 변경 감지
+watch([currentYear, currentMonth], ([year, month]) => {
+  emit('month-change', year, month);
+});
 
 function isToday(date) {
   const now = new Date();
@@ -127,76 +136,122 @@ function hasRecord(date) {
 
 <style scoped>
 .calendar-view {
-  background-color: #ffffff;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(33, 213, 155, 0.15);
   box-sizing: border-box;
   width: 100%;
   min-width: 360px;
   max-width: 640px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 600;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  color: #2d5a52;
+}
+
+.calendar-header button {
+  background: linear-gradient(135deg, #21d59b 0%, #1bc489 100%);
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.3);
+}
+
+.calendar-header button:hover {
+  background: linear-gradient(135deg, #1bc489 0%, #17a673 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 213, 155, 0.4);
 }
 
 .calendar-today-button {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .calendar-today-button button {
-  background-color: #ffe2b3;
+  background: linear-gradient(90deg, #ffc83d 0%, #ffb84d 100%);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+  padding: 0.7rem 1.5rem;
+  border-radius: 25px;
   cursor: pointer;
-  font-weight: 500;
-  transition: 0.2s;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(255, 200, 61, 0.3);
 }
+
 .calendar-today-button button:hover {
-  background-color: #ffc085;
+  background: linear-gradient(90deg, #ffb84d 0%, #ff9f5d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 200, 61, 0.4);
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .day-label {
   text-align: center;
-  font-weight: bold;
-  color: #666;
+  font-weight: 700;
+  color: #2d5a52;
+  padding: 0.75rem 0;
+  font-size: 1rem;
 }
 
 .day-cell {
   text-align: center;
-  padding: 0.75rem 0;
+  padding: 1rem 0;
   border-radius: 12px;
   cursor: pointer;
-  background-color: #fff9f0;
-  transition: 0.2s;
+  background: linear-gradient(135deg, #f8fffc 0%, #f0fdf9 100%);
+  transition: all 0.2s ease;
+  position: relative;
+  min-height: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(33, 213, 155, 0.1);
 }
 
 .day-cell:hover {
-  background-color: #ffe2b3;
+  background: linear-gradient(135deg, #e6fffa 0%, #ccfff3 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(33, 213, 155, 0.2);
 }
 
 .day-cell.selected {
-  background-color: #ffc085;
+  background: linear-gradient(135deg, #21d59b 0%, #1bc489 100%);
   color: white;
   font-weight: bold;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 213, 155, 0.4);
 }
 
 .day-cell.recorded {
-  border-bottom: 2px solid chocolate;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border: 2px solid #22c55e;
+}
+
+.day-cell.recorded.selected {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: 2px solid #15803d;
 }
 
 .day-cell.not-current-month {
@@ -204,6 +259,29 @@ function hasRecord(date) {
 }
 
 .day-cell.today {
-  border: 2px solid #ffc085;
+  border: 2px solid #ffc83d;
+  font-weight: bold;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.record-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+
+.record-dot {
+  font-size: 0.8rem;
+  color: #22c55e;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.day-cell.selected .record-dot {
+  color: white;
 }
 </style>
