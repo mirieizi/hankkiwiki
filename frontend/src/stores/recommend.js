@@ -1,6 +1,5 @@
-// src/stores/recommend.js
 import { defineStore } from "pinia";
-import axios from "@/plugins/axios";
+import { recommendService } from "@/services/recommendService";
 
 export const useRecommendStore = defineStore("recommend", {
   state: () => ({
@@ -9,7 +8,7 @@ export const useRecommendStore = defineStore("recommend", {
     hasRun: false,
 
     // recommendation currency
-    remainingSpoons: 0,
+    remainingSpoons: 5,
     runCount: 0,
 
     // for history-based prompt
@@ -25,19 +24,35 @@ export const useRecommendStore = defineStore("recommend", {
     // 랜덤 / 히스토리 / 커스텀 추천 (추천 후 스푼 동기화)
     async fetchRecommendation(mode) {
       this.loading = true;
-      let url = "";
-      switch (mode) {
-        case "random":
-          url = "/recommend/random";
-          break;
-        case "history":
-          url = "/recommend/furthest";
-          break;
-        case "custom":
-          url = "/recommend/similar";
-          break;
-        default:
-          url = "/recommend/random";
+      this.showNoHistoryPrompt = false;
+      this.showLoginPrompt = false;
+      
+      try {
+        let result;
+        
+        switch (mode) {
+          case "random":
+            result = await recommendService.getRandomRecommendation();
+            break;
+          case "history":
+            result = await recommendService.getFurthestRecommendation();
+            break;
+          case "custom":
+            result = await recommendService.getSimilarRecommendation();
+            break;
+          default:
+            result = await recommendService.getRandomRecommendation();
+        }
+        
+        this.recommendation = result;
+        this.hasRun = true;
+        
+      } catch (error) {
+        console.error('추천 실패:', error);
+        this.handleRecommendError(error, mode);
+        throw error;
+      } finally {
+        this.loading = false;
       }
       try {
         const { data } = await axios.get(url);
@@ -67,11 +82,22 @@ export const useRecommendStore = defineStore("recommend", {
     // 남은 스푼 개수 조회
     async fetchRemainingSpoons() {
       try {
-        const { data } = await axios.get("/recommend/spoons");
-        this.remainingSpoons = data.remainingSpoons;
+        this.remainingSpoons = await recommendService.getSpoonCount();
       } catch (e) {
         console.error("fetchRemainingSpoons error:", e);
-        this.remainingSpoons = 0;
+        this.remainingSpoons = 5; // 기본값
+      }
+    },
+
+    // 스푼 사용
+    async useSpoons(count) {
+      try {
+        const result = await recommendService.useSpoons(count);
+        this.remainingSpoons = result.remainingSpoons;
+      } catch (error) {
+        console.error('스푼 사용 실패:', error);
+        // 실패해도 UI에서는 차감 (낙관적 업데이트)
+        this.remainingSpoons = Math.max(0, this.remainingSpoons - count);
       }
     },
 

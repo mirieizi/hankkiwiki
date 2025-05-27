@@ -27,10 +27,6 @@ Thumbs.db
 ##################################
 /backend/target/
 /backend/*.iml
-!/backend/.mvn/
-!/backend/.mvn/wrapper/
-!/backend/.mvn/wrapper/maven-wrapper.jar
-!/backend/.mvn/wrapper/maven-wrapper.properties
 
 # Spring 설정 관련
 /backend/.env
@@ -40,9 +36,8 @@ Thumbs.db
 /backend/*.dump
 
 # 데이터 폴더 (MySQL, Redis 등)
-backend/mysql-data/
-backend/redis-data/
-backend/dump.rdb
+/backend/mysql-data/
+/backend/redis/data/dump.rdb
 
 # Eclipse IDE
 /backend/.classpath
@@ -88,4 +83,3 @@ ehthumbs.db
 Icon?
 Desktop.ini
 mysql-data/
-/backend/target/
