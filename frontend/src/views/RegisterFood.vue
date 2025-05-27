@@ -103,9 +103,9 @@ async function loadExistingData() {
           // ✅ 음식 데이터 구조 정규화
           const processedFoods = diet.foods.map((food) => ({
             id: food.id,
-            foodName: food.foodName || food.name,
-            kcal: food.kcal || food.calories || 0,
-            majorCategory: food.majorCategory || food.category || "",
+            foodName: food.foodName || "알 수 없는 음식",
+            kcal: food.kcal || 0,
+            majorCategory: food.majorCategory,
           }));
 
           allFoods.push(...processedFoods);
@@ -165,24 +165,43 @@ function removeFood(food) {
   selectedFoods.value = selectedFoods.value.filter((f) => f.id !== food.id);
 }
 
-// 식단 저장 완료 후 처리
+// 식단 저장 완료 후 처리 - 수정
 function onFoodsSaved(result) {
   console.log("식단 저장 완료:", result);
 
   // 선택된 음식 목록 초기화 (선택사항)
   selectedFoods.value = [];
 
-  if (isEditMode.value) {
+  // ✅ 수정: 항상 캘린더로 이동 (수정 모드든 일반 모드든)
+  toast.success("식단이 저장되었습니다! 📋");
+
+  // 1초 후 캘린더로 이동
+  setTimeout(() => {
     router.push(`/calendar?date=${selectedDate.value}`);
-  }
+  }, 1000);
 }
 
-// 일기 저장 완료 후 처리
+// 일기 저장 완료 후 처리 - 수정
 function onDiarySaved() {
   console.log("일기 저장 완료");
 
-  // 저장 완료 후 달력 페이지로 이동하거나 다른 액션 수행
-  // router.push('/calendar');
+  // ✅ 추가: 일기 저장 후에도 캘린더로 이동
+  toast.success("일기가 저장되었습니다! 📝");
+
+  setTimeout(() => {
+    router.push(`/calendar?date=${selectedDate.value}`);
+  }, 1000);
+}
+
+// ✅ 추가: 전체 저장 완료 핸들러 (식단 + 일기 모두 저장 시)
+function onAllSaved() {
+  console.log("식단 및 일기 저장 완료");
+
+  toast.success("모든 내용이 저장되었습니다! 🎉");
+
+  setTimeout(() => {
+    router.push(`/calendar?date=${selectedDate.value}`);
+  }, 1500);
 }
 </script>
 

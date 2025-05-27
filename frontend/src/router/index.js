@@ -9,13 +9,10 @@ import LoginPage from "@/views/LoginPage.vue";
 import ProfileInfoPage from "@/views/ProfileInfoPage.vue";
 import HealthInfoPage from "@/views/HealthInfoPage.vue";
 import UserInfoPage from "@/views/UserInfoPage.vue";
-import RandomRecommend from "@/views/RandomRecommend.vue";
-import HistoryRecommend from "@/views/historyRecommend.vue";
-import AiRecommend from "@/views/AiRecommend.vue";
+import RecommendView from "@/views/RecommendView.vue";
 import RegisterFood from "@/views/RegisterFood.vue";
 import Calendar from "@/views/Calendar.vue";
 import KakaoMap from "@/views/KakaoMap.vue";
-import CustomRecommend from "../views/CustomRecommend.vue";
 
 // Route definitions
 const routes = [
@@ -35,10 +32,8 @@ const routes = [
   { path: "/profile/user", name: "ProfileUser", component: UserInfoPage, meta: { requiresAuth: true } },
 
   // Recommendation pages
-  { path: "/recommend/random", name: "RandomRecommend", component: RandomRecommend, meta: { requiresAuth: true } },
-  { path: "/recommend/history", name: "HistoryRecommend", component: HistoryRecommend, meta: { requiresAuth: true } },
-  { path: "/recommend/ai", name: "AiRecommend", component: AiRecommend, meta: { requiresAuth: true } },
-  { path: "/recommend/custom", name: "CustomRecommend", component: CustomRecommend, meta: { requiresAuth: true } },
+  { path: "/recommend/:mode", name: "Recommend", component: RecommendView, props: true, meta: { requiresAuth: true } },
+  { path: "/recommend", redirect: "/recommend/random" },
 
   // Food & Calendar (require auth)
   { path: "/food/register", name: "RegisterFood", component: RegisterFood, meta: { requiresAuth: true } },

@@ -37,14 +37,22 @@
               <!-- 히스토리 없음 안내 -->
               <div v-if="showNoHistoryPrompt" class="prompt-message">
                 <h3>🍽️ 식단 기록이 부족해요</h3>
-                <p>{{ mode === 'history' ? '새로운 맛' : '취향 맞춤' }} 추천을 위해서는<br>최근 3일간의 식단 기록이 필요합니다.</p>
+                <p>
+                  {{ mode === "history" ? "새로운 맛" : "취향 맞춤" }} 추천을 위해서는
+                  <br />
+                  최근 3일간의 식단 기록이 필요합니다.
+                </p>
                 <button @click="goToRegister" class="prompt-button">식단 등록하러 가기</button>
               </div>
 
               <!-- 로그인 안내 -->
               <div v-if="showLoginPrompt" class="prompt-message">
                 <h3>🔐 로그인이 필요해요</h3>
-                <p>개인화된 추천을 받으시려면<br>로그인해주세요.</p>
+                <p>
+                  개인화된 추천을 받으시려면
+                  <br />
+                  로그인해주세요.
+                </p>
                 <button @click="goToLogin" class="prompt-button">로그인하러 가기</button>
               </div>
             </div>
@@ -146,8 +154,8 @@ const hasRun = computed(() => store.hasRun);
 const runCount = computed(() => store.runCount);
 const showNoHistoryPrompt = computed(() => store.showNoHistoryPrompt);
 const showLoginPrompt = computed(() => store.showLoginPrompt);
-const buttonLabel = computed(() => currentMode.value?.label || '추천하기');
-const resultTitle = computed(() => `${currentMode.value?.label || '추천'} 메뉴`);
+const buttonLabel = computed(() => currentMode.value?.label || "추천하기");
+const resultTitle = computed(() => `${currentMode.value?.label || "추천"} 메뉴`);
 const animationComponent = computed(() => currentMode.value?.animation || RandomAnimation);
 const expanded = computed(() => store.expanded);
 const foodImage = computed(() => recommendSuccessLogo);
@@ -155,9 +163,9 @@ const foodImage = computed(() => recommendSuccessLogo);
 // 안전한 추천 데이터 (누락된 부분 추가)
 const safeRecommendation = computed(() => {
   const defaultFood = {
-    foodName: '추천 음식',
-    majorCategory: '기타',
-    subCategory: '기타',
+    foodName: "추천 음식",
+    majorCategory: "기타",
+    subCategory: "기타",
     kcal: 0,
     carbohydrate: 0,
     protein: 0,
@@ -166,9 +174,9 @@ const safeRecommendation = computed(() => {
     sugar: 0,
     sodium: 0,
     cholesterol: 0,
-    servingSize: 100
+    servingSize: 100,
   };
-  
+
   return recommendation.value ? { ...defaultFood, ...recommendation.value } : defaultFood;
 });
 
@@ -186,24 +194,28 @@ const modes = [
 // 실행 버튼 핸들러 (수정)
 async function onRun() {
   if (spoonCount.value < spoonCost.value) {
-    alert('스푼이 부족합니다!');
+    alert("스푼이 부족합니다!");
     return;
   }
 
   // 스푼 사용
   await store.useSpoons(spoonCost.value);
-  
+
   store.hasRun = true;
   store.runCount++;
   isResultReady.value = false;
   isChatting.value = true;
 
-  if (mode.value !== "ai") {
-    // 일반 추천 (random, history, custom)
-    store.fetchRecommendation(mode.value).catch(() => {
-      // 에러는 store에서 처리됨
-      isChatting.value = false;
-    });
+  try {
+    if (mode.value !== "ai") {
+      // ✅ 수정: store.fetchRecommendation 호출 방법 확인
+      await store.fetchRecommendation(mode.value);
+    }
+    // AI 모드는 애니메이션에서 처리
+  } catch (error) {
+    console.error("추천 실패:", error);
+    isChatting.value = false;
+    store.hasRun = false;
   }
   // AI 모드는 애니메이션에서 사용자 입력 받은 후 onAiChatDone에서 처리
 }
@@ -243,12 +255,12 @@ function goMode(id) {
 
 // 식단 등록 페이지로 이동
 function goToRegister() {
-  router.push('/register-food');
+  router.push("/register-food");
 }
 
 // 로그인 페이지로 이동
 function goToLogin() {
-  router.push('/login');
+  router.push("/login");
 }
 
 // 초기 마운트
@@ -320,11 +332,13 @@ watch(
   box-shadow: 0 4px 15px rgba(33, 213, 155, 0.3);
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
