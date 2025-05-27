@@ -15,7 +15,7 @@ import java.time.LocalDate;
 public class UserLogServiceImpl {
 
     private final UserLogRepository userLogRepository;
-    private static final int MAX_RECOMMEND_COUNT_PER_DAY = 5;
+    private static final int MAX_RECOMMEND_COUNT_PER_DAY = 500;
 
     /**
      * 추천 횟수 초과 여부 확인
