@@ -64,18 +64,20 @@ const selectedMealType = ref("LUNCH");
 // 디버깅용 로그
 watch(
   () => props.foods,
-  (newFoods) => {
-    console.log("선택된 음식 목록 변경:", newFoods);
-    newFoods.forEach((food, index) => {
-      console.log(`음식 ${index}:`, {
-        id: food.id,
-        name: food.foodName || food.name,
-        calories: food.kcal || food.calories,
-      });
-    });
+  (newFoods, oldFoods) => {
+    console.log("=== SelectedFoodList foods 변경 ===");
+    console.log("이전:", oldFoods);
+    console.log("현재:", newFoods);
+    console.log("길이:", newFoods?.length || 0);
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
+
+// ✅ computed로 안전하게 처리
+const safeFoods = computed(() => {
+  console.log("safeFoods computed 실행:", props.foods);
+  return Array.isArray(props.foods) ? props.foods : [];
+});
 
 // 총 칼로리 계산
 const totalCalories = computed(() => {
