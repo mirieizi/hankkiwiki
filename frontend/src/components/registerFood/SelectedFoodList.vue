@@ -41,31 +41,35 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { toast } from 'vue3-toastify';
-import { foodService } from '@/services/foodService';
+import { ref, computed, watch } from "vue";
+import { toast } from "vue3-toastify";
+import { foodService } from "@/services/foodService";
 
 const props = defineProps({
   foods: { type: Array, required: true },
-  selectedDate: { type: String, required: true }
+  selectedDate: { type: String, required: true },
 });
 
-const emit = defineEmits(['remove-food', 'foods-saved']);
+const emit = defineEmits(["remove-food", "foods-saved"]);
 
 const saving = ref(false);
-const selectedMealType = ref('LUNCH');
+const selectedMealType = ref("LUNCH");
 
 // 디버깅용 로그
-watch(() => props.foods, (newFoods) => {
-  console.log('선택된 음식 목록 변경:', newFoods);
-  newFoods.forEach((food, index) => {
-    console.log(`음식 ${index}:`, {
-      id: food.id,
-      name: food.foodName || food.name,
-      calories: food.kcal || food.calories
+watch(
+  () => props.foods,
+  (newFoods) => {
+    console.log("선택된 음식 목록 변경:", newFoods);
+    newFoods.forEach((food, index) => {
+      console.log(`음식 ${index}:`, {
+        id: food.id,
+        name: food.foodName || food.name,
+        calories: food.kcal || food.calories,
+      });
     });
-  });
-}, { deep: true });
+  },
+  { deep: true }
+);
 
 // 총 칼로리 계산
 const totalCalories = computed(() => {
@@ -77,14 +81,14 @@ const totalCalories = computed(() => {
 
 // 음식 제거
 function removeFood(food) {
-  emit('remove-food', food);
+  emit("remove-food", food);
   toast.info(`${food.foodName || food.name}이(가) 제거되었습니다. 🗑️`);
 }
 
 // ✅ 백엔드 구조에 맞춘 식단 저장
 async function saveDiet() {
   if (props.foods.length === 0) {
-    toast.warning('선택된 음식이 없습니다. 🍽️');
+    toast.warning("선택된 음식이 없습니다. 🍽️");
     return;
   }
 
@@ -97,31 +101,34 @@ async function saveDiet() {
       foods: [
         {
           mealType: selectedMealType.value, // MealType enum
-          foodIds: props.foods.map(food => food.id) // List<Long>
-        }
-      ]
+          foodIds: props.foods.map((food) => food.id), // List<Long>
+        },
+      ],
     };
 
-    console.log('저장할 식단 데이터 (백엔드 구조):', dietData);
-    console.log('선택된 음식 ID들:', props.foods.map(food => food.id));
+    console.log("저장할 식단 데이터 (백엔드 구조):", dietData);
+    console.log(
+      "선택된 음식 ID들:",
+      props.foods.map((food) => food.id)
+    );
 
     const result = await foodService.createDiet(dietData);
 
-    const mealTypeKorean = {
-      'TODAY': '오늘늘'
-      'BREAKFAST': '아침',
-      'LUNCH': '점심',
-      'DINNER': '저녁',
-      'SNACK': '간식'
-    }[selectedMealType.value] || '오늘';
+    const mealTypeKorean =
+      {
+        TODAY: "오늘",
+        BREAKFAST: "아침",
+        LUNCH: "점심",
+        DINNER: "저녁",
+        SNACK: "간식",
+      }[selectedMealType.value] || "오늘";
 
     toast.success(`${mealTypeKorean} 식단이 저장되었습니다! 🎉`);
-    emit('foods-saved', result);
-
+    emit("foods-saved", result);
   } catch (error) {
-    console.error('식단 저장 실패:', error);
-    console.error('에러 응답:', error.response?.data);
-    console.error('요청 데이터:', error.config?.data);
+    console.error("식단 저장 실패:", error);
+    console.error("에러 응답:", error.response?.data);
+    console.error("요청 데이터:", error.config?.data);
 
     if (error.response?.status === 401) {
       toast.error("로그인이 필요합니다. 🔐");
