@@ -6,77 +6,68 @@
       <!-- 왼쪽: 음식 검색 + 선택 -->
       <div class="left-section">
         <SearchFood @select-food="addFood" />
-        <SelectedFoodList 
-          :foods="selectedFoods" 
-          :selectedDate="selectedDate"
-          @remove-food="removeFood"
-          @foods-saved="onFoodsSaved"
-        />
+        <SelectedFoodList :foods="selectedFoods" :selectedDate="selectedDate" @remove-food="removeFood" @foods-saved="onFoodsSaved" />
       </div>
 
       <!-- 오른쪽: 일기 작성 -->
       <div class="right-section">
-        <DiaryEditor
-          :date="selectedDate"
-          :userName="userName"
-          @diary-saved="onDiarySaved"
-        />
+        <DiaryEditor :date="selectedDate" :userName="userName" @diary-saved="onDiarySaved" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import SearchFood from '@/components/registerFood/SearchFood.vue';
-import SelectedFoodList from '@/components/registerFood/SelectedFoodList.vue';
-import DiaryEditor from '@/components/registerFood/DiaryEditor.vue';
+import { ref, watchEffect, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import SearchFood from "@/components/registerFood/SearchFood.vue";
+import SelectedFoodList from "@/components/registerFood/SelectedFoodList.vue";
+import DiaryEditor from "@/components/registerFood/DiaryEditor.vue";
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
-const selectedDate = ref('');
+const selectedDate = ref("");
 const selectedFoods = ref([]);
 
 // 사용자 이름 computed (JWT에서 가져옴)
 const userName = computed(() => {
-  return userStore.userName || '사용자';
+  return userStore.userName || "사용자";
 });
 
 // 인증 확인 및 사용자 정보 로드
 onMounted(async () => {
-  const token = localStorage.getItem('accessToken');
-  
+  const token = localStorage.getItem("accessToken");
+
   if (!token) {
-    alert('로그인이 필요합니다.');
-    router.push('/login');
+    alert("로그인이 필요합니다.");
+    router.push("/login");
     return;
   }
 
   // JWT에서 사용자 정보 로드
   const isLoaded = userStore.loadUserFromToken();
   if (!isLoaded) {
-    alert('인증 정보가 유효하지 않습니다. 다시 로그인해주세요.');
-    router.push('/login');
+    alert("인증 정보가 유효하지 않습니다. 다시 로그인해주세요.");
+    router.push("/login");
     return;
   }
 
-  console.log('로그인된 사용자:', userName.value);
+  console.log("로그인된 사용자:", userName.value);
 });
 
 // 날짜 감지: 쿼리에서 가져오되 없으면 오늘 날짜
 watchEffect(() => {
   const dateFromRoute = route.query.date;
-  if (typeof dateFromRoute === 'string' && isValidDate(dateFromRoute)) {
+  if (typeof dateFromRoute === "string" && isValidDate(dateFromRoute)) {
     selectedDate.value = dateFromRoute;
   } else {
     const today = new Date();
     const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
     selectedDate.value = `${yyyy}-${mm}-${dd}`;
   }
 });
@@ -85,7 +76,7 @@ watchEffect(() => {
 function isValidDate(dateString) {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
   if (!regex.test(dateString)) return false;
-  
+
   const date = new Date(dateString);
   return date instanceof Date && !isNaN(date.getTime());
 }
@@ -93,30 +84,30 @@ function isValidDate(dateString) {
 // 음식 추가
 function addFood(food) {
   // 중복 확인 (ID 기준)
-  if (!selectedFoods.value.find(f => f.id === food.id)) {
+  if (!selectedFoods.value.find((f) => f.id === food.id)) {
     selectedFoods.value.push(food);
   } else {
-    alert('이미 선택된 음식입니다.');
+    alert("이미 선택된 음식입니다.");
   }
 }
 
 // 음식 제거
 function removeFood(food) {
-  selectedFoods.value = selectedFoods.value.filter(f => f.id !== food.id);
+  selectedFoods.value = selectedFoods.value.filter((f) => f.id !== food.id);
 }
 
 // 식단 저장 완료 후 처리
 function onFoodsSaved(result) {
-  console.log('식단 저장 완료:', result);
-  
+  console.log("식단 저장 완료:", result);
+
   // 선택된 음식 목록 초기화 (선택사항)
   selectedFoods.value = [];
 }
 
 // 일기 저장 완료 후 처리
 function onDiarySaved() {
-  console.log('일기 저장 완료');
-  
+  console.log("일기 저장 완료");
+
   // 저장 완료 후 달력 페이지로 이동하거나 다른 액션 수행
   // router.push('/calendar');
 }
@@ -125,18 +116,21 @@ function onDiarySaved() {
 <style scoped>
 .register-container {
   /* 전체 페이지 컨테이너 */
-  min-height: calc(100vh - 64px - 60px); /* header/footer 고려 */
+  min-height: 100vh;
   width: 100%;
   background: linear-gradient(135deg, #d9f6ee 0%, #c8f5ea 50%, #b8f4e6 100%);
-  
+
   /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  
+
   padding: 2rem;
   box-sizing: border-box;
+
+  /* 스크롤 허용 */
+  overflow-y: auto;
 }
 
 .title {
@@ -161,6 +155,7 @@ function onDiarySaved() {
   align-items: flex-start;
   width: 100%;
   max-width: 1400px;
+  flex: 1;
 }
 
 /* ====== 공통 섹션 스타일 ====== */
@@ -169,22 +164,42 @@ function onDiarySaved() {
   flex: 1 1 50%;
   min-width: 400px;
   max-width: 650px;
-  
-  /* 글래스모피즘 스타일 */
+
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   padding: 2.5rem;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(33, 213, 155, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  
+
   box-sizing: border-box;
-  min-height: 600px;
+  max-height: 80vh; /* ✅ 최대 높이 제한 */
+  overflow-y: auto; /* ✅ 개별 섹션 스크롤 */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  position: relative;
-  overflow: visible;
+}
+
+/* ✅ 스크롤바 스타일링 */
+.left-section::-webkit-scrollbar,
+.right-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.left-section::-webkit-scrollbar-track,
+.right-section::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.left-section::-webkit-scrollbar-thumb,
+.right-section::-webkit-scrollbar-thumb {
+  background: rgba(33, 213, 155, 0.3);
+  border-radius: 4px;
+}
+
+.left-section::-webkit-scrollbar-thumb:hover,
+.right-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(33, 213, 155, 0.5);
 }
 
 /* ====== 음식 검색 영역 (좌측) ====== */
@@ -203,13 +218,13 @@ function onDiarySaved() {
   .layout {
     gap: 4rem;
   }
-  
+
   .left-section,
   .right-section {
     min-width: 450px;
     max-width: 700px;
   }
-  
+
   .register-container {
     padding: 3rem;
   }
@@ -220,18 +235,18 @@ function onDiarySaved() {
   .register-container {
     padding: 2rem;
   }
-  
+
   .layout {
     gap: 2rem;
   }
-  
+
   .left-section,
   .right-section {
     min-width: 350px;
     max-width: 550px;
     padding: 2rem;
   }
-  
+
   .title {
     font-size: 2.2rem;
     margin-bottom: 2rem;
@@ -243,16 +258,16 @@ function onDiarySaved() {
   .register-container {
     padding: 1.5rem;
   }
-  
+
   .title {
     font-size: 2rem;
     margin-bottom: 1.5rem;
   }
-  
+
   .layout {
     gap: 1.5rem;
   }
-  
+
   .left-section,
   .right-section {
     min-width: 300px;
@@ -269,7 +284,7 @@ function onDiarySaved() {
     align-items: center;
     gap: 1.5rem;
   }
-  
+
   .left-section,
   .right-section {
     flex: 1 1 auto;
@@ -278,12 +293,12 @@ function onDiarySaved() {
     width: 100%;
     min-height: 400px;
   }
-  
+
   .title {
     font-size: 1.8rem;
     margin-bottom: 1rem;
   }
-  
+
   .register-container {
     padding: 1rem;
   }
@@ -294,17 +309,17 @@ function onDiarySaved() {
   .register-container {
     padding: 0.75rem;
   }
-  
+
   .left-section,
   .right-section {
     padding: 1rem;
     min-height: 350px;
   }
-  
+
   .title {
     font-size: 1.5rem;
   }
-  
+
   .layout {
     gap: 1rem;
   }
@@ -316,12 +331,12 @@ function onDiarySaved() {
     min-height: calc(100vh - 50px - 40px);
     padding: 1rem;
   }
-  
+
   .left-section,
   .right-section {
     min-height: 300px;
   }
-  
+
   .title {
     margin-bottom: 1rem;
   }

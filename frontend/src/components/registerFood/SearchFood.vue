@@ -66,7 +66,7 @@ function debouncedSearch() {
   }, 300);
 }
 
-// 음식 검색 실행
+// ✅ 검색 함수 개선 (응답 구조 확인)
 async function searchFoods() {
   loading.value = true;
   error.value = "";
@@ -77,8 +77,10 @@ async function searchFoods() {
     const result = await foodService.searchFoods(query.value.trim());
 
     console.log("검색 결과 원본:", result);
+    console.log("검색 결과 타입:", typeof result);
+    console.log("배열 여부:", Array.isArray(result));
 
-    // 배열인지 확인하고 처리
+    // 응답 구조에 따른 처리
     if (Array.isArray(result)) {
       foods.value = result;
     } else if (result && typeof result === "object") {
@@ -89,6 +91,12 @@ async function searchFoods() {
     }
 
     console.log("처리된 검색 결과:", foods.value);
+
+    // 첫 번째 음식의 구조 확인
+    if (foods.value.length > 0) {
+      console.log("첫 번째 음식 구조:", foods.value[0]);
+      console.log("사용 가능한 필드들:", Object.keys(foods.value[0]));
+    }
   } catch (err) {
     console.error("검색 에러:", err);
     console.error("에러 응답:", err.response?.data);
@@ -107,6 +115,14 @@ async function searchFoods() {
   } finally {
     loading.value = false;
   }
+}
+
+function select(food) {
+  console.log("선택된 음식 원본:", food);
+  console.log("음식 ID:", food.id);
+  console.log("음식 이름:", food.foodName || food.name);
+  console.log("칼로리:", food.kcal || food.calories);
+  emit("select-food", food);
 }
 
 // ✅ 검색 재시도 함수 유지
@@ -129,11 +145,6 @@ const paginatedFoods = computed(() => {
 // 페이지 변경
 function setPage(page) {
   currentPage.value = page;
-}
-
-// 음식 선택
-function select(food) {
-  emit("select-food", food);
 }
 </script>
 

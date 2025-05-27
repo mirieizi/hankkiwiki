@@ -11,8 +11,8 @@
     <ul v-else class="selected-list">
       <li v-for="food in foods" :key="food.id" class="selected-item">
         <div class="food-info">
-          <span class="food-name">{{ food.name }}</span>
-          <small class="food-calories">{{ food.calories }} kcal</small>
+          <span class="food-name">{{ food.foodName || food.name || "음식명 없음" }}</span>
+          <small class="food-calories">{{ food.kcal || food.calories || 0 }} kcal</small>
         </div>
         <button class="remove-button" @click="removeFood(food)" aria-label="삭제">✕</button>
       </li>
@@ -26,6 +26,7 @@
     <div v-if="foods.length > 0" class="meal-type-section">
       <label for="mealType" class="meal-type-label">식사 타입:</label>
       <select v-model="selectedMealType" id="mealType" class="meal-type-select">
+        <option value="TODAY">오늘</option>
         <option value="BREAKFAST">아침</option>
         <option value="LUNCH">점심</option>
         <option value="DINNER">저녁</option>
@@ -40,73 +41,87 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { toast } from "vue3-toastify";
-import { foodService } from "@/services/foodService";
+import { ref, computed, watch } from 'vue';
+import { toast } from 'vue3-toastify';
+import { foodService } from '@/services/foodService';
 
 const props = defineProps({
-  foods: {
-    type: Array,
-    required: true,
-  },
-  selectedDate: {
-    type: String,
-    required: true,
-  },
+  foods: { type: Array, required: true },
+  selectedDate: { type: String, required: true }
 });
 
-const emit = defineEmits(["remove-food", "foods-saved"]);
+const emit = defineEmits(['remove-food', 'foods-saved']);
 
 const saving = ref(false);
-const selectedMealType = ref("LUNCH");
+const selectedMealType = ref('LUNCH');
+
+// 디버깅용 로그
+watch(() => props.foods, (newFoods) => {
+  console.log('선택된 음식 목록 변경:', newFoods);
+  newFoods.forEach((food, index) => {
+    console.log(`음식 ${index}:`, {
+      id: food.id,
+      name: food.foodName || food.name,
+      calories: food.kcal || food.calories
+    });
+  });
+}, { deep: true });
 
 // 총 칼로리 계산
 const totalCalories = computed(() => {
-  return props.foods.reduce((sum, food) => sum + (food.calories || 0), 0);
+  return props.foods.reduce((sum, food) => {
+    const calories = food.kcal || food.calories || 0;
+    return sum + calories;
+  }, 0);
 });
 
 // 음식 제거
 function removeFood(food) {
-  emit("remove-food", food);
-  toast.info(`${food.foodName || food.name}이(가) 제거되었습니다.`);
+  emit('remove-food', food);
+  toast.info(`${food.foodName || food.name}이(가) 제거되었습니다. 🗑️`);
 }
 
-// 식단 저장 (Diet API 사용)
+// ✅ 백엔드 구조에 맞춘 식단 저장
 async function saveDiet() {
   if (props.foods.length === 0) {
-    toast.warning("선택된 음식이 없습니다. 🍽️");
+    toast.warning('선택된 음식이 없습니다. 🍽️');
     return;
   }
 
   saving.value = true;
 
   try {
+    // ✅ 백엔드 DietCreateRequestDto 구조에 맞춘 데이터 생성
     const dietData = {
-      takeAt: props.selectedDate,
-      mealType: selectedMealType.value,
-      foods: props.foods.map((food) => ({
-        foodId: food.id,
-        name: food.foodName || food.name,
-        calories: food.kcal || food.calories || 0,
-      })),
+      takeAt: props.selectedDate, // LocalDate
+      foods: [
+        {
+          mealType: selectedMealType.value, // MealType enum
+          foodIds: props.foods.map(food => food.id) // List<Long>
+        }
+      ]
     };
 
-    console.log("저장할 식단 데이터:", dietData);
+    console.log('저장할 식단 데이터 (백엔드 구조):', dietData);
+    console.log('선택된 음식 ID들:', props.foods.map(food => food.id));
+
     const result = await foodService.createDiet(dietData);
 
-    // ✅ 성공 토스트
-    const mealTypeKorean =
-      {
-        BREAKFAST: "아침",
-        LUNCH: "점심",
-        DINNER: "저녁",
-        SNACK: "간식",
-      }[selectedMealType.value] || "식단";
+    const mealTypeKorean = {
+      'TODAY': '오늘늘'
+      'BREAKFAST': '아침',
+      'LUNCH': '점심',
+      'DINNER': '저녁',
+      'SNACK': '간식'
+    }[selectedMealType.value] || '오늘';
 
     toast.success(`${mealTypeKorean} 식단이 저장되었습니다! 🎉`);
-    emit("foods-saved", result);
+    emit('foods-saved', result);
+
   } catch (error) {
-    console.error("식단 저장 실패:", error);
+    console.error('식단 저장 실패:', error);
+    console.error('에러 응답:', error.response?.data);
+    console.error('요청 데이터:', error.config?.data);
 
     if (error.response?.status === 401) {
       toast.error("로그인이 필요합니다. 🔐");
