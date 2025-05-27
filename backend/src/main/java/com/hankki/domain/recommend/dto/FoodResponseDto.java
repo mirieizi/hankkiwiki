@@ -55,8 +55,6 @@ public class FoodResponseDto {
 
     @Schema(description = "콜레스테롤(mg)", example = "15")
     private double cholesterol;
-
-    @Schema(description = "GPT 추천 이유")
     private String reason;
 
     public static FoodResponseDto fromEntity(Food food, String reason) {
@@ -78,4 +76,22 @@ public class FoodResponseDto {
                 .build();
     }
 
+    // ✅ 호환성을 위한 별칭 메서드 추가
+    public static FoodResponseDto from(Food food) {
+        return FoodResponseDto.builder()
+                .id(food.getId())
+                .foodName(food.getFoodName())
+                .majorCategory(food.getMajorCategory())
+                .subCategory(food.getSubCategory())
+                .servingSize(food.getServingSize())
+                .kcal(food.getKcal())
+                .moisture(food.getMoisture())
+                .carbohydrate(food.getCarbohydrate())
+                .protein(food.getProtein())
+                .fat(food.getFat())
+                .sugar(food.getSugar())
+                .sodium(food.getSodium())
+                .cholesterol(food.getCholesterol())
+                .build();
+    }
 }
