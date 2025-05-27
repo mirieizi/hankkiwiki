@@ -4,22 +4,23 @@ FROM openjdk:17-jdk-slim AS builder
 # 작업 디렉토리 설정
 WORKDIR /workspace
 
-# 로컬 Maven 캐시 볼륨 마운트
+# 로컬 Maven 캐시 볼륨 마운트 (빌드 캐시 활용)
 VOLUME /root/.m2
 
-# mvnw 스크립트 및 .mvn 전체 복사
+# mvnw 스크립트 및 .mvn 디렉토리 복사
 COPY mvnw .
 COPY .mvn .mvn
 
-# pom.xml 및 소스 복사
+# pom.xml 및 소스 코드 복사
 COPY pom.xml .
 COPY src/ src/
 
 # mvnw 실행 권한 부여
 RUN chmod +x mvnw
 
-# 패키징 (테스트 스킵)
-RUN ./mvnw clean package -DskipTests
+# 비대화형 모드(-B)로 패키징 (테스트 스킵)
+RUN ./mvnw clean package -DskipTests -B
+
 
 # Stage 2: Runtime 이미지
 FROM openjdk:17-jdk-slim
@@ -28,73 +29,12 @@ WORKDIR /app
 # 빌드된 JAR 파일 복사
 COPY --from=builder /workspace/target/*.jar app.jar
 
+# 서비스 포트 노출
+EXPOSE 8080
+
+# 헬스체크 설정 (Spring Boot Actuator 필요)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD wget --quiet --spider http://localhost:8080/actuator/health || exit 1
+
 # 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
-COPY mvnw .
-RUN ls -al && cat mvnw
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Base image
-# FROM openjdk:17-jdk-slim AS builder
-
-# # 작업 디렉토리 설정
-# WORKDIR /workspace
-
-# VOLUME /root/.m2
-
-# # 빌드에 필요한 파일 복사
-# COPY mvnw .
-# COPY .mvn/wrapper .mvn/wrapper
-# COPY pom.xml .
-# COPY src src
-
-# # 빌드
-# RUN ./mvnw clean package -DskipTests
-
-# # 런타임 이미지
-# FROM openjdk:17-jdk-slim
-# WORKDIR /app
-
-# COPY --from=builder /workspace/target/hankkiwiki-0.0.1-SNAPSHOT.jar app.jar
-
-# # 애플리케이션 실행
-# ENTRYPOINT ["java", "-jar", "app.jar"]
-
-
-#
-## Stage 1: build with Maven + JDK-17
-#FROM maven:3-openjdk-17-slim AS builder
-#WORKDIR /workspace
-#
-## 1) 복사 pom, 소스
-#COPY pom.xml ./
-#RUN mvn dependency:go-offline
-#
-## 전체 소스 복사
-#COPY . .
-#
-## 빌드
-#RUN mvn clean package -DskipTests
-#
-## Stage 2: run the fat JAR on a slim JRE
-#FROM openjdk:17-jdk-slim
-#WORKDIR /workspace
-#
-## 3) 빌드된 JAR만 복사
-#COPY --from=builder /workspace/target/*.jar app.jar
-#
-## 4) 앱 실행
-#ENTRYPOINT ["java","-jar","app.jar"]

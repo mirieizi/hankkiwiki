@@ -12,7 +12,7 @@ DOCKERFILE_PATH=Dockerfile
 DOCKER_CONTEXT=.
 DOCKER_COMPOSE_FILE=docker-compose-server.yml
 PROJECT_NAME=hankkiwiki-server
-DOCKER_COMPOSE_CMD=docker-compose -f $(DOCKER_COMPOSE_FILE) -p $(PROJECT_NAME)
+DOCKER_COMPOSE_CMD=docker compose -f $(DOCKER_COMPOSE_FILE) -p $(PROJECT_NAME)
 
 # ========================================
 # 공통 명령어 (macOS/Linux/Windows)
