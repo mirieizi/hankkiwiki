@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 // ✅ 수정: 동적 import로 변경하거나 getter에서 제거
 // import { recommendService } from "@/services/recommendService";
+// stores/recommend.js에서 수정
+import RandomAnimation from "@/components/animation/RandomAnimation.vue";
+import AnalysisAnimation from "@/components/animation/AnalysisAnimation.vue";
+import CustomAnimation from "@/components/animation/CustomAnimation.vue";
+import AIAnimation from "@/components/animation/AIAnimation.vue";
 
 export const useRecommendStore = defineStore("recommend", {
   state: () => ({
@@ -21,12 +26,52 @@ export const useRecommendStore = defineStore("recommend", {
     // UI expansion flag
     expanded: false,
 
+    // ✅ 추가: isChatting state
+    isChatting: false,
+
     // 동적 모드 설정
+    // stores/recommend.js에서 수정
     availableModes: [
-      { mode: "random", label: "랜덤 추천", cost: 1, icon: "🎲", description: "무작위로 음식을 추천합니다" },
-      { mode: "custom", label: "새로운 맛", cost: 2, icon: "🌟", description: "평소와 다른 새로운 맛을 추천합니다" },
-      { mode: "history", label: "취향 맞춤", cost: 2, icon: "❤️", description: "최근 식단을 바탕으로 취향에 맞는 음식을 추천합니다" },
-      { mode: "ai", label: "AI 추천", cost: 3, icon: "🤖", description: "AI가 건강정보와 선호도를 고려해 추천합니다" },
+      {
+        mode: "random",
+        id: "random",
+        label: "랜덤 추천",
+        cost: 1,
+        icon: "🎲",
+        desc: "랜덤으로 추천",
+        description: "무작위로 음식을 추천합니다",
+        animation: RandomAnimation, // ✅ 실제 컴포넌트 객체
+      },
+      {
+        mode: "history",
+        id: "history",
+        label: "새로운 맛",
+        cost: 1,
+        icon: "🕓",
+        desc: "3일 내 식단과 가장 거리가 먼 음식 추천",
+        description: "최근 식단과 가장 거리가 먼 음식을 추천합니다",
+        animation: AnalysisAnimation, // ✅ 실제 컴포넌트 객체
+      },
+      {
+        mode: "ai",
+        id: "ai",
+        label: "AI 추천",
+        cost: 2,
+        icon: "🤖",
+        desc: "내 식단과 건강정보를 활용한 RAG AI추천",
+        description: "AI가 건강정보와 선호도를 고려해 추천합니다",
+        animation: AIAnimation, // ✅ 실제 컴포넌트 객체
+      },
+      {
+        mode: "custom",
+        id: "custom",
+        label: "취향 맞춤",
+        cost: 1,
+        icon: "✨",
+        desc: "최근 음식과 비슷한 추천",
+        description: "최근 식단을 바탕으로 취향에 맞는 음식을 추천합니다",
+        animation: CustomAnimation, // ✅ 실제 컴포넌트 객체
+      },
     ],
   }),
 
@@ -48,6 +93,9 @@ export const useRecommendStore = defineStore("recommend", {
       const config = state.availableModes.find((mode) => mode.mode === state.currentMode);
       return state.remainingSpoons >= (config?.cost || 1);
     },
+
+    // ✅ 수정: getters 안으로 이동
+    isGlobalBlocked: (state) => state.loading || state.isChatting,
   },
 
   actions: {
@@ -60,6 +108,10 @@ export const useRecommendStore = defineStore("recommend", {
     setCurrentMode(mode) {
       this.currentMode = mode;
       this.resetRecommend();
+    },
+
+    setIsChatting(value) {
+      this.isChatting = value;
     },
 
     // ✅ 수정: 동적 import 사용
@@ -180,6 +232,7 @@ export const useRecommendStore = defineStore("recommend", {
       this.showNoHistoryPrompt = false;
       this.showLoginPrompt = false;
       this.expanded = false;
+      this.isChatting = false;
     },
   },
 });

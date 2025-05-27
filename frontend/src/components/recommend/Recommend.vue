@@ -4,7 +4,7 @@
       <!-- 좌측: 추천 모드 2x2 버튼 -->
       <div class="mode-sidebar">
         <div class="mode-grid">
-          <button v-for="m in modes" :key="m.id" class="mode-btn" :class="{ active: mode === m.id }" @click="goMode(m.id)" type="button" :disabled="loading">
+          <button v-for="m in modes" :key="m.id" class="mode-btn" :class="{ active: store.currentMode === m.id }" @click="goMode(m.id)" type="button" :disabled="store.isGlobalBlocked">
             <div class="icon">{{ m.icon }}</div>
             <div class="title">{{ m.label }}</div>
             <div class="desc">{{ m.desc }}</div>
@@ -19,7 +19,7 @@
           <div class="mockup-content">
             <div class="recommend-inner">
               <div class="run-button">
-                <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" :disabled="loading || spoonCount < spoonCost" @run="onRun" />
+                <RecommendButton :label="buttonLabel" :cost="spoonCost" :spoonCount="spoonCount" :loading="loading" :disabled="store.isGlobalBlocked || spoonCount < spoonCost" @run="onRun" />
               </div>
 
               <div v-if="!isResultReady && !showNoHistoryPrompt && !showLoginPrompt" class="content-area">
@@ -138,10 +138,23 @@ const store = useRecommendStore();
 const props = defineProps({ initialMode: { type: String, default: null } });
 const route = useRoute();
 const router = useRouter();
-const mode = ref(props.initialMode ?? route.params.mode ?? "random");
+const mode = computed({
+  get: () => store.currentMode,
+  set: (value) => store.setCurrentMode(value),
+});
+
+onMounted(() => {
+  const routeMode = route.params.mode || props.initialMode || "random";
+  if (routeMode !== store.currentMode) {
+    store.setCurrentMode(routeMode);
+  }
+});
 
 // local state
-const isChatting = ref(false);
+const isChatting = computed({
+  get: () => store.isChatting,
+  set: (value) => store.setIsChatting(value),
+});
 const isResultReady = ref(false);
 
 // computed
@@ -184,40 +197,41 @@ const searchKeyword = computed(() => safeRecommendation.value.foodName || "요�
 const coupangUrl = computed(() => `https://www.coupang.com/np/search?q=${encodeURIComponent(searchKeyword.value)}`);
 
 // 추천 모드 정보
-const modes = [
-  { id: "random", label: "랜덤 추천", icon: "🎲", desc: "랜덤으로 추천", cost: 1, animation: RandomAnimation },
-  { id: "history", label: "새로운 맛", icon: "🕓", desc: "3일 내 식단과 가장 거리가 먼 음식 추천", cost: 1, animation: AnalysisAnimation },
-  { id: "ai", label: "AI 추천", icon: "🤖", desc: "내 식단과 건강정보를 활용한 RAG AI추천", cost: 2, animation: AIAnimation },
-  { id: "custom", label: "취향 맞춤", icon: "✨", desc: "최근 음식과 비슷한 추천", cost: 1, animation: CustomAnimation },
-];
-
-// 실행 버튼 핸들러 (수정)
+const modes = computed(() => store.availableModes);
+// 실행 버튼 핸들러 (합친 최종 버전)
 async function onRun() {
+  // 1) 스푼 부족 체크
   if (spoonCount.value < spoonCost.value) {
     alert("스푼이 부족합니다!");
     return;
   }
 
-  // 스푼 사용
+  // 2) 이미 추천 진행 중인지 체크
+  if (loading.value || isChatting.value) {
+    console.log("이미 추천 진행 중입니다.");
+    return;
+  }
+
+  // 3) 스푼 사용
   await store.useSpoons(spoonCost.value);
 
+  // 4) UI 상태 초기화
   store.hasRun = true;
   store.runCount++;
   isResultReady.value = false;
   isChatting.value = true;
 
+  // 5) 실제 추천 API 호출
   try {
     if (mode.value !== "ai") {
-      // ✅ 수정: store.fetchRecommendation 호출 방법 확인
       await store.fetchRecommendation(mode.value);
     }
-    // AI 모드는 애니메이션에서 처리
+    // 'ai' 모드는 애니메이션 컴포넌트에서 onAiChatDone으로 처리됩니다.
   } catch (error) {
     console.error("추천 실패:", error);
     isChatting.value = false;
     store.hasRun = false;
   }
-  // AI 모드는 애니메이션에서 사용자 입력 받은 후 onAiChatDone에서 처리
 }
 
 // 랜덤/히스토리/커스텀 애니메이션 완료
@@ -243,9 +257,13 @@ function onAiChatDone(payload) {
 // 모드 전환
 function goMode(id) {
   if (loading.value) return;
-  if (id === mode.value) return;
+  if (isChatting.value) {
+    console.log("추천 진행 중에는 모드를 변경할 수 없습니다.");
+    return;
+  }
+  if (id === store.currentMode) return;
   router.push(`/recommend/${id}`);
-  mode.value = id;
+  store.setCurrentMode(id);
   store.resetRecommend();
   store.fetchRemainingSpoons();
   store.fetchHistoryRecords();
@@ -255,7 +273,7 @@ function goMode(id) {
 
 // 식단 등록 페이지로 이동
 function goToRegister() {
-  router.push("/register-food");
+  router.push("/food/register");
 }
 
 // 로그인 페이지로 이동
@@ -275,16 +293,26 @@ onMounted(async () => {
 // 라우트 변경 감지
 watch(
   () => route.params.mode,
-  (m) => {
-    if (!props.initialMode && m) {
-      mode.value = m;
+  (newMode) => {
+    if (!props.initialMode && newMode) {
+      // 기존 조건 유지
+      console.log(`라우트 변경 감지: ${store.currentMode} → ${newMode}`);
+      // 모드 업데이트
+      store.setCurrentMode(newMode);
+
+      // 기존 추천 상태 초기화
       store.resetRecommend();
+
+      // 새로운 모드에 맞는 데이터 로드
       store.fetchRemainingSpoons();
       store.fetchHistoryRecords();
+
+      // UI 상태 초기화
       isResultReady.value = false;
-      isChatting.value = false;
+      store.setIsChatting(false);
     }
-  }
+  },
+  { immediate: true }
 );
 </script>
 
