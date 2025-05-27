@@ -21,7 +21,7 @@ export const useRecommendStore = defineStore("recommend", {
   }),
 
   actions: {
-    // 랜덤 / 히스토리 / 커스텀 추천 (추천 후 스푼 동기화)
+    // 랜덤 / 히스토리 / 커스텀 추천 (POST 방식으로 수정)
     async fetchRecommendation(mode) {
       this.loading = true;
       this.showNoHistoryPrompt = false;
@@ -54,28 +54,24 @@ export const useRecommendStore = defineStore("recommend", {
       } finally {
         this.loading = false;
       }
-      try {
-        const { data } = await axios.get(url);
-        this.recommendation = data;
-        this.hasRun = true;
-      } finally {
-        this.loading = false;
-        // 추천 끝나고 스푼 동기화
-        await this.fetchRemainingSpoons();
-      }
     },
 
-    // AI 추천 (RAG 기반, 추천 후 스푼 동기화)
+    // AI 추천 (RAG 기반)
     async fetchAiRecommendation(payload) {
       this.loading = true;
+      this.showNoHistoryPrompt = false;
+      this.showLoginPrompt = false;
+      
       try {
-        const { data } = await axios.post("/recommend/rag", payload);
-        this.recommendation = data;
+        const result = await recommendService.getRagRecommendation(payload);
+        this.recommendation = result;
         this.hasRun = true;
+      } catch (error) {
+        console.error('AI 추천 실패:', error);
+        this.handleRecommendError(error, 'ai');
+        throw error;
       } finally {
         this.loading = false;
-        // 추천 끝나고 스푼 동기화
-        await this.fetchRemainingSpoons();
       }
     },
 
@@ -101,16 +97,42 @@ export const useRecommendStore = defineStore("recommend", {
       }
     },
 
-    // 최근 3일간의 식단 기록 유무(T/F)로 받음
+    // 최근 3일간의 식단 기록 불러오기
     async fetchHistoryRecords() {
       try {
-        const { data } = await axios.get("/diet/history-records");
-        // data === true or false
-        this.showNoHistoryPrompt = !data; // 기록 없으면 true(프롬프트 노출)
+        const data = await recommendService.getHistoryRecords();
+        this.historyRecords = data || [];
+        
+        // 히스토리가 없으면 프롬프트 표시하지 않음 (기본적으로 false)
+        // this.showNoHistoryPrompt = Array.isArray(data) && data.length === 0;
       } catch (e) {
         console.error("fetchHistoryRecords error:", e);
-        // 네트워크/예외 시에는 일단 "없음" 처리
-        this.showNoHistoryPrompt = true;
+        this.historyRecords = [];
+        
+        // 인증 오류면 로그인 프롬프트
+        if (e.response?.status === 401) {
+          this.showLoginPrompt = true;
+        }
+      }
+    },
+
+    // 에러 처리 통합
+    handleRecommendError(error, mode) {
+      const status = error.response?.status;
+      
+      if (status === 401) {
+        this.showLoginPrompt = true;
+      } else if (status === 404) {
+        // 히스토리나 커스텀 모드에서 데이터 부족
+        if (mode === 'history' || mode === 'custom') {
+          this.showNoHistoryPrompt = true;
+        }
+      } else if (status === 429) {
+        alert('추천 가능 횟수를 초과했습니다. 나중에 다시 시도해주세요.');
+      } else if (status >= 500) {
+        alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        alert('추천 중 오류가 발생했습니다.');
       }
     },
 
