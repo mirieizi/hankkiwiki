@@ -1,6 +1,8 @@
 package com.hankki.domain.vector.util;
 
 import com.hankki.domain.user.constant.Gender;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ArrayOutput;
@@ -11,9 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -35,28 +36,19 @@ public class RedisVectorSearcher {
     };
 
     private static final int VECTOR_DIMENSION = 9;
+    private static volatile Boolean redisStackSupported = null;
 
     /**
      * KNN 검색 (가장 유사한 벡터들)
      */
     public List<Long> knnSearch(Gender gender, double[] queryVector, int limit) {
-        if (!validateSearchInput(gender, queryVector, limit)) {
-            return Collections.emptyList();
-        }
-
-        if (!checkRedisStackSupport()) {
-            log.error("[RedisVectorSearcher] Redis Stack 미지원으로 검색 불가");
-            return Collections.emptyList();
-        }
+        if (!validateSearchInput(gender, queryVector, limit)) return Collections.emptyList();
+        if (!checkRedisStackSupport()) return Collections.emptyList();
 
         String indexName = "idx_" + gender.key();
         byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
 
         try {
-            log.debug("[RedisVectorSearcher] KNN 검색 시작: index={}, limit={}, vector_size={}",
-                    indexName, limit, vectorBytes.length);
-
-            // FT.SEARCH idx_male "*=>[KNN 30 @vector $BLOB]" PARAMS 2 BLOB vectorBytes RETURN 1 __key DIALECT 2
             Object result = redisCommands.dispatch(
                     FT_SEARCH,
                     new ArrayOutput<>(ByteArrayCodec.INSTANCE),
@@ -66,12 +58,10 @@ public class RedisVectorSearcher {
                             .add("PARAMS".getBytes(StandardCharsets.UTF_8)).add(2)
                             .add("BLOB".getBytes(StandardCharsets.UTF_8)).add(vectorBytes)
                             .add("RETURN".getBytes(StandardCharsets.UTF_8)).add(1).add("__key".getBytes(StandardCharsets.UTF_8))
+                            .add("SORTBY".getBytes(StandardCharsets.UTF_8)).add("__vector_score".getBytes(StandardCharsets.UTF_8)).add("ASC".getBytes(StandardCharsets.UTF_8))
                             .add("DIALECT".getBytes(StandardCharsets.UTF_8)).add(2)
             );
-
-            List<Long> results = parseSearchResults(result, gender);
-            log.info("[RedisVectorSearcher] KNN 검색 완료: index={}, 결과 수={}", indexName, results.size());
-            return results;
+            return parseSearchResults(result, gender, limit);
 
         } catch (Exception e) {
             log.error("[RedisVectorSearcher] KNN 검색 실패: gender={}, error={}", gender, e.getMessage(), e);
@@ -80,27 +70,29 @@ public class RedisVectorSearcher {
     }
 
     /**
-     * 가장 먼 벡터 검색 (역순 정렬)
+     * 가장 먼 벡터 검색 (Redis에서 내림차순 정렬)
      */
     public List<Long> furthestSearch(Gender gender, double[] queryVector, int limit) {
-        if (!validateSearchInput(gender, queryVector, limit)) {
-            return Collections.emptyList();
-        }
+        if (!validateSearchInput(gender, queryVector, limit)) return Collections.emptyList();
+        if (!checkRedisStackSupport()) return Collections.emptyList();
+
+        String indexName = "idx_" + gender.key();
+        byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
 
         try {
-            // 더 많은 수를 가져온 후 거리순으로 정렬해서 뒤에서부터 가져오기
-            List<Long> results = knnSearch(gender, queryVector, Math.max(limit * 3, 100));
-
-            if (results.isEmpty()) {
-                log.warn("[RedisVectorSearcher] KNN 검색 결과가 비어있어 furthest 검색 불가");
-                return Collections.emptyList();
-            }
-
-            Collections.reverse(results); // 가장 먼 것부터
-            List<Long> furthest = results.subList(0, Math.min(limit, results.size()));
-
-            log.info("[RedisVectorSearcher] Furthest 검색 완료: gender={}, 결과 수={}", gender, furthest.size());
-            return furthest;
+            Object result = redisCommands.dispatch(
+                    FT_SEARCH,
+                    new ArrayOutput<>(ByteArrayCodec.INSTANCE),
+                    new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                            .add(indexName.getBytes(StandardCharsets.UTF_8))
+                            .add(String.format("*=>[KNN %d @vector $BLOB]", limit).getBytes(StandardCharsets.UTF_8))
+                            .add("PARAMS".getBytes(StandardCharsets.UTF_8)).add(2)
+                            .add("BLOB".getBytes(StandardCharsets.UTF_8)).add(vectorBytes)
+                            .add("RETURN".getBytes(StandardCharsets.UTF_8)).add(1).add("__key".getBytes(StandardCharsets.UTF_8))
+                            .add("SORTBY".getBytes(StandardCharsets.UTF_8)).add("__vector_score".getBytes(StandardCharsets.UTF_8)).add("DESC".getBytes(StandardCharsets.UTF_8))
+                            .add("DIALECT".getBytes(StandardCharsets.UTF_8)).add(2)
+            );
+            return parseSearchResults(result, gender, limit);
 
         } catch (Exception e) {
             log.error("[RedisVectorSearcher] Furthest 검색 실패: gender={}, error={}", gender, e.getMessage(), e);
@@ -109,46 +101,40 @@ public class RedisVectorSearcher {
     }
 
     /**
-     * 여러 벡터의 평균 계산
+     * 여러 벡터의 평균 계산 (파이프라인 사용)
      */
     public double[] computeAverageVector(List<Long> foodIds, Gender gender) {
         if (foodIds == null || foodIds.isEmpty()) {
             log.warn("[RedisVectorSearcher] 평균 벡터 계산할 음식 ID가 없습니다");
             return null;
         }
-
-        log.debug("[RedisVectorSearcher] 평균 벡터 계산 시작: gender={}, foodIds 수={}", gender, foodIds.size());
-
-        List<double[]> vectors = new ArrayList<>();
+        List<double[]> vectors = new ArrayList<>(foodIds.size());
         int loadFailCount = 0;
 
-        for (Long foodId : foodIds) {
-            String redisKey = String.format("food_%s:%d", gender.key(), foodId);
-            try {
-                byte[] vectorBytes = redisCommands.hget(
-                        redisKey.getBytes(StandardCharsets.UTF_8),
-                        "vector".getBytes(StandardCharsets.UTF_8)
-                );
-
+        // 파이프라인(비동기)으로 벡터 일괄 조회
+        try {
+            RedisAsyncCommands<byte[], byte[]> async = redisCommands.getStatefulConnection().async();
+            List<RedisFuture<byte[]>> futures = new ArrayList<>(foodIds.size());
+            for (Long foodId : foodIds) {
+                String redisKey = String.format("food_%s:%d", gender.key(), foodId);
+                futures.add(async.hget(redisKey.getBytes(StandardCharsets.UTF_8), "vector".getBytes(StandardCharsets.UTF_8)));
+            }
+            for (int i = 0; i < foodIds.size(); i++) {
+                byte[] vectorBytes = futures.get(i).get(5, TimeUnit.SECONDS);
                 if (vectorBytes != null && vectorBytes.length == VECTOR_DIMENSION * 4) {
                     double[] vector = RedisVectorUtil.bytesToDoubleArray(vectorBytes);
-
                     if (RedisVectorUtil.isValidVector(vector, VECTOR_DIMENSION)) {
                         vectors.add(vector);
-                        log.debug("[RedisVectorSearcher] 벡터 로드 성공: key={}", redisKey);
                     } else {
-                        log.warn("[RedisVectorSearcher] 잘못된 벡터 데이터: key={}", redisKey);
                         loadFailCount++;
                     }
                 } else {
-                    log.warn("[RedisVectorSearcher] 벡터 로드 실패: key={}, bytes={}",
-                            redisKey, vectorBytes != null ? vectorBytes.length : "null");
                     loadFailCount++;
                 }
-            } catch (Exception e) {
-                log.error("[RedisVectorSearcher] 벡터 로드 중 오류: key={}, error={}", redisKey, e.getMessage());
-                loadFailCount++;
             }
+        } catch (Exception e) {
+            log.error("[RedisVectorSearcher] 평균 벡터 파이프라인 조회 중 오류: {}", e.getMessage());
+            return null;
         }
 
         if (vectors.isEmpty()) {
@@ -163,87 +149,65 @@ public class RedisVectorSearcher {
                 avgVector[i] += vector[i];
             }
         }
-
         for (int i = 0; i < VECTOR_DIMENSION; i++) {
             avgVector[i] /= vectors.size();
         }
-
         log.info("[RedisVectorSearcher] 평균 벡터 계산 완료: 성공={}, 실패={}", vectors.size(), loadFailCount);
         return avgVector;
     }
 
+    // Redis Stack 지원 체크(캐싱)
     private boolean checkRedisStackSupport() {
-        try {
-            redisCommands.dispatch(
-                    FT_LIST,
-                    new ArrayOutput<>(ByteArrayCodec.INSTANCE),
-                    new CommandArgs<>(ByteArrayCodec.INSTANCE)
-            );
-            return true;
-        } catch (Exception e) {
-            log.error("[RedisVectorSearcher] Redis Stack 모듈 미지원: {}", e.getMessage());
-            return false;
+        if (redisStackSupported != null) return redisStackSupported;
+        synchronized (RedisVectorSearcher.class) {
+            if (redisStackSupported != null) return redisStackSupported;
+            try {
+                redisCommands.dispatch(
+                        FT_LIST,
+                        new ArrayOutput<>(ByteArrayCodec.INSTANCE),
+                        new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                );
+                redisStackSupported = true;
+            } catch (Exception e) {
+                log.error("[RedisVectorSearcher] Redis Stack 모듈 미지원: {}", e.getMessage());
+                redisStackSupported = false;
+            }
+            return redisStackSupported;
         }
     }
 
     private boolean validateSearchInput(Gender gender, double[] queryVector, int limit) {
-        if (gender == null) {
-            log.error("[RedisVectorSearcher] Gender가 null입니다");
-            return false;
-        }
-
-        if (!RedisVectorUtil.isValidVector(queryVector, VECTOR_DIMENSION)) {
-            log.error("[RedisVectorSearcher] 잘못된 쿼리 벡터: 차원={}, 예상={}",
-                    queryVector != null ? queryVector.length : "null", VECTOR_DIMENSION);
-            return false;
-        }
-
-        if (limit <= 0) {
-            log.error("[RedisVectorSearcher] 잘못된 limit 값: {}", limit);
-            return false;
-        }
-
+        if (gender == null) return false;
+        if (!RedisVectorUtil.isValidVector(queryVector, VECTOR_DIMENSION)) return false;
+        if (limit <= 0) return false;
         return true;
     }
 
     /**
-     * 검색 결과 파싱
+     * 검색 결과 파싱 (최대 limit개)
      */
-    private List<Long> parseSearchResults(Object result, Gender gender) {
-        List<Long> foodIds = new ArrayList<>();
-
+    private List<Long> parseSearchResults(Object result, Gender gender, int limit) {
+        List<Long> foodIds = new ArrayList<>(limit);
         try {
             if (result instanceof List) {
                 List<?> resultList = (List<?>) result;
-                log.debug("[RedisVectorSearcher] 검색 결과 크기: {}", resultList.size());
-
                 // 첫 번째 요소는 총 결과 수
-                if (resultList.size() > 1) {
-                    for (int i = 1; i < resultList.size(); i += 2) { // key, attributes 쌍
-                        if (resultList.get(i) instanceof byte[]) {
-                            String key = new String((byte[]) resultList.get(i), StandardCharsets.UTF_8);
-                            String prefix = "food_" + gender.key() + ":";
-
-                            if (key.startsWith(prefix)) {
-                                try {
-                                    Long foodId = Long.parseLong(key.substring(prefix.length()));
-                                    foodIds.add(foodId);
-                                    log.debug("[RedisVectorSearcher] 파싱된 음식 ID: {}", foodId);
-                                } catch (NumberFormatException e) {
-                                    log.warn("[RedisVectorSearcher] 음식 ID 파싱 실패: key={}", key);
-                                }
-                            }
+                for (int i = 1; i < resultList.size() && foodIds.size() < limit; i += 2) { // key, attributes 쌍
+                    if (resultList.get(i) instanceof byte[]) {
+                        String key = new String((byte[]) resultList.get(i), StandardCharsets.UTF_8);
+                        String prefix = "food_" + gender.key() + ":";
+                        if (key.startsWith(prefix)) {
+                            try {
+                                Long foodId = Long.parseLong(key.substring(prefix.length()));
+                                foodIds.add(foodId);
+                            } catch (NumberFormatException ignored) {}
                         }
                     }
-                } else {
-                    log.warn("[RedisVectorSearcher] 검색 결과가 비어있습니다");
                 }
             }
         } catch (Exception e) {
             log.error("[RedisVectorSearcher] 검색 결과 파싱 실패: {}", e.getMessage(), e);
         }
-
-        log.info("[RedisVectorSearcher] 파싱된 음식 ID 수: {}", foodIds.size());
         return foodIds;
     }
 }

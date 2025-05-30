@@ -8,24 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-
-/**
- * food_data.csv 파일을 읽어 MySQL의 food 테이블에 음식 정보를 초기화하는 클래스입니다.
- *
- * - Spring Boot 애플리케이션 시작 시 @PostConstruct를 통해 자동 실행됩니다.
- * - CSV 파일은 resources 디렉토리에 위치하며, 음식 이름, 분류, 영양소 등의 정보가 포함되어 있습니다.
- *
- * - 각 행은 Food 엔티티로 매핑되어 데이터베이스에 저장되며,
- *   이미 데이터가 존재하는지 여부는 따로 확인하지 않고 모두 삽입합니다.
- *
- * - 데이터 저장 중 문제가 발생하면 로그로 경고 또는 예외 메시지를 출력합니다.
- *
- * 이 클래스는 주로 개발 또는 초기 배포 단계에서 식품 데이터를 자동으로 삽입하기 위한 용도로 사용됩니다.
- */
+import java.util.*;
 
 @Slf4j
 @Service
@@ -33,25 +19,39 @@ import java.nio.charset.StandardCharsets;
 public class FoodInitializer {
 
     private static final String CSV_FILE_NAME = "/mini_food_data.csv";
+    private static final int BATCH_SIZE = 200;
 
     private final FoodRepository foodRepository;
 
+    @PostConstruct
     public void init() {
         try (InputStream is = getClass().getResourceAsStream(CSV_FILE_NAME);
              CSVReader reader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
 
+            // 1. 이미 존재하는 음식명 미리 조회 (중복 체크 빠르게)
+            Set<String> existingFoodNames = new HashSet<>();
+            for (Food food : foodRepository.findAll()) {
+                existingFoodNames.add(food.getFoodName());
+            }
+
             String[] tokens;
             reader.readNext(); // skip header
 
+            List<Food> batch = new ArrayList<>(BATCH_SIZE);
+            int total = 0, skipped = 0, duplicated = 0, inserted = 0;
+
             while ((tokens = reader.readNext()) != null) {
+                total++;
                 if (tokens.length < 12) {
+                    skipped++;
                     log.warn("[FoodInitializer] 컬럼 수 부족 - skip: {}", String.join(",", tokens));
                     continue;
                 }
 
                 String foodName = tokens[0].replaceAll("[\\s_]", "").trim();
-                if (foodRepository.findByFoodName(foodName).isPresent()) {
-                    log.info("이미 존재: {}", foodName);
+                if (existingFoodNames.contains(foodName)) {
+                    duplicated++;
+                    // log.debug("이미 존재: {}", foodName); // 필요시만 활성화
                     continue;
                 }
 
@@ -70,14 +70,27 @@ public class FoodInitializer {
                         .cholesterol(safeParseDouble(tokens[11], 0))
                         .build();
 
-                foodRepository.save(food);
+                batch.add(food);
+
+                // BATCH_SIZE마다 일괄 저장
+                if (batch.size() >= BATCH_SIZE) {
+                    foodRepository.saveAll(batch);
+                    inserted += batch.size();
+                    batch.clear();
+                }
             }
-            log.info("[FoodInitializer] Food Data 로드 성공");
+            // 남은 데이터 저장
+            if (!batch.isEmpty()) {
+                foodRepository.saveAll(batch);
+                inserted += batch.size();
+            }
+
+            log.info("[FoodInitializer] Food Data 로드 완료: 전체={}, 중복={}, 컬럼부족={}, 신규삽입={}",
+                    total, duplicated, skipped, inserted);
 
         } catch (Exception e) {
             log.warn("[FoodInitializer] Food Data 로드 실패: {}", e.getMessage(), e);
         }
-
     }
 
     private double safeParseDouble(String value, double defaultValue) {

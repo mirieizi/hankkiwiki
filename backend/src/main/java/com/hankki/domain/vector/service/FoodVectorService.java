@@ -3,6 +3,8 @@ package com.hankki.domain.vector.service;
 import com.hankki.domain.vector.util.RedisVectorUtil;
 import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.user.constant.Gender;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ArrayOutput;
@@ -16,6 +18,8 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -43,6 +47,9 @@ public class FoodVectorService {
         @Override public String name() { return "FT._LIST"; }
     };
 
+    /**
+     * 벡터 일괄 적재 (파이프라인) 및 일부 샘플 검증
+     */
     public void loadVectors() {
         log.info("[FoodVectorService] 벡터 로딩 시작");
 
@@ -52,8 +59,8 @@ public class FoodVectorService {
             return;
         }
 
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failCount = new AtomicInteger(0);
+        Map<String, byte[]> redisKeyToVector = new LinkedHashMap<>();
+        Map<String, String> keyToFoodName = new HashMap<>();
 
         try (InputStream is = getClass().getResourceAsStream(VECTOR_FILE_PATH)) {
             if (is == null) {
@@ -65,27 +72,101 @@ public class FoodVectorService {
                 String line = reader.readLine(); // skip header
                 log.info("[FoodVectorService] 헤더 스킵: {}", line);
 
+                int lineNum = 1;
                 while ((line = reader.readLine()) != null) {
-                    try {
-                        processVectorLine(line, successCount, failCount);
-                    } catch (Exception e) {
-                        log.warn("[FoodVectorService] 라인 처리 실패: '{}', 오류: {}", line, e.getMessage());
-                        failCount.incrementAndGet();
+                    lineNum++;
+                    Optional<VectorEntry> entryOpt = parseVectorLine(line);
+                    if (entryOpt.isEmpty()) {
+                        log.warn("[FoodVectorService] {}번째 라인 파싱 실패, 스킵", lineNum);
+                        continue;
                     }
+                    VectorEntry entry = entryOpt.get();
+                    foodRepository.findByFoodName(entry.foodName).ifPresentOrElse(food -> {
+                        String redisKey = String.format("food_%s:%d", entry.gender.key(), food.getId());
+                        redisKeyToVector.put(redisKey, entry.vectorBytes);
+                        keyToFoodName.put(redisKey, entry.foodName);
+                    }, () -> log.warn("[FoodVectorService] 음식 매칭 실패: foodName='{}', gender='{}'", entry.foodName, entry.gender));
                 }
-
-                log.info("[FoodVectorService] 벡터 로딩 완료 - 성공: {}, 실패: {}",
-                        successCount.get(), failCount.get());
-
-                // 안전한 인덱스 상태 확인
-                checkIndexStatusSafely();
-
             }
         } catch (Exception e) {
-            log.error("[FoodVectorService] 벡터 로딩 중 예외 발생: {}", e.getMessage(), e);
+            log.error("[FoodVectorService] 벡터 파일 파싱 중 예외: {}", e.getMessage(), e);
+            return;
         }
+
+        // Redis 파이프라인(비동기) 일괄 적재
+        if (redisKeyToVector.isEmpty()) {
+            log.warn("[FoodVectorService] 적재할 벡터 데이터가 없습니다.");
+            return;
+        }
+
+        try {
+            RedisAsyncCommands<byte[], byte[]> async = redisCommands.getStatefulConnection().async();
+            List<RedisFuture<?>> futures = new ArrayList<>();
+            redisKeyToVector.forEach((redisKey, vectorBytes) -> {
+                futures.add(async.hset(redisKey.getBytes(StandardCharsets.UTF_8), "vector".getBytes(StandardCharsets.UTF_8), vectorBytes));
+            });
+
+            // 모든 적재 완료 대기 (최대 10초)
+            for (RedisFuture<?> future : futures) {
+                future.get(10, TimeUnit.SECONDS);
+            }
+            log.info("[FoodVectorService] 벡터 {}개 일괄 적재 완료", redisKeyToVector.size());
+        } catch (Exception e) {
+            log.error("[FoodVectorService] Redis 파이프라인 적재 중 예외: {}", e.getMessage(), e);
+            return;
+        }
+
+        // 샘플 3개만 저장 검증
+        int checked = 0;
+        for (String redisKey : redisKeyToVector.keySet()) {
+            if (checked >= 3) break;
+            byte[] stored = redisCommands.hget(redisKey.getBytes(StandardCharsets.UTF_8), "vector".getBytes(StandardCharsets.UTF_8));
+            if (stored == null || stored.length != VECTOR_DIMENSION * 4) {
+                log.error("[FoodVectorService] 샘플 벡터 저장 검증 실패: key={}, foodName={}", redisKey, keyToFoodName.get(redisKey));
+            } else {
+                log.info("[FoodVectorService] 샘플 벡터 저장 검증 성공: key={}, foodName={}", redisKey, keyToFoodName.get(redisKey));
+            }
+            checked++;
+        }
+
+        // 인덱스 상태 확인
+        checkIndexStatusSafely();
     }
 
+    /**
+     * 벡터 라인을 파싱하여 VectorEntry로 반환
+     */
+    private Optional<VectorEntry> parseVectorLine(String line) {
+        String[] tokens = line.split(",");
+        if (tokens.length < VECTOR_DIMENSION + 2) return Optional.empty();
+
+        String foodName = tokens[0].replaceAll("[\\s_]", "").trim();
+        String genderStr = tokens[1].trim();
+        Gender gender;
+        try {
+            gender = Gender.valueOf(genderStr.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+
+        double[] vector = new double[VECTOR_DIMENSION];
+        try {
+            for (int i = 0; i < VECTOR_DIMENSION; i++) {
+                vector[i] = Double.parseDouble(tokens[i + 2]);
+            }
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+
+        byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(vector);
+        if (vectorBytes.length != VECTOR_DIMENSION * 4) return Optional.empty();
+
+        return Optional.of(new VectorEntry(foodName, gender, vectorBytes));
+    }
+
+    /**
+     * Redis Stack 지원 여부 확인
+     */
     private boolean checkRedisStackSupport() {
         try {
             redisCommands.dispatch(
@@ -101,151 +182,52 @@ public class FoodVectorService {
         }
     }
 
-    private void processVectorLine(String line, AtomicInteger successCount, AtomicInteger failCount) {
-        String[] tokens = line.split(",");
-
-        if (tokens.length < VECTOR_DIMENSION + 2) {
-            log.warn("[FoodVectorService] 토큰 수 부족: 예상={}, 실제={}", VECTOR_DIMENSION + 2, tokens.length);
-            failCount.incrementAndGet();
-            return;
-        }
-
-        String foodName = tokens[0].replaceAll("[\\s_]", "").trim();
-        String genderStr = tokens[1].trim();
-
-        Gender gender;
-        try {
-            gender = Gender.valueOf(genderStr.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            log.warn("[FoodVectorService] 잘못된 gender 값: '{}'", genderStr);
-            failCount.incrementAndGet();
-            return;
-        }
-
-        double[] vector = new double[VECTOR_DIMENSION];
-        try {
-            for (int i = 0; i < VECTOR_DIMENSION; i++) {
-                vector[i] = Double.parseDouble(tokens[i + 2]);
-            }
-        } catch (NumberFormatException ex) {
-            log.warn("[FoodVectorService] 벡터 파싱 실패: '{}'", line);
-            failCount.incrementAndGet();
-            return;
-        }
-
-        foodRepository.findByFoodName(foodName).ifPresentOrElse(food -> {
-            try {
-                String redisKey = String.format("food_%s:%d", gender.key(), food.getId());
-                byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(vector);
-
-                // 벡터 바이트 크기 검증
-                if (vectorBytes.length != VECTOR_DIMENSION * 4) {
-                    log.error("[FoodVectorService] 벡터 바이트 크기 오류: 예상={}, 실제={}",
-                            VECTOR_DIMENSION * 4, vectorBytes.length);
-                    failCount.incrementAndGet();
-                    return;
-                }
-
-                redisCommands.hset(
-                        redisKey.getBytes(StandardCharsets.UTF_8),
-                        "vector".getBytes(StandardCharsets.UTF_8),
-                        vectorBytes
-                );
-
-                // 저장 검증
-                byte[] stored = redisCommands.hget(
-                        redisKey.getBytes(StandardCharsets.UTF_8),
-                        "vector".getBytes(StandardCharsets.UTF_8)
-                );
-
-                if (stored == null || stored.length != vectorBytes.length) {
-                    log.error("[FoodVectorService] 벡터 저장 검증 실패: key={}", redisKey);
-                    failCount.incrementAndGet();
-                    return;
-                }
-
-                log.debug("[FoodVectorService] 벡터 저장 성공: key={}, 바이트 크기={}",
-                        redisKey, vectorBytes.length);
-                successCount.incrementAndGet();
-
-            } catch (Exception e) {
-                log.error("[FoodVectorService] 벡터 저장 중 오류: foodName={}, error={}",
-                        foodName, e.getMessage());
-                failCount.incrementAndGet();
-            }
-
-        }, () -> {
-            log.warn("[FoodVectorService] 음식 매칭 실패: foodName='{}', gender='{}'", foodName, genderStr);
-            failCount.incrementAndGet();
-        });
-    }
-
+    /**
+     * 인덱스 상태 확인 (효율적으로)
+     */
     private void checkIndexStatusSafely() {
-        for (Gender gender : Gender.values()) {
-            String indexName = "idx_" + gender.key();
+        // 여러 gender를 하나의 인덱스에 PREFIX로 관리한다면 아래처럼 하나만 확인
+        String indexName = "idx_food_vector";
+        try {
+            Object result = redisCommands.dispatch(
+                    FT_INFO,
+                    new ArrayOutput<>(ByteArrayCodec.INSTANCE),
+                    new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                            .add(indexName.getBytes(StandardCharsets.UTF_8))
+            );
 
-            try {
-                // ProtocolKeyword를 사용한 안전한 FT.INFO 호출
-                Object result = redisCommands.dispatch(
-                        FT_INFO,
-                        new ArrayOutput<>(ByteArrayCodec.INSTANCE),
-                        new CommandArgs<>(ByteArrayCodec.INSTANCE)
-                                .add(indexName.getBytes(StandardCharsets.UTF_8))
-                );
-
-                if (result instanceof java.util.List) {
-                    java.util.List<?> infoList = (java.util.List<?>) result;
-                    log.info("[FoodVectorService] 인덱스 상태 확인 - {}: 요소 수 {}", indexName, infoList.size());
-
-                    // 문서 수 확인 (인덱스 정보에서 num_docs 찾기)
-                    for (int i = 0; i < infoList.size() - 1; i++) {
-                        if (infoList.get(i) instanceof byte[]) {
-                            String key = new String((byte[]) infoList.get(i), StandardCharsets.UTF_8);
-                            if ("num_docs".equals(key) && (i + 1) < infoList.size()) {
-                                Object numDocs = infoList.get(i + 1);
-                                log.info("[FoodVectorService] 인덱스 {} 문서 수: {}", indexName, numDocs);
-                                break;
-                            }
+            if (result instanceof List) {
+                List<?> infoList = (List<?>) result;
+                log.info("[FoodVectorService] 인덱스 상태 확인 - {}: 요소 수 {}", indexName, infoList.size());
+                for (int i = 0; i < infoList.size() - 1; i++) {
+                    if (infoList.get(i) instanceof byte[]) {
+                        String key = new String((byte[]) infoList.get(i), StandardCharsets.UTF_8);
+                        if ("num_docs".equals(key) && (i + 1) < infoList.size()) {
+                            Object numDocs = infoList.get(i + 1);
+                            log.info("[FoodVectorService] 인덱스 {} 문서 수: {}", indexName, numDocs);
+                            break;
                         }
                     }
-                } else {
-                    log.info("[FoodVectorService] 인덱스 상태 확인 - {}: {}", indexName, result);
                 }
-
-            } catch (Exception e) {
-                log.warn("[FoodVectorService] 인덱스 상태 확인 실패: index={}, error={}",
-                        indexName, e.getMessage());
-
-                // FT.INFO 실패 시 대안으로 샘플 키 확인
-                checkSampleKeys(gender);
+            } else {
+                log.info("[FoodVectorService] 인덱스 상태 확인 - {}: {}", indexName, result);
             }
+        } catch (Exception e) {
+            log.warn("[FoodVectorService] 인덱스 상태 확인 실패: index={}, error={}", indexName, e.getMessage());
         }
     }
 
-    private void checkSampleKeys(Gender gender) {
-        try {
-            String sampleKeyPattern = String.format("food_%s:*", gender.key());
-            log.info("[FoodVectorService] 대안 확인: {} 패턴의 키 존재 여부 확인", sampleKeyPattern);
-
-            // 첫 번째 키 몇 개 확인
-            for (int i = 1; i <= 5; i++) {
-                String sampleKey = String.format("food_%s:%d", gender.key(), i);
-                byte[] vectorData = redisCommands.hget(
-                        sampleKey.getBytes(StandardCharsets.UTF_8),
-                        "vector".getBytes(StandardCharsets.UTF_8)
-                );
-
-                if (vectorData != null) {
-                    log.info("[FoodVectorService] {} 성별 벡터 확인: key={}, 크기={}",
-                            gender, sampleKey, vectorData.length);
-                    return; // 하나라도 찾으면 성공
-                }
-            }
-
-            log.warn("[FoodVectorService] {} 성별 벡터 데이터를 찾을 수 없습니다", gender);
-
-        } catch (Exception e) {
-            log.error("[FoodVectorService] 샘플 키 확인 중 오류: {}", e.getMessage());
+    /**
+     * 벡터 데이터 파싱용 내부 클래스
+     */
+    private static class VectorEntry {
+        final String foodName;
+        final Gender gender;
+        final byte[] vectorBytes;
+        VectorEntry(String foodName, Gender gender, byte[] vectorBytes) {
+            this.foodName = foodName;
+            this.gender = gender;
+            this.vectorBytes = vectorBytes;
         }
     }
 }

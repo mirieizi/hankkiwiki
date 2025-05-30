@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -22,17 +24,11 @@ public class RedisVectorIndexInitializer {
 
     private final RedisClient redisClient;
 
-    // ProtocolKeyword 정의들
+    // ProtocolKeyword 정의
     private static final ProtocolKeyword FT_CREATE = new ProtocolKeyword() {
         private final byte[] raw = "FT.CREATE".getBytes(StandardCharsets.UTF_8);
         @Override public byte[] getBytes() { return raw; }
         @Override public String name() { return "FT.CREATE"; }
-    };
-
-    private static final ProtocolKeyword FT_DROPINDEX = new ProtocolKeyword() {
-        private final byte[] raw = "FT.DROPINDEX".getBytes(StandardCharsets.UTF_8);
-        @Override public byte[] getBytes() { return raw; }
-        @Override public String name() { return "FT.DROPINDEX"; }
     };
 
     private static final ProtocolKeyword FT_INFO = new ProtocolKeyword() {
@@ -57,25 +53,23 @@ public class RedisVectorIndexInitializer {
             return;
         }
 
+        String indexName = "idx_food_vector";
+        List<String> keyPrefixes = new ArrayList<>();
         for (Gender gender : Gender.values()) {
-            String indexName = "idx_" + gender.key();
-            String keyPrefix = "food_" + gender.key() + ":";
-
-            try {
-                // 1) 기존 인덱스 삭제
-                dropIndexIfExists(redis, indexName);
-
-                // 2) 새 인덱스 생성
-                createVectorIndex(redis, indexName, keyPrefix);
-
-                // 3) 인덱스 상태 확인 (안전하게)
-                checkIndexInfoSafely(redis, indexName);
-
-            } catch (Exception e) {
-                log.error("[RedisVectorIndexInitializer] 인덱스 생성 실패: index={}, error={}",
-                        indexName, e.getMessage(), e);
-            }
+            keyPrefixes.add("food_" + gender.key() + ":");
         }
+
+        // 인덱스가 이미 존재하면 생성하지 않음
+        if (indexExists(redis, indexName)) {
+            log.info("[RedisVectorIndexInitializer] 인덱스 이미 존재: {}", indexName);
+            return;
+        }
+
+        // 인덱스 생성
+        createVectorIndex(redis, indexName, keyPrefixes);
+
+        // 인덱스 상태 확인
+        checkIndexInfoSafely(redis, indexName);
     }
 
     private boolean checkRedisStackSupport(RedisCommands<byte[], byte[]> redis) {
@@ -93,44 +87,47 @@ public class RedisVectorIndexInitializer {
         }
     }
 
-    private void dropIndexIfExists(RedisCommands<byte[], byte[]> redis, String indexName) {
+    private boolean indexExists(RedisCommands<byte[], byte[]> redis, String indexName) {
         try {
             redis.dispatch(
-                    FT_DROPINDEX,
-                    new StatusOutput<>(ByteArrayCodec.INSTANCE),
+                    FT_INFO,
+                    new ArrayOutput<>(ByteArrayCodec.INSTANCE),
                     new CommandArgs<>(ByteArrayCodec.INSTANCE)
                             .add(indexName.getBytes(StandardCharsets.UTF_8))
-                            .add("DD".getBytes(StandardCharsets.UTF_8))
             );
-            log.info("[RedisVectorIndexInitializer] 기존 인덱스 삭제 완료: {}", indexName);
+            return true;
         } catch (Exception e) {
-            log.debug("[RedisVectorIndexInitializer] 기존 인덱스 없음: {}", indexName);
+            return false;
         }
     }
 
-    private void createVectorIndex(RedisCommands<byte[], byte[]> redis, String indexName, String keyPrefix) {
+    private void createVectorIndex(RedisCommands<byte[], byte[]> redis, String indexName, List<String> keyPrefixes) {
         try {
+            CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                    .add(indexName.getBytes(StandardCharsets.UTF_8))
+                    .add("ON".getBytes(StandardCharsets.UTF_8))
+                    .add("HASH".getBytes(StandardCharsets.UTF_8))
+                    .add("PREFIX".getBytes(StandardCharsets.UTF_8))
+                    .add(keyPrefixes.size());
+            for (String prefix : keyPrefixes) {
+                args.add(prefix.getBytes(StandardCharsets.UTF_8));
+            }
+            args.add("SCHEMA".getBytes(StandardCharsets.UTF_8))
+                    .add("vector".getBytes(StandardCharsets.UTF_8))
+                    .add("VECTOR".getBytes(StandardCharsets.UTF_8))
+                    .add("FLAT".getBytes(StandardCharsets.UTF_8)) // FLAT 인덱스 사용
+                    .add(4)
+                    .add("TYPE".getBytes(StandardCharsets.UTF_8))
+                    .add("FLOAT32".getBytes(StandardCharsets.UTF_8))
+                    .add("DIM".getBytes(StandardCharsets.UTF_8))
+                    .add(9)
+                    .add("DISTANCE_METRIC".getBytes(StandardCharsets.UTF_8))
+                    .add("COSINE".getBytes(StandardCharsets.UTF_8));
+
             redis.dispatch(
                     FT_CREATE,
                     new StatusOutput<>(ByteArrayCodec.INSTANCE),
-                    new CommandArgs<>(ByteArrayCodec.INSTANCE)
-                            .add(indexName.getBytes(StandardCharsets.UTF_8))
-                            .add("ON".getBytes(StandardCharsets.UTF_8))
-                            .add("HASH".getBytes(StandardCharsets.UTF_8))
-                            .add("PREFIX".getBytes(StandardCharsets.UTF_8))
-                            .add(1)
-                            .add(keyPrefix.getBytes(StandardCharsets.UTF_8))
-                            .add("SCHEMA".getBytes(StandardCharsets.UTF_8))
-                            .add("vector".getBytes(StandardCharsets.UTF_8))
-                            .add("VECTOR".getBytes(StandardCharsets.UTF_8))
-                            .add("HNSW".getBytes(StandardCharsets.UTF_8))
-                            .add(6)
-                            .add("TYPE".getBytes(StandardCharsets.UTF_8))
-                            .add("FLOAT32".getBytes(StandardCharsets.UTF_8))
-                            .add("DIM".getBytes(StandardCharsets.UTF_8))
-                            .add(9)
-                            .add("DISTANCE_METRIC".getBytes(StandardCharsets.UTF_8))
-                            .add("COSINE".getBytes(StandardCharsets.UTF_8))
+                    args
             );
             log.info("[RedisVectorIndexInitializer] 벡터 인덱스 생성 완료: {}", indexName);
         } catch (Exception e) {
@@ -141,7 +138,6 @@ public class RedisVectorIndexInitializer {
 
     private void checkIndexInfoSafely(RedisCommands<byte[], byte[]> redis, String indexName) {
         try {
-            // 잠시 대기 후 인덱스 정보 확인
             Thread.sleep(100);
 
             Object info = redis.dispatch(
@@ -155,8 +151,6 @@ public class RedisVectorIndexInitializer {
                 java.util.List<?> infoList = (java.util.List<?>) info;
                 log.info("[RedisVectorIndexInitializer] 인덱스 생성 확인: {} (요소 수: {})",
                         indexName, infoList.size());
-
-                // 인덱스 상세 정보 로깅
                 logIndexDetails(indexName, infoList);
             } else {
                 log.info("[RedisVectorIndexInitializer] 인덱스 생성 확인: {}", indexName);
