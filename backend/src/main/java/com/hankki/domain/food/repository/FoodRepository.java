@@ -41,6 +41,11 @@ public interface FoodRepository extends JpaRepository<Food, Long>, FoodRepositor
             """, nativeQuery = true)
     Optional<Food> findBestMatchByFullText(@Param("query") String query);
 
-
     List<Food> findByFoodNameContainingIgnoreCase(String query);
+
+    @Query("SELECT f.foodName FROM Food f")
+    List<String> findAllFoodNames();
+
+    boolean existsByFoodName(String foodName);
+
 }

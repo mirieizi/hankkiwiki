@@ -1,5 +1,6 @@
 package com.hankki.domain.vector.service;
 
+import com.hankki.domain.food.service.FoodInitializer;
 import com.hankki.domain.vector.util.RedisVectorUtil;
 import com.hankki.domain.food.repository.FoodRepository;
 import com.hankki.domain.user.constant.Gender;
@@ -31,6 +32,7 @@ public class FoodVectorService {
     private static final String VECTOR_FILE_PATH = "/vectors/mini_food_embeddings.csv";
 
     private final FoodRepository foodRepository;
+    private final FoodInitializer foodInitializer;
     private final RedisCommands<byte[], byte[]> redisCommands;
 
     // FT.INFO ProtocolKeyword 정의
@@ -52,6 +54,22 @@ public class FoodVectorService {
      */
     public void loadVectors() {
         log.info("[FoodVectorService] 벡터 로딩 시작");
+
+        // 1. 먼저 음식 데이터 존재 여부 확인
+        long foodCount = foodRepository.count();
+        log.info("[FoodVectorService] 현재 음식 데이터 수: {}", foodCount);
+
+        if (foodCount == 0) {
+            log.warn("[FoodVectorService] 음식 데이터가 없어 FoodInitializer 실행");
+            foodInitializer.init(); // 수동으로 음식 데이터 로드
+
+            // 다시 확인
+            foodCount = foodRepository.count();
+            if (foodCount == 0) {
+                log.error("[FoodVectorService] 음식 데이터 로드 실패, 벡터 로딩 중단");
+                return;
+            }
+        }
 
         // Redis Stack 지원 여부 먼저 확인
         if (!checkRedisStackSupport()) {

@@ -17,6 +17,7 @@ Thumbs.db
 *.iml
 *.iws
 *.ipr
+.settings/
 
 # VS Code
 .vscode/
