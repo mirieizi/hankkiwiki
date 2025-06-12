@@ -116,7 +116,7 @@ public class RedisVectorIndexInitializer {
                     .add("vector".getBytes(StandardCharsets.UTF_8))
                     .add("VECTOR".getBytes(StandardCharsets.UTF_8))
                     .add("FLAT".getBytes(StandardCharsets.UTF_8)) // FLAT 인덱스 사용
-                    .add(4)
+                    .add(6)
                     .add("TYPE".getBytes(StandardCharsets.UTF_8))
                     .add("FLOAT32".getBytes(StandardCharsets.UTF_8))
                     .add("DIM".getBytes(StandardCharsets.UTF_8))
