@@ -1,6 +1,7 @@
 package com.hankki.common.init;
 
 import com.hankki.domain.food.repository.FoodRepository;
+import com.hankki.domain.vector.redis.config.RedisVectorIndexInitializer;
 import com.hankki.domain.vector.service.FoodVectorService;
 import com.hankki.domain.food.service.FoodInitializer;
 import jakarta.annotation.PostConstruct;
@@ -15,6 +16,7 @@ public class AppDataInitializer {
 
     private final FoodInitializer foodInitializer;
     private final FoodVectorService foodVectorService;
+    private final RedisVectorIndexInitializer redisVectorIndexInitializer;
     private final FoodRepository foodRepository;
 
     @PostConstruct
@@ -24,6 +26,9 @@ public class AppDataInitializer {
         try {
             // 1. 음식 데이터 초기화 및 검증
             initializeFoodData();
+
+            // 2. Redis 벡터 인덱스 먼저 생성
+            initializeVectorIndex();
 
             // 2. 벡터 데이터 초기화
             initializeVectorData();
@@ -52,6 +57,18 @@ public class AppDataInitializer {
 
         } catch (Exception e) {
             log.error("[AppDataInitializer] 음식 데이터 초기화 실패", e);
+            throw e;
+        }
+    }
+
+    private void initializeVectorIndex() {
+        log.info("[AppDataInitializer] 벡터 인덱스 초기화 시작");
+
+        try {
+            redisVectorIndexInitializer.createVectorIndexes();
+            log.info("[AppDataInitializer] 벡터 인덱스 초기화 완료");
+        } catch (Exception e) {
+            log.error("[AppDataInitializer] 벡터 인덱스 초기화 실패", e);
             throw e;
         }
     }

@@ -6,9 +6,11 @@ import com.hankki.domain.diet.repository.DietFoodRepository;
 import com.hankki.domain.diet.repository.DietGroupRepository;
 import com.hankki.domain.food.entity.Food;
 import com.hankki.domain.food.repository.FoodRepository;
+import com.hankki.domain.recommend.dto.FoodResponseDto;
 import com.hankki.domain.recommend.repository.UserFoodLogRepository;
 import com.hankki.domain.vector.util.RedisVectorSearcher;
 import com.hankki.domain.user.constant.Gender;
+import io.micrometer.core.instrument.Gauge;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,7 @@ public class RecommendVectorFacade {
     private final DietGroupRepository dietGroupRepository;
     private final RedisVectorSearcher redisVectorSearcher;
     private final FoodRepository foodRepository;
+    private final FallbackRecommendService fallbackRecommendService;
 
     /**
      * 최근 먹은 음식과 가장 거리가 먼 음식 찾기
@@ -57,7 +60,7 @@ public class RecommendVectorFacade {
             }
 
             List<Long> results = redisVectorSearcher.furthestSearch(gender, avgVector, SEARCH_CANDIDATE_SIZE);
-            Long recommendedFoodId = checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
+            Long recommendedFoodId = checkDuplicatedRecommend(userId, gender, results, recentFoodIds, recentRecommendedFoodIds);
 
             log.info("[RecommendVectorFacade] 가장 먼 음식 찾기 완료: userId={}, foodId={}", userId, recommendedFoodId);
             return recommendedFoodId;
@@ -90,7 +93,7 @@ public class RecommendVectorFacade {
             }
 
             List<Long> results = redisVectorSearcher.knnSearch(gender, avgVector, SEARCH_CANDIDATE_SIZE);
-            Long recommendedFoodId = checkDuplicatedRecommend(results, recentFoodIds, recentRecommendedFoodIds);
+            Long recommendedFoodId = checkDuplicatedRecommend(userId, gender, results, recentFoodIds, recentRecommendedFoodIds);
 
             log.info("[RecommendVectorFacade] 가장 가까운 음식 찾기 완료: userId={}, foodId={}", userId, recommendedFoodId);
             return recommendedFoodId;
@@ -131,11 +134,11 @@ public class RecommendVectorFacade {
             return Collections.emptyList();
         }
     }
-    
-    public List<Food> getRecentFoods(Long userId){
+
+    public List<Food> getRecentFoods(Long userId) {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysAgo = today.minusDays(2);
-    	List<Long> recentFoodIds = userFoodLogRepository.findRecommendedFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
+        List<Long> recentFoodIds = userFoodLogRepository.findRecommendedFoodIdsByUserIdAndTakeAtBetween(userId, threeDaysAgo, today);
         if (recentFoodIds.isEmpty()) {
             throw new IllegalStateException("최근 섭취한 음식이 없습니다.");
         }
@@ -173,13 +176,16 @@ public class RecommendVectorFacade {
     }
 
     private Long checkDuplicatedRecommend(
+            Long userId,
+            Gender gender,
             List<Long> foodIds,
             List<Long> recentTakenFoodIds,
             List<Long> recentRecommendedFoodIds
     ) {
         if (foodIds == null || foodIds.isEmpty()) {
             log.warn("[RecommendVectorFacade] 추천 후보군이 비어 있습니다. (벡터 검색 실패 또는 Redis 문제)");
-            throw new IllegalStateException("추천할 음식이 없습니다.");
+            // 빈 결과에 대한 fallback 처리 추가
+            return handleEmptyRecommendation();
         }
 
         Set<Long> recent = new HashSet<>();
@@ -200,5 +206,11 @@ public class RecommendVectorFacade {
 
         log.info("[RecommendVectorFacade] 중복 검사 완료: 추천 음식 ID={}", recommendedFood);
         return recommendedFood;
+    }
+
+    private Long handleEmptyRecommendation() {
+        log.warn("[RecommendVectorFacade] 벡터 검색 실패 - 폴백 처리");
+
+        return fallbackRecommendService.getFallbackFoodId();
     }
 }

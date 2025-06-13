@@ -43,7 +43,6 @@ public class RedisVectorIndexInitializer {
         @Override public String name() { return "FT._LIST"; }
     };
 
-    @PostConstruct
     public void createVectorIndexes() {
         RedisCommands<byte[], byte[]> redis = redisClient.connect(ByteArrayCodec.INSTANCE).sync();
 
@@ -53,23 +52,23 @@ public class RedisVectorIndexInitializer {
             return;
         }
 
-        String indexName = "idx_food_vector";
-        List<String> keyPrefixes = new ArrayList<>();
         for (Gender gender : Gender.values()) {
-            keyPrefixes.add("food_" + gender.key() + ":");
+            String indexName = "idx_" + gender.key();
+            String keyPrefixes = "food_" + gender.key() + ":";
+
+            // 인덱스가 이미 존재하면 생성하지 않음
+            if (indexExists(redis, indexName)) {
+                log.info("[RedisVectorIndexInitializer] 인덱스 이미 존재: {}", indexName);
+                return;
+            }
+
+            // 인덱스 생성
+            createVectorIndex(redis, indexName, keyPrefixes);
+
+            // 인덱스 상태 확인
+            checkIndexInfoSafely(redis, indexName);
+
         }
-
-        // 인덱스가 이미 존재하면 생성하지 않음
-        if (indexExists(redis, indexName)) {
-            log.info("[RedisVectorIndexInitializer] 인덱스 이미 존재: {}", indexName);
-            return;
-        }
-
-        // 인덱스 생성
-        createVectorIndex(redis, indexName, keyPrefixes);
-
-        // 인덱스 상태 확인
-        checkIndexInfoSafely(redis, indexName);
     }
 
     private boolean checkRedisStackSupport(RedisCommands<byte[], byte[]> redis) {
@@ -101,18 +100,16 @@ public class RedisVectorIndexInitializer {
         }
     }
 
-    private void createVectorIndex(RedisCommands<byte[], byte[]> redis, String indexName, List<String> keyPrefixes) {
+    private void createVectorIndex(RedisCommands<byte[], byte[]> redis, String indexName, String keyPrefix) {
         try {
             CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE)
                     .add(indexName.getBytes(StandardCharsets.UTF_8))
                     .add("ON".getBytes(StandardCharsets.UTF_8))
                     .add("HASH".getBytes(StandardCharsets.UTF_8))
                     .add("PREFIX".getBytes(StandardCharsets.UTF_8))
-                    .add(keyPrefixes.size());
-            for (String prefix : keyPrefixes) {
-                args.add(prefix.getBytes(StandardCharsets.UTF_8));
-            }
-            args.add("SCHEMA".getBytes(StandardCharsets.UTF_8))
+                    .add(1)
+                    .add(keyPrefix.getBytes(StandardCharsets.UTF_8))
+                    .add("SCHEMA".getBytes(StandardCharsets.UTF_8))
                     .add("vector".getBytes(StandardCharsets.UTF_8))
                     .add("VECTOR".getBytes(StandardCharsets.UTF_8))
                     .add("FLAT".getBytes(StandardCharsets.UTF_8)) // FLAT 인덱스 사용

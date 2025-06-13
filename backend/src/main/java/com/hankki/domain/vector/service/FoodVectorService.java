@@ -204,34 +204,35 @@ public class FoodVectorService {
      * 인덱스 상태 확인 (효율적으로)
      */
     private void checkIndexStatusSafely() {
-        // 여러 gender를 하나의 인덱스에 PREFIX로 관리한다면 아래처럼 하나만 확인
-        String indexName = "idx_food_vector";
-        try {
-            Object result = redisCommands.dispatch(
-                    FT_INFO,
-                    new ArrayOutput<>(ByteArrayCodec.INSTANCE),
-                    new CommandArgs<>(ByteArrayCodec.INSTANCE)
-                            .add(indexName.getBytes(StandardCharsets.UTF_8))
-            );
+        for (Gender gender : Gender.values()) {
+            String indexName = "idx_" + gender.key();
+            try {
+                Object result = redisCommands.dispatch(
+                        FT_INFO,
+                        new ArrayOutput<>(ByteArrayCodec.INSTANCE),
+                        new CommandArgs<>(ByteArrayCodec.INSTANCE)
+                                .add(indexName.getBytes(StandardCharsets.UTF_8))
+                );
 
-            if (result instanceof List) {
-                List<?> infoList = (List<?>) result;
-                log.info("[FoodVectorService] 인덱스 상태 확인 - {}: 요소 수 {}", indexName, infoList.size());
-                for (int i = 0; i < infoList.size() - 1; i++) {
-                    if (infoList.get(i) instanceof byte[]) {
-                        String key = new String((byte[]) infoList.get(i), StandardCharsets.UTF_8);
-                        if ("num_docs".equals(key) && (i + 1) < infoList.size()) {
-                            Object numDocs = infoList.get(i + 1);
-                            log.info("[FoodVectorService] 인덱스 {} 문서 수: {}", indexName, numDocs);
-                            break;
+                if (result instanceof List) {
+                    List<?> infoList = (List<?>) result;
+                    log.info("[FoodVectorService] 인덱스 상태 확인 - {}: 요소 수 {}", indexName, infoList.size());
+                    for (int i = 0; i < infoList.size() - 1; i++) {
+                        if (infoList.get(i) instanceof byte[]) {
+                            String key = new String((byte[]) infoList.get(i), StandardCharsets.UTF_8);
+                            if ("num_docs".equals(key) && (i + 1) < infoList.size()) {
+                                Object numDocs = infoList.get(i + 1);
+                                log.info("[FoodVectorService] 인덱스 {} 문서 수: {}", indexName, numDocs);
+                                break;
+                            }
                         }
                     }
+                } else {
+                    log.info("[FoodVectorService] 인덱스 상태 확인 - {}: {}", indexName, result);
                 }
-            } else {
-                log.info("[FoodVectorService] 인덱스 상태 확인 - {}: {}", indexName, result);
+            } catch (Exception e) {
+                log.warn("[FoodVectorService] 인덱스 상태 확인 실패: index={}, error={}", indexName, e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("[FoodVectorService] 인덱스 상태 확인 실패: index={}, error={}", indexName, e.getMessage());
         }
     }
 

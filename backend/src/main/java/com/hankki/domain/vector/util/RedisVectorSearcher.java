@@ -42,8 +42,13 @@ public class RedisVectorSearcher {
      * KNN 검색 (가장 유사한 벡터들)
      */
     public List<Long> knnSearch(Gender gender, double[] queryVector, int limit) {
-        if (!validateSearchInput(gender, queryVector, limit)) return Collections.emptyList();
+        if (!validateSearchInput(gender, queryVector, limit)) {
+            log.warn("[RedisVectorSearcher] KNN 입력값이 유효하지 않음 - gender={}, vectorValid={}, limit={}",
+                    gender, RedisVectorUtil.isValidVector(queryVector, VECTOR_DIMENSION), limit);
+            return Collections.emptyList();        }
         if (!checkRedisStackSupport()) return Collections.emptyList();
+
+        log.info("[RedisVectorSearcher] KNN 검색 시작 - gender={}, limit={}, queryVector={}", gender, limit, Arrays.toString(queryVector));
 
         String indexName = "idx_" + gender.key();
         byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
@@ -108,6 +113,8 @@ public class RedisVectorSearcher {
             log.warn("[RedisVectorSearcher] 평균 벡터 계산할 음식 ID가 없습니다");
             return null;
         }
+        log.info("[RedisVectorSearcher] 평균 벡터 계산 시작 - foodIds={}, gender={}", foodIds, gender);
+
         List<double[]> vectors = new ArrayList<>(foodIds.size());
         int loadFailCount = 0;
 
@@ -205,6 +212,7 @@ public class RedisVectorSearcher {
                     }
                 }
             }
+            log.debug("[RedisVectorSearcher] KNN 결과: {}", foodIds);
         } catch (Exception e) {
             log.error("[RedisVectorSearcher] 검색 결과 파싱 실패: {}", e.getMessage(), e);
         }

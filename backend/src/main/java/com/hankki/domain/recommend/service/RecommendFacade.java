@@ -100,4 +100,24 @@ public class RecommendFacade {
             .getGender();
     }
 
+    @Transactional
+    public FoodResponseDto recommendRandomFallback(Long userId, Gender gender) {
+        log.info("[RecommendFacade] 폴백 랜덤 추천 시작: userId={}, gender={}", userId, gender);
+
+        try {
+            // 할당량 체크 없이 랜덤 음식만 선택
+            FoodResponseDto foodResponseDto = recommendService.recommendRandomFood(gender);
+
+            // 폴백이므로 할당량 기록 없이 사용자 음식 로그만 기록
+            userFoodLogService.createUserFoodLog(userId, foodResponseDto.getId());
+
+            log.info("[RecommendFacade] 폴백 랜덤 추천 성공: userId={}, foodId={}",
+                    userId, foodResponseDto.getId());
+            return foodResponseDto;
+
+        } catch (Exception e) {
+            log.error("[RecommendFacade] 폴백 랜덤 추천 실패: userId={}", userId, e);
+            throw new HankkiWikiException(ExceptionStatus.NOT_FOUND_VECTOR);
+        }
+    }
 }

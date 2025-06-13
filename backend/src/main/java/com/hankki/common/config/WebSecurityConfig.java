@@ -45,7 +45,8 @@ public class WebSecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/webjars/**",
-                    "/swagger/**"
+                    "/swagger/**",
+                    "/admin/debug/**"
             );
     }
 

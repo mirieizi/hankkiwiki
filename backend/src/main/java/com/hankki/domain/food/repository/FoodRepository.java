@@ -48,4 +48,5 @@ public interface FoodRepository extends JpaRepository<Food, Long>, FoodRepositor
 
     boolean existsByFoodName(String foodName);
 
+    Optional<Food> findFirstByOrderById();
 }
