@@ -3,6 +3,10 @@
 
 RAG 기법을 활용한 AI 기반 개인 맞춤형 식사 추천 서비스
 
+<p align="center">
+  <img src="homepage.png" width="700" />
+</p>
+
 * * *
 
 ## 📋 프로젝트 개요  
