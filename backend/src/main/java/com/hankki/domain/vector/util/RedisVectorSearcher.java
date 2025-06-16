@@ -54,19 +54,26 @@ public class RedisVectorSearcher {
         byte[] vectorBytes = RedisVectorUtil.doubleToFloatBytes(queryVector);
 
         try {
+            String query = String.format("(*)=>[KNN %d @vector $BLOB AS vector_score]", limit);
+
             Object result = redisCommands.dispatch(
                     FT_SEARCH,
                     new ArrayOutput<>(ByteArrayCodec.INSTANCE),
                     new CommandArgs<>(ByteArrayCodec.INSTANCE)
                             .add(indexName.getBytes(StandardCharsets.UTF_8))
-                            .add(String.format("*=>[KNN %d @vector $BLOB]", limit).getBytes(StandardCharsets.UTF_8))
+                            .add(query.getBytes(StandardCharsets.UTF_8))
                             .add("PARAMS".getBytes(StandardCharsets.UTF_8)).add(2)
                             .add("BLOB".getBytes(StandardCharsets.UTF_8)).add(vectorBytes)
-                            .add("RETURN".getBytes(StandardCharsets.UTF_8)).add(1).add("__key".getBytes(StandardCharsets.UTF_8))
-                            .add("SORTBY".getBytes(StandardCharsets.UTF_8)).add("__vector_score".getBytes(StandardCharsets.UTF_8)).add("ASC".getBytes(StandardCharsets.UTF_8))
+                            .add("RETURN".getBytes(StandardCharsets.UTF_8)).add(1)
+                            .add("__key".getBytes(StandardCharsets.UTF_8))
+                            .add("SORTBY".getBytes(StandardCharsets.UTF_8))
+                            .add("__vector_score".getBytes(StandardCharsets.UTF_8))
+                            .add("ASC".getBytes(StandardCharsets.UTF_8))
                             .add("DIALECT".getBytes(StandardCharsets.UTF_8)).add(2)
             );
-            return parseSearchResults(result, gender, limit);
+            List<Long> results = parseSearchResults(result, gender, limit);
+            log.info("[RedisVectorSearcher] KNN 검색 완료: {} 개 결과", results.size());
+            return results;
 
         } catch (Exception e) {
             log.error("[RedisVectorSearcher] KNN 검색 실패: gender={}, error={}", gender, e.getMessage(), e);
@@ -194,6 +201,22 @@ public class RedisVectorSearcher {
      * 검색 결과 파싱 (최대 limit개)
      */
     private List<Long> parseSearchResults(Object result, Gender gender, int limit) {
+        log.info("[DEBUG] Redis 응답 타입: {}", result != null ? result.getClass().getSimpleName() : "null");
+
+        if (result instanceof List) {
+            List<?> resultList = (List<?>) result;
+            log.info("[DEBUG] 응답 리스트 크기: {}", resultList.size());
+
+            // 응답 내용 상세 로깅
+            for (int i = 0; i < Math.min(resultList.size(), 5); i++) {
+                Object item = resultList.get(i);
+                log.info("[DEBUG] 응답[{}]: 타입={}, 값={}",
+                        i,
+                        item != null ? item.getClass().getSimpleName() : "null",
+                        item instanceof byte[] ? new String((byte[]) item, StandardCharsets.UTF_8) : item);
+            }
+        }
+
         List<Long> foodIds = new ArrayList<>(limit);
         try {
             if (result instanceof List) {
