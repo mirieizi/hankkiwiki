@@ -59,7 +59,7 @@ public class RedisVectorIndexInitializer {
             // 인덱스가 이미 존재하면 생성하지 않음
             if (indexExists(redis, indexName)) {
                 log.info("[RedisVectorIndexInitializer] 인덱스 이미 존재: {}", indexName);
-                return;
+                continue;
             }
 
             // 인덱스 생성
